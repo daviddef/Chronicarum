@@ -93,7 +93,10 @@ enum SiteType: String, Codable, CaseIterable {
         switch self {
         case .wonder:      return "🏛"
         case .castle:      return "🏰"
-        case .sacred:      return "⛩️"
+        // Neutral "place of worship" default — the catalogue's sacred sites span
+        // many faiths, so no single tradition's symbol stands for all of them.
+        // Individual sites override this via `Site.glyph`.
+        case .sacred:      return "🛐"
         case .battlefield: return "⚔️"
         case .lostCity:    return "🏚"
         case .treasure:    return "👑"
@@ -144,9 +147,17 @@ struct Site: Codable, Identifiable {
     let bestTimeToVisit: String?
     let visaNote: String?
 
+    /// Optional per-site marker override. `type.emoji` is a fine default for most sites,
+    /// but a single type can span traditions a category icon can't represent — a mosque,
+    /// a church and a Shinto shrine are all `.sacred`. When set, this wins.
+    var glyph: String? = nil
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
+
+    /// The emoji actually drawn on the map: the site's own override, else its type's.
+    var markerGlyph: String { glyph ?? type.emoji }
 
     var isBookmarked: Bool = false
     var isVisited: Bool = false
@@ -156,7 +167,7 @@ struct Site: Codable, Identifiable {
         case builtDescription = "built"
         case civilisation = "civ"
         case tagline, chapters
-        case nearestAirport, bestTimeToVisit, visaNote
+        case nearestAirport, bestTimeToVisit, visaNote, glyph
     }
 }
 

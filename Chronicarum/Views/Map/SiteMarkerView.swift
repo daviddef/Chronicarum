@@ -17,7 +17,7 @@ struct SiteMarkerView: View {
                     .frame(width: isSelected ? 38 : 28, height: isSelected ? 38 : 28)
                     .shadow(color: markerColor.opacity(0.5), radius: isSelected ? 8 : 4)
 
-                Text(site.type.emoji)
+                Text(site.markerGlyph)
                     .font(.system(size: isSelected ? 18 : 13))
             }
 

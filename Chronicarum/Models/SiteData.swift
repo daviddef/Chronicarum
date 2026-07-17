@@ -212,7 +212,8 @@ enum SiteData {
             ],
             nearestAirport: "Siem Reap International (REP)",
             bestTimeToVisit: "November–March",
-            visaNote: "e-Visa available; 30-day single entry"
+            visaNote: "e-Visa available; 30-day single entry",
+            glyph: "🛕"
         ),
         Site(
             id: "petra",
@@ -547,7 +548,8 @@ enum SiteData {
             ],
             nearestAirport: nil,
             bestTimeToVisit: nil,
-            visaNote: nil
+            visaNote: nil,
+            glyph: "🕌"
         ),
         Site(
             id: "pyramids-of-giza",
@@ -764,7 +766,8 @@ enum SiteData {
             ],
             nearestAirport: "Ben Gurion Airport (TLV)",
             bestTimeToVisit: "March–May, September–November",
-            visaNote: "Interior closed to non-Muslims; visitors may enter the Temple Mount compound in restricted hours only, and non-Muslims may not pray, carry prayer books or wear religious apparel"
+            visaNote: "Interior closed to non-Muslims; visitors may enter the Temple Mount compound in restricted hours only, and non-Muslims may not pray, carry prayer books or wear religious apparel",
+            glyph: "🕌"
         ),
         Site(
             id: "ephesus",
@@ -826,7 +829,8 @@ enum SiteData {
             ],
             nearestAirport: "Nevşehir Kapadokya Airport (NAV)",
             bestTimeToVisit: "April–June, September–October",
-            visaNote: "Türkiye e-visa or visa-free entry depending on nationality; the Dark Church needs an extra ticket, and balloon flights cancel in high wind"
+            visaNote: "Türkiye e-visa or visa-free entry depending on nationality; the Dark Church needs an extra ticket, and balloon flights cancel in high wind",
+            glyph: "⛪"
         ),
         Site(
             id: "baalbek",
@@ -981,7 +985,8 @@ enum SiteData {
             ],
             nearestAirport: "Paris Charles de Gaulle (CDG)",
             bestTimeToVisit: "Early morning; reserve a free slot Apr–Oct",
-            visaNote: "Schengen 90/180 rules apply; no ticket needed for the nave"
+            visaNote: "Schengen 90/180 rules apply; no ticket needed for the nave",
+            glyph: "⛪"
         ),
         Site(
             id: "mont-saint-michel",
@@ -1012,7 +1017,8 @@ enum SiteData {
             ],
             nearestAirport: "Rennes–Bretagne (RNS)",
             bestTimeToVisit: "Sep–Oct; time a visit to a high spring tide",
-            visaNote: "Schengen 90/180 rules apply; shuttle in from mainland car parks"
+            visaNote: "Schengen 90/180 rules apply; shuttle in from mainland car parks",
+            glyph: "⛪"
         ),
         Site(
             id: "sagrada-familia",
@@ -1043,7 +1049,8 @@ enum SiteData {
             ],
             nearestAirport: "Barcelona–El Prat (BCN)",
             bestTimeToVisit: "Mar–May or Oct; book timed entry weeks ahead",
-            visaNote: "Schengen 90/180 rules apply; tickets sell out — buy online only"
+            visaNote: "Schengen 90/180 rules apply; tickets sell out — buy online only",
+            glyph: "⛪"
         ),
         Site(
             id: "neuschwanstein-castle",
@@ -1229,7 +1236,8 @@ enum SiteData {
             ],
             nearestAirport: "Leonardo da Vinci–Fiumicino (FCO)",
             bestTimeToVisit: "November–February; book the first entry slot",
-            visaNote: "No border control between Italy and Vatican City — Schengen rules apply via Italy. Reached only through the Vatican Museums, so a timed ticket is effectively mandatory. Strict dress code; no photography inside the chapel."
+            visaNote: "No border control between Italy and Vatican City — Schengen rules apply via Italy. Reached only through the Vatican Museums, so a timed ticket is effectively mandatory. Strict dress code; no photography inside the chapel.",
+            glyph: "⛪"
         ),
         Site(
             id: "leaning-tower-of-pisa",
@@ -1353,7 +1361,8 @@ enum SiteData {
             ],
             nearestAirport: "Thessaloniki – Makedonia (SKG)",
             bestTimeToVisit: "May–June or September–October",
-            visaNote: "Schengen 90/180 visa-free for most non-EU visitors; EES biometrics at entry. Direct trains from Athens and Thessaloniki to Kalambaka. Each monastery closes on a different weekday — check before planning a route. Strict dress code: long trousers for men, skirts for women (wraps lent at the gate)."
+            visaNote: "Schengen 90/180 visa-free for most non-EU visitors; EES biometrics at entry. Direct trains from Athens and Thessaloniki to Kalambaka. Each monastery closes on a different weekday — check before planning a route. Strict dress code: long trousers for men, skirts for women (wraps lent at the gate).",
+            glyph: "⛪"
         ),
         Site(
             id: "prague-castle",
@@ -1632,7 +1641,8 @@ enum SiteData {
             ],
             nearestAirport: "Osaka Itami (ITM); international gateway Kansai (KIX)",
             bestTimeToVisit: "Year-round; go before 08:00 or after dark — open 24h, free",
-            visaNote: "Visa-free short stays (typically 90 days) for around 70 nationalities including the US, UK, EU, Canada and Australia. No JESTA is required — it is not due to launch before fiscal 2028."
+            visaNote: "Visa-free short stays (typically 90 days) for around 70 nationalities including the US, UK, EU, Canada and Australia. No JESTA is required — it is not due to launch before fiscal 2028.",
+            glyph: "⛩️"
         ),
         Site(
             id: "kinkaku-ji",
@@ -1663,7 +1673,8 @@ enum SiteData {
             ],
             nearestAirport: "Osaka Itami (ITM); international gateway Kansai (KIX)",
             bestTimeToVisit: "Nov for autumn colour; after snow if you are lucky. Opens 09:00",
-            visaNote: "Visa-free short stays (typically 90 days) for around 70 nationalities including the US, UK, EU, Canada and Australia. No JESTA is required — it is not due to launch before fiscal 2028."
+            visaNote: "Visa-free short stays (typically 90 days) for around 70 nationalities including the US, UK, EU, Canada and Australia. No JESTA is required — it is not due to launch before fiscal 2028.",
+            glyph: "☸️"
         ),
         Site(
             id: "borobudur",
@@ -1725,7 +1736,8 @@ enum SiteData {
             ],
             nearestAirport: "Nyaung-U / Bagan (NYU) — domestic only, seasonal service",
             bestTimeToVisit: "Nov–Feb, when the few flights run — but read the safety note first",
-            visaNote: "Myanmar is in civil war. The US advisory is Level 4 — Do Not Travel (renewed May 2026); the UK FCDO advises against all but essential travel to Mandalay Region, which contains Bagan, and against all travel to the adjacent Sagaing and Magway regions. A new state of emergency and martial law over 63 townships have applied since August 2025. Conscription (2024 law) can be enforced on Myanmar nationals including dual citizens, who may be barred from leaving. Most travel insurance is void. An e-visa exists; the advisories, not the visa, are the obstacle."
+            visaNote: "Myanmar is in civil war. The US advisory is Level 4 — Do Not Travel (renewed May 2026); the UK FCDO advises against all but essential travel to Mandalay Region, which contains Bagan, and against all travel to the adjacent Sagaing and Magway regions. A new state of emergency and martial law over 63 townships have applied since August 2025. Conscription (2024 law) can be enforced on Myanmar nationals including dual citizens, who may be barred from leaving. Most travel insurance is void. An e-visa exists; the advisories, not the visa, are the obstacle.",
+            glyph: "☸️"
         ),
         Site(
             id: "hampi",
@@ -1787,7 +1799,8 @@ enum SiteData {
             ],
             nearestAirport: "Chhatrapati Sambhajinagar / Aurangabad (IXU)",
             bestTimeToVisit: "Oct–Mar; closed Tuesdays",
-            visaNote: "e-Tourist visa online at indianvisaonline.gov.in — 30-day double-entry, or 1-year and 5-year multiple-entry. Apply at least 4 days ahead."
+            visaNote: "e-Tourist visa online at indianvisaonline.gov.in — 30-day double-entry, or 1-year and 5-year multiple-entry. Apply at least 4 days ahead.",
+            glyph: "🛕"
         ),
         Site(
             id: "teotihuacan-pyramid-of-the-sun",
@@ -2097,7 +2110,8 @@ enum SiteData {
             ],
             nearestAirport: "Mataveri International, Hanga Roa (IPC)",
             bestTimeToVisit: "October–March; early February for the Tapati Rapa Nui festival",
-            visaNote: "Chile is visa-free for most US, EU, UK, Canadian and Australian citizens, but Rapa Nui has extra rules: a Rapa Nui entry form, a max 30-day stay, and proof of return ticket plus booked accommodation or an islander host."
+            visaNote: "Chile is visa-free for most US, EU, UK, Canadian and Australian citizens, but Rapa Nui has extra rules: a Rapa Nui entry form, a max 30-day stay, and proof of return ticket plus booked accommodation or an islander host.",
+            glyph: "🗿"
         ),
         Site(
             id: "uluru",
@@ -2283,7 +2297,8 @@ enum SiteData {
             ],
             nearestAirport: "Lalibela Airport (LLI)",
             bestTimeToVisit: "October–March; Genna (Ethiopian Christmas, 7 January) draws mass pilgrimage",
-            visaNote: "Most visitors obtain an Ethiopian e-visa before travel. Check current government and security advisories for the Amhara Region before booking. Remove shoes at church entrances, dress modestly, and hire a site guide — access is via steep trenches and dark tunnels."
+            visaNote: "Most visitors obtain an Ethiopian e-visa before travel. Check current government and security advisories for the Amhara Region before booking. Remove shoes at church entrances, dress modestly, and hire a site guide — access is via steep trenches and dark tunnels.",
+            glyph: "⛪"
         ),
         Site(
             id: "great-zimbabwe",
@@ -2345,7 +2360,8 @@ enum SiteData {
             ],
             nearestAirport: "Mopti Ambodédjo Airport (MZI)",
             bestTimeToVisit: "November–February (cool, dry); Monday is market day",
-            visaNote: "Mali requires a visa in advance for most nationalities. Many governments currently advise against all travel to central Mali on security grounds — check your foreign ministry before any planning. Non-Muslims are not permitted inside the mosque; photograph from the market square."
+            visaNote: "Mali requires a visa in advance for most nationalities. Many governments currently advise against all travel to central Mali on security grounds — check your foreign ministry before any planning. Non-Muslims are not permitted inside the mosque; photograph from the market square.",
+            glyph: "🕌"
         ),
         Site(
             id: "victoria-falls",

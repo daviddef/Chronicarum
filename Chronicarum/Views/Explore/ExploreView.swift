@@ -79,7 +79,7 @@ struct SiteListRow: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(hex: site.era.color).opacity(0.2))
                     .frame(width: 44, height: 44)
-                Text(site.type.emoji)
+                Text(site.markerGlyph)
                     .font(.title3)
             }
 

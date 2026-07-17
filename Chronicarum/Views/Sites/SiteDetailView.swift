@@ -97,7 +97,7 @@ struct SiteHeroView: View {
                 .fill(Color(hex: site.era.color).opacity(0.3))
                 .frame(height: 200)
                 .overlay(
-                    Text(site.type.emoji)
+                    Text(site.markerGlyph)
                         .font(.system(size: 72))
                 )
 
@@ -286,7 +286,7 @@ struct NearbySiteCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(site.type.emoji)
+            Text(site.markerGlyph)
                 .font(.title2)
             Text(site.name)
                 .font(.caption.bold())
