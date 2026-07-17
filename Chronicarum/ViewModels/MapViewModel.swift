@@ -74,6 +74,38 @@ final class MapViewModel: ObservableObject {
         }
     }
 
+    /// Sites bucketed into grid cells sized relative to the current zoom, so a dense
+    /// region collapses to a few count-bubbles when zoomed out and breaks apart as you
+    /// zoom in. Recomputes when `visibleRegion` changes (via `onMapCameraChange`).
+    var clusteredItems: [SiteCluster] {
+        Self.cluster(visibleSites, in: visibleRegion)
+    }
+
+    /// Number of grid columns across the visible span. Higher = finer cells = sites
+    /// merge only when very close on screen.
+    private static let clusterDivisions = 9.0
+
+    static func cluster(_ sites: [Site], in region: MKCoordinateRegion) -> [SiteCluster] {
+        let cellLat = max(region.span.latitudeDelta / clusterDivisions, 0.00001)
+        let cellLon = max(region.span.longitudeDelta / clusterDivisions, 0.00001)
+
+        var buckets: [String: [Site]] = [:]
+        for site in sites {
+            let row = (site.latitude  / cellLat).rounded(.down)
+            let col = (site.longitude / cellLon).rounded(.down)
+            buckets["\(row):\(col)", default: []].append(site)
+        }
+
+        return buckets.map { key, group in
+            // Centroid keeps the bubble visually over its members.
+            let lat = group.reduce(0) { $0 + $1.latitude }  / Double(group.count)
+            let lon = group.reduce(0) { $0 + $1.longitude } / Double(group.count)
+            return SiteCluster(id: key,
+                               coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                               sites: group)
+        }
+    }
+
     var nearestSite: (site: Site, distanceKm: Int)? {
         guard let userLoc = userLocation else { return nil }
         let origin = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
@@ -115,6 +147,30 @@ final class MapViewModel: ObservableObject {
 
     func resetToDefaultView() {
         setRegion(MapViewModel.mediterraneanRegion)
+    }
+
+    /// Zooms to frame a cluster's members. Returns the site to open directly when the
+    /// group can't be split further (all members share one point, e.g. the Mona Lisa
+    /// and the Louvre) — the caller shows its detail instead of leaving a dead tap.
+    @discardableResult
+    func expandCluster(_ cluster: SiteCluster) -> Site? {
+        let lats = cluster.sites.map(\.latitude)
+        let lons = cluster.sites.map(\.longitude)
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return nil }
+
+        // Members effectively co-located — zooming would never separate them.
+        if maxLat - minLat < 0.0005 && maxLon - minLon < 0.0005 {
+            return cluster.representative
+        }
+
+        setRegion(MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2,
+                                           longitude: (minLon + maxLon) / 2),
+            span: MKCoordinateSpan(latitudeDelta: max((maxLat - minLat) * 1.5, 0.15),
+                                   longitudeDelta: max((maxLon - minLon) * 1.5, 0.15))
+        ))
+        return nil
     }
 
     /// Asks for a location fix and centres the map on it once it arrives.

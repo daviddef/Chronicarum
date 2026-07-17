@@ -38,14 +38,27 @@ struct MapRootView: View {
                     }
                 }
 
-                // Site markers
-                ForEach(mapVM.visibleSites) { site in
-                    Annotation("", coordinate: site.coordinate) {
-                        SiteMarkerView(site: site, isSelected: mapVM.selectedSite?.id == site.id)
-                            .onTapGesture {
-                                mapVM.selectSite(site)
-                                showSiteSheet = true
-                            }
+                // Site markers — clustered at the current zoom so dense regions stay
+                // legible. A single-site cluster renders as its marker; a group renders
+                // as a count bubble that zooms in when tapped.
+                ForEach(mapVM.clusteredItems) { item in
+                    Annotation("", coordinate: item.coordinate) {
+                        if item.isSingle {
+                            let site = item.representative
+                            SiteMarkerView(site: site, isSelected: mapVM.selectedSite?.id == site.id)
+                                .onTapGesture {
+                                    mapVM.selectSite(site)
+                                    showSiteSheet = true
+                                }
+                        } else {
+                            ClusterMarkerView(cluster: item)
+                                .onTapGesture {
+                                    if let site = mapVM.expandCluster(item) {
+                                        mapVM.selectSite(site)
+                                        showSiteSheet = true
+                                    }
+                                }
+                        }
                     }
                     .annotationTitles(.hidden)
                 }

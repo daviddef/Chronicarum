@@ -50,6 +50,30 @@ struct SiteMarkerView: View {
     }
 }
 
+// MARK: - Cluster bubble
+
+/// Shown in place of individual markers when several sites merge at the current zoom.
+/// Tapping it zooms in to break the group apart.
+struct ClusterMarkerView: View {
+    let cluster: SiteCluster
+
+    private var color: Color { Color(hex: cluster.representative.era.color) }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(color)
+                .frame(width: 34, height: 34)
+                .overlay(Circle().stroke(.white, lineWidth: 2))
+                .shadow(color: color.opacity(0.5), radius: 4)
+
+            Text("\(cluster.count)")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+        }
+    }
+}
+
 // MARK: - Color hex extension
 
 extension Color {

@@ -162,9 +162,21 @@ struct Site: Codable, Identifiable {
 
 // MARK: - Cluster Model (for map grouping)
 
+/// One map annotation: either a single site (`count == 1`) or a group merged because
+/// they fell in the same grid cell at the current zoom.
 struct SiteCluster: Identifiable {
-    let id = UUID()
+    /// Derived from the grid cell, not a UUID — a fresh UUID each recompute would give
+    /// SwiftUI a new identity every frame and break annotation reuse and animation.
+    let id: String
     let coordinate: CLLocationCoordinate2D
     let sites: [Site]
+
     var count: Int { sites.count }
+    var isSingle: Bool { sites.count == 1 }
+
+    /// The site that represents the group — highest tier wins, so a cluster takes the
+    /// colour and (when single) the marker of its most significant member.
+    var representative: Site {
+        sites.max { $0.tier < $1.tier } ?? sites[0]
+    }
 }
