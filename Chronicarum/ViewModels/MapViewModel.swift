@@ -1,0 +1,185 @@
+import Foundation
+import SwiftUI
+import MapKit
+import Combine
+
+@MainActor
+final class MapViewModel: ObservableObject {
+
+    // MARK: - Map state
+
+    /// Drives the map camera. Assign to move the map.
+    @Published var cameraPosition: MapCameraPosition = .region(MapViewModel.mediterraneanRegion)
+
+    /// Mirrors what the map is actually showing — kept in sync via `onMapCameraChange`.
+    /// Read this (not `cameraPosition`) when you need the current span, e.g. to zoom relative to it.
+    @Published var visibleRegion: MKCoordinateRegion = MapViewModel.mediterraneanRegion
+
+    @Published var selectedSite: Site? = nil
+    @Published var userLocation: CLLocationCoordinate2D? = nil
+    @Published var isLocating: Bool = false
+    @Published var locationError: String? = nil
+
+    // MARK: - Filters
+    @Published var activeEras: Set<Era> = Set(Era.allCases)
+    @Published var activeTypes: Set<SiteType> = Set(SiteType.allCases)
+    @Published var minimumTier: Int = 1
+
+    // MARK: - Conquest timeline
+    @Published var timelineState: TimelineState = TimelineState()
+
+    // MARK: - Dependencies
+    private let locationService: LocationService
+    private var cancellables = Set<AnyCancellable>()
+
+    init(locationService: LocationService) {
+        self.locationService = locationService
+        bindLocationService()
+    }
+
+    private func bindLocationService() {
+        locationService.$userLocation
+            .compactMap { $0 }
+            .sink { [weak self] coordinate in
+                guard let self else { return }
+                self.userLocation = coordinate
+                // Only follow the user to their location when they asked us to;
+                // otherwise a background fix would yank the map out from under them.
+                if self.isLocating {
+                    self.isLocating = false
+                    self.setRegion(MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 5, longitudeDelta: 5)
+                    ))
+                }
+            }
+            .store(in: &cancellables)
+
+        locationService.$error
+            .sink { [weak self] error in
+                guard let self else { return }
+                guard let error else { self.locationError = nil; return }
+                self.isLocating = false
+                self.locationError = error.localizedDescription
+            }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - Derived
+    var visibleSites: [Site] {
+        SiteData.all.filter { site in
+            activeEras.contains(site.era) &&
+            activeTypes.contains(site.type) &&
+            site.tier >= minimumTier
+        }
+    }
+
+    var nearestSite: (site: Site, distanceKm: Int)? {
+        guard let userLoc = userLocation else { return nil }
+        let origin = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
+        let nearest = SiteData.all
+            .map { (site: $0, metres: origin.distance(from: CLLocation(latitude: $0.latitude,
+                                                                       longitude: $0.longitude))) }
+            .min { $0.metres < $1.metres }
+        guard let nearest else { return nil }
+        return (site: nearest.site, distanceKm: Int((nearest.metres / 1000).rounded()))
+    }
+
+    // MARK: - Default regions
+    static let mediterraneanRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 37, longitude: 22),
+        span: MKCoordinateSpan(latitudeDelta: 35, longitudeDelta: 50)
+    )
+
+    static let worldRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+        span: MKCoordinateSpan(latitudeDelta: 160, longitudeDelta: 360)
+    )
+
+    // MARK: - Actions
+
+    func selectSite(_ site: Site) {
+        selectedSite = site
+    }
+
+    func clearSelection() {
+        selectedSite = nil
+    }
+
+    func zoomToSite(_ site: Site, span: Double = 0.5) {
+        setRegion(MKCoordinateRegion(
+            center: site.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: span, longitudeDelta: span)
+        ))
+    }
+
+    func resetToDefaultView() {
+        setRegion(MapViewModel.mediterraneanRegion)
+    }
+
+    /// Asks for a location fix and centres the map on it once it arrives.
+    func requestUserLocation() {
+        isLocating = true
+        locationError = nil
+        locationService.requestLocation()
+    }
+
+    func setRegion(_ region: MKCoordinateRegion) {
+        visibleRegion = region
+        cameraPosition = .region(region)
+    }
+
+    func zoomIn() {
+        var r = visibleRegion
+        r.span.latitudeDelta  = max(r.span.latitudeDelta  * 0.5, 0.2)
+        r.span.longitudeDelta = max(r.span.longitudeDelta * 0.5, 0.2)
+        setRegion(r)
+    }
+
+    func zoomOut() {
+        var r = visibleRegion
+        r.span.latitudeDelta  = min(r.span.latitudeDelta  * 2.0, 160)
+        r.span.longitudeDelta = min(r.span.longitudeDelta * 2.0, 360)
+        setRegion(r)
+    }
+
+    func toggleConquest() {
+        timelineState.isVisible.toggle()
+    }
+
+    func advanceTimeline() {
+        let next = timelineState.periodIndex + 1
+        guard next < TimelineData.periods.count else { return }
+        timelineState.periodIndex = next
+    }
+
+    func rewindTimeline() {
+        let prev = timelineState.periodIndex - 1
+        guard prev >= 0 else { return }
+        timelineState.periodIndex = prev
+    }
+
+    func playTimeline() {
+        guard !timelineState.isAnimating else {
+            timelineState.isAnimating = false
+            return
+        }
+        timelineState.isAnimating = true
+        animateNext()
+    }
+
+    private func animateNext() {
+        guard timelineState.isAnimating else { return }
+        let next = timelineState.periodIndex + 1
+        if next >= TimelineData.periods.count {
+            timelineState.isAnimating = false
+            return
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(3.2))
+            guard timelineState.isAnimating else { return }
+            timelineState.periodIndex = next
+            animateNext()
+        }
+    }
+}

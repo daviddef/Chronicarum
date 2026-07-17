@@ -1,0 +1,73 @@
+import SwiftUI
+
+/// Map pin for a heritage site. Scales up when selected.
+struct SiteMarkerView: View {
+    let site: Site
+    let isSelected: Bool
+
+    private var markerColor: Color {
+        // Map era hex strings to SwiftUI Color
+        // TODO: Replace with a proper color from a design token extension
+        switch site.era {
+        case .ancient:     return Color(hex: "#C9A84C")
+        case .classical:   return Color(hex: "#C05538")
+        case .medieval:    return Color(hex: "#4A7FC1")
+        case .renaissance: return Color(hex: "#4F8A5C")
+        case .modern:      return Color(hex: "#6B7280")
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Circle()
+                    .fill(markerColor)
+                    .frame(width: isSelected ? 38 : 28, height: isSelected ? 38 : 28)
+                    .shadow(color: markerColor.opacity(0.5), radius: isSelected ? 8 : 4)
+
+                Text(site.type.emoji)
+                    .font(.system(size: isSelected ? 18 : 13))
+            }
+
+            // Tier dots
+            if site.tier >= 4 {
+                HStack(spacing: 2) {
+                    ForEach(0..<site.tier, id: \.self) { _ in
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 3, height: 3)
+                    }
+                }
+                .padding(.top, 2)
+            }
+
+            // Callout label when selected
+            if isSelected {
+                Text(site.name)
+                    .font(.caption2.bold())
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(markerColor)
+                    .cornerRadius(6)
+                    .fixedSize()
+                    .padding(.top, 4)
+            }
+        }
+        .animation(.spring(response: 0.3), value: isSelected)
+    }
+}
+
+// MARK: - Color hex extension
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r = Double((int >> 16) & 0xFF) / 255
+        let g = Double((int >>  8) & 0xFF) / 255
+        let b = Double( int        & 0xFF) / 255
+        self.init(red: r, green: g, blue: b)
+    }
+}

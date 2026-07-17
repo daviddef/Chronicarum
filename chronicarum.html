@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chronicarum — Cultural Heritage Atlas</title>
+<style>
+:root {
+  --bg-deep: #080705;
+  --bg-map: #0c1018;
+  --bg-surface: #12100e;
+  --bg-card: #1a1714;
+  --bg-card-hover: #221f1b;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.14);
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.12);
+  --gold-glow: rgba(201,168,76,0.35);
+  --text-primary: #ede9e2;
+  --text-secondary: #9a9080;
+  --text-muted: #5a5248;
+
+  --era-ancient:     #c9a84c;
+  --era-classical:   #c05538;
+  --era-medieval:    #4a7fc1;
+  --era-renaissance: #4f8a5c;
+  --era-modern:      #7a7a90;
+
+  --type-wonder:   #c9a84c;
+  --type-castle:   #4a7fc1;
+  --type-sacred:   #9b6db5;
+  --type-battle:   #b83a3a;
+  --type-lost:     #2a9d8f;
+  --type-treasure: #d4722a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  z-index: 10;
+}
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  cursor: default;
+}
+.logo-mark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.logo-sub {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.header-stats {
+  display: flex;
+  gap: 28px;
+}
+.stat {
+  text-align: center;
+}
+.stat-val {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  width: 220px;
+}
+.header-search input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  width: 100%;
+}
+.header-search input::placeholder { color: var(--text-muted); }
+.search-icon { color: var(--text-muted); font-size: 13px; }
+
+/* ── LAYOUT ── */
+.main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── MAP ── */
+.map-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-map);
+}
+#world-map {
+  width: 100%;
+  height: 100%;
+}
+.graticule { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 0.5; }
+.land { fill: #161e2c; stroke: #1f2d42; stroke-width: 0.5; }
+.land-feature { fill: #1a2334; }
+
+.site-marker {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.site-marker circle.ring {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.4;
+}
+.site-marker circle.dot {
+  stroke: none;
+  transition: r 0.2s;
+}
+.site-marker:hover circle.dot { r: 7; }
+.site-marker.active circle.dot { r: 8; }
+.site-marker.active circle.ring { opacity: 1; r: 14; }
+.site-marker.dimmed { opacity: 0.15; }
+
+.site-label {
+  font-size: 9px;
+  fill: rgba(255,255,255,0.55);
+  pointer-events: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* map tooltip */
+.map-tooltip {
+  position: absolute;
+  background: #1c1917;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  max-width: 200px;
+  z-index: 5;
+}
+.map-tooltip.visible { opacity: 1; }
+.map-tooltip-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.map-tooltip-loc  { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.map-tooltip-tag  { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+/* map controls */
+.map-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 4;
+}
+.map-badge {
+  background: rgba(8,7,5,0.85);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  backdrop-filter: blur(4px);
+}
+.zoom-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 4;
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  background: rgba(8,7,5,0.88);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+.zoom-btn:hover { background: rgba(201,168,76,0.15); color: var(--gold); border-color: var(--gold); }
+.zoom-btn:active { transform: scale(0.93); }
+.zoom-reset {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+#world-map { cursor: grab; }
+#world-map.panning { cursor: grabbing; }
+
+/* ERA LEGEND */
+.era-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 4;
+  background: rgba(8,7,5,0.8);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  backdrop-filter: blur(4px);
+}
+.era-legend-title {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.era-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.era-item:hover { background: rgba(255,255,255,0.04); }
+.era-item.active { color: var(--text-primary); }
+.era-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── SIDE PANEL ── */
+.side-panel {
+  width: 320px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+.panel-filters {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.filter-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.pill.active {
+  color: var(--bg-deep);
+  border-color: transparent;
+  font-weight: 600;
+}
+.pill[data-type="all"].active    { background: var(--text-secondary); }
+.pill[data-type="wonder"].active { background: var(--type-wonder); }
+.pill[data-type="castle"].active { background: var(--type-castle); }
+.pill[data-type="sacred"].active { background: var(--type-sacred); }
+.pill[data-type="battle"].active { background: var(--type-battle); }
+.pill[data-type="lost"].active   { background: var(--type-lost); }
+.pill[data-type="treasure"].active { background: var(--type-treasure); }
+
+.panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.panel-list::-webkit-scrollbar { width: 4px; }
+.panel-list::-webkit-scrollbar-track { background: transparent; }
+.panel-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+.site-card {
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+  position: relative;
+}
+.site-card:hover { background: var(--bg-card-hover); border-color: var(--border); }
+.site-card.active { background: var(--bg-card); border-color: var(--border-strong); }
+
+.card-header { display: flex; align-items: flex-start; gap: 10px; }
+.card-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.card-meta { flex: 1; min-width: 0; }
+.card-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.card-loc  { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+.card-badges { display: flex; align-items: center; gap: 5px; margin-top: 6px; }
+.era-badge, .type-badge {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.tier-dots { display: flex; gap: 2px; margin-left: auto; }
+.tier-dot { width: 5px; height: 5px; border-radius: 50%; }
+.card-tagline {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 6px;
+  line-height: 1.45;
+}
+
+/* ── STORYBOARD OVERLAY ── */
+.storyboard {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: stretch;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.storyboard.open { opacity: 1; pointer-events: all; }
+.story-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,4,3,0.75);
+  backdrop-filter: blur(3px);
+}
+.story-panel {
+  position: relative;
+  margin: auto;
+  width: 780px;
+  max-width: 95vw;
+  max-height: 90vh;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+  transform: translateY(12px);
+  transition: transform 0.25s;
+}
+.storyboard.open .story-panel { transform: translateY(0); }
+
+.story-hero {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.story-hero-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 96px;
+  opacity: 0.12;
+}
+.story-hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, var(--bg-card) 100%);
+}
+.story-hero-content {
+  position: absolute;
+  bottom: 20px;
+  left: 28px;
+  right: 28px;
+}
+.story-era-badge {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.story-title { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.story-location { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+
+.story-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+  transition: all 0.15s;
+}
+.story-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+.story-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  flex-shrink: 0;
+  gap: 0;
+}
+.story-tab {
+  padding: 10px 16px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.story-tab:hover { color: var(--text-secondary); }
+.story-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.story-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px 28px;
+}
+.story-body::-webkit-scrollbar { width: 4px; }
+.story-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+.story-chapter { display: none; }
+.story-chapter.active { display: block; }
+
+.chapter-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.chapter-heading {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.chapter-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.chapter-body p { margin-bottom: 12px; }
+.chapter-body strong { color: var(--text-primary); font-weight: 600; }
+
+.story-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.fact-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.fact-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.fact-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ── CONQUEST / TIMELINE ── */
+.conquest-btn {
+  width: 32px; height: 32px;
+  background: rgba(8,7,5,0.88);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  backdrop-filter: blur(4px);
+  user-select: none;
+  margin-top: 6px;
+  title: 'Conquest timeline';
+}
+.conquest-btn:hover, .conquest-btn.active {
+  background: rgba(201,168,76,0.15);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.empire-label-text {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(0,0,0,0.8);
+  stroke-width: 3px;
+}
+.region-name-text {
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(0,0,0,0.7);
+  stroke-width: 2.5px;
+}
+.timeline-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 5;
+  background: linear-gradient(to top, rgba(5,4,3,0.97) 55%, transparent 100%);
+  padding: 12px 18px 14px;
+  display: none;
+}
+.tl-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.play-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: 9px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.play-btn:hover { background: var(--gold); color: var(--bg-deep); }
+.tl-year {
+  font-size: 20px; font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  min-width: 88px;
+  line-height: 1;
+}
+.tl-sub {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.tl-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+.empire-chip {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--text-secondary);
+}
+.empire-chip-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%; flex-shrink: 0;
+}
+input[type=range].tl-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+input[type=range].tl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--bg-deep);
+  box-shadow: 0 0 10px rgba(201,168,76,0.6);
+  cursor: grab;
+}
+input[type=range].tl-slider::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--bg-deep);
+}
+.tl-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.tl-tick {
+  font-size: 9px;
+  color: var(--text-muted);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+.tl-tick:hover { color: var(--text-secondary); }
+.tl-tick.active { color: var(--gold); font-weight: 700; }
+.name-changes-bar {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.name-changes-bar::-webkit-scrollbar { display: none; }
+.name-change-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.name-change-item .old { color: var(--text-muted); text-decoration: line-through; }
+.name-change-item .arrow { color: var(--gold); }
+.name-change-item .new { color: var(--text-primary); font-weight: 600; }
+.name-change-item .yr { color: var(--text-muted); font-size: 9px; }
+/* pulse animation for markers */
+@keyframes pulse {
+  0%   { opacity: 0.6; r: 12; }
+  50%  { opacity: 0.2; r: 18; }
+  100% { opacity: 0.6; r: 12; }
+}
+.pulse-ring { animation: pulse 2.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-mark">Chronicarum</span>
+    <span class="logo-sub">Cultural Heritage Atlas</span>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-val">1,223</div><div class="stat-label">UNESCO Sites</div></div>
+    <div class="stat"><div class="stat-val">12</div><div class="stat-label">Wonders</div></div>
+    <div class="stat"><div class="stat-val">168</div><div class="stat-label">Nations</div></div>
+    <div class="stat"><div class="stat-val">3,200+</div><div class="stat-label">Significant Sites</div></div>
+  </div>
+  <div class="header-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" placeholder="Search sites, civilisations, eras…" id="searchInput">
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <svg id="world-map" viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <filter id="glow-gold">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-soft">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="vignet" cx="50%" cy="50%" r="50%">
+          <stop offset="60%" stop-color="transparent"/>
+          <stop offset="100%" stop-color="rgba(8,7,5,0.6)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Ocean -->
+      <rect width="1000" height="480" fill="#0c1018"/>
+
+      <!-- Graticule (lat/lon grid) -->
+      <g class="graticule">
+        <!-- Horizontals every 30° -->
+        <line x1="0" y1="80"  x2="1000" y2="80"/>
+        <line x1="0" y1="160" x2="1000" y2="160"/>
+        <line x1="0" y1="240" x2="1000" y2="240"/>
+        <line x1="0" y1="320" x2="1000" y2="320"/>
+        <line x1="0" y1="400" x2="1000" y2="400"/>
+        <!-- Verticals every 30° -->
+        <line x1="83"  y1="0" x2="83"  y2="480"/>
+        <line x1="167" y1="0" x2="167" y2="480"/>
+        <line x1="250" y1="0" x2="250" y2="480"/>
+        <line x1="333" y1="0" x2="333" y2="480"/>
+        <line x1="416" y1="0" x2="416" y2="480"/>
+        <line x1="500" y1="0" x2="500" y2="480"/>
+        <line x1="583" y1="0" x2="583" y2="480"/>
+        <line x1="667" y1="0" x2="667" y2="480"/>
+        <line x1="750" y1="0" x2="750" y2="480"/>
+        <line x1="833" y1="0" x2="833" y2="480"/>
+        <line x1="917" y1="0" x2="917" y2="480"/>
+        <!-- Equator (slightly brighter) -->
+        <line x1="0" y1="240" x2="1000" y2="240" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      </g>
+
+      <!-- CONTINENTS (simplified Mercator) -->
+      <!-- North America -->
+      <path class="land" d="
+        M 50,75 L 95,60 L 145,58 L 200,60 L 240,65
+        L 320,70 L 345,88 L 342,105 L 330,122
+        L 320,148 L 305,170 L 296,190 L 288,205
+        L 270,208 L 256,218 L 248,252 L 238,278
+        L 228,298 L 212,302 L 198,295 L 188,272
+        L 175,245 L 168,212 L 155,178 L 140,152
+        L 122,132 L 108,115 L 90,100 L 68,88 Z
+      "/>
+      <!-- Baja California -->
+      <path class="land" d="M 170,210 L 178,225 L 165,262 L 156,252 L 158,230 Z"/>
+      <!-- Yucatan / Central America -->
+      <path class="land" d="M 245,250 L 255,245 L 262,252 L 260,268 L 250,275 L 242,262 Z"/>
+      <!-- Cuba -->
+      <path class="land" d="M 260,205 L 292,202 L 300,208 L 295,213 L 268,215 Z"/>
+      <!-- Greenland -->
+      <path class="land" d="M 370,30 L 415,28 L 440,38 L 435,58 L 415,68 L 388,65 L 368,52 Z"/>
+      <!-- Great Britain -->
+      <path class="land" d="M 454,138 L 465,130 L 472,140 L 468,155 L 458,158 L 450,150 Z"/>
+      <!-- Ireland -->
+      <path class="land" d="M 443,143 L 451,140 L 453,148 L 448,153 L 441,150 Z"/>
+
+      <!-- South America -->
+      <path class="land" d="
+        M 240,262 L 265,262 L 305,268 L 348,272 L 368,282
+        L 375,310 L 372,345 L 360,380 L 342,410
+        L 318,435 L 296,448 L 275,450 L 258,438
+        L 242,418 L 230,390 L 224,358 L 220,322
+        L 222,292 L 232,270 Z
+      "/>
+      <!-- Falkland Islands -->
+      <ellipse class="land" cx="296" cy="458" rx="6" ry="3"/>
+
+      <!-- Europe -->
+      <path class="land" d="
+        M 454,90 L 475,82 L 508,78 L 540,78 L 568,84
+        L 588,96 L 578,112 L 565,118 L 555,132
+        L 548,150 L 542,162 L 535,172 L 524,180
+        L 512,185 L 506,198 L 498,198 L 492,190
+        L 484,182 L 475,172 L 465,162 L 458,150
+        L 448,138 L 445,122 L 448,105 Z
+      "/>
+      <!-- Scandinavia -->
+      <path class="land" d="
+        M 492,78 L 505,68 L 518,62 L 532,64 L 540,75
+        L 535,88 L 520,95 L 505,90 Z
+      "/>
+      <!-- Italy peninsula -->
+      <path class="land" d="M 506,162 L 514,170 L 520,185 L 515,200 L 508,205 L 500,198 L 498,185 L 500,170 Z"/>
+      <!-- Iberian Peninsula (Spain/Portugal) -->
+      <path class="land" d="M 445,148 L 460,148 L 465,162 L 458,178 L 442,180 L 432,168 L 434,155 Z"/>
+      <!-- Sicily -->
+      <path class="land" d="M 508,205 L 518,202 L 522,210 L 514,214 L 507,210 Z"/>
+      <!-- Sardinia -->
+      <path class="land" d="M 493,188 L 499,185 L 500,196 L 494,197 Z"/>
+      <!-- Crete -->
+      <path class="land" d="M 535,208 L 548,205 L 551,210 L 542,214 L 534,212 Z"/>
+
+      <!-- Africa -->
+      <path class="land" d="
+        M 446,188 L 480,185 L 525,183 L 560,185
+        L 588,190 L 614,208 L 632,228 L 638,258
+        L 638,295 L 628,332 L 610,365 L 590,395
+        L 565,420 L 540,435 L 515,438 L 490,428
+        L 465,408 L 446,382 L 434,352 L 428,315
+        L 428,278 L 432,245 L 438,218 Z
+      "/>
+      <!-- Madagascar -->
+      <path class="land" d="M 625,340 L 634,332 L 640,345 L 638,368 L 628,378 L 620,370 L 620,352 Z"/>
+
+      <!-- Asia (merged from Middle East through Far East) -->
+      <path class="land" d="
+        M 570,88 L 610,82 L 660,78 L 720,74 L 780,72
+        L 840,70 L 890,74 L 930,80 L 955,92 L 960,108
+        L 945,125 L 928,138 L 910,148 L 898,158
+        L 882,168 L 862,178 L 842,182 L 825,188
+        L 808,195 L 790,200 L 775,205 L 758,215
+        L 742,222 L 722,228 L 705,235 L 692,245
+        L 680,255 L 672,268 L 680,282 L 678,295
+        L 668,308 L 658,298 L 645,278 L 635,262
+        L 622,250 L 610,242 L 598,235 L 588,225
+        L 578,215 L 568,205 L 558,195 L 552,182
+        L 548,168 L 550,152 L 558,138 L 562,122
+        L 566,105 Z
+      "/>
+      <!-- Indian Subcontinent -->
+      <path class="land" d="
+        M 662,248 L 690,242 L 718,248 L 730,268
+        L 728,295 L 718,318 L 700,332 L 684,328
+        L 670,312 L 662,290 L 658,268 Z
+      "/>
+      <!-- Sri Lanka -->
+      <ellipse class="land" cx="702" cy="338" rx="6" ry="8"/>
+      <!-- Southeast Asia peninsula -->
+      <path class="land" d="
+        M 760,212 L 782,218 L 798,228 L 805,248
+        L 798,268 L 785,282 L 770,278 L 762,262
+        L 758,242 Z
+      "/>
+      <!-- Japan -->
+      <path class="land" d="M 870,148 L 880,142 L 892,148 L 895,160 L 885,168 L 874,162 Z"/>
+      <!-- Sumatra -->
+      <path class="land" d="M 740,292 L 768,280 L 792,288 L 798,300 L 778,308 L 748,305 Z"/>
+      <!-- Java -->
+      <path class="land" d="M 758,318 L 782,312 L 808,315 L 812,322 L 788,328 L 762,326 Z"/>
+      <!-- Borneo -->
+      <path class="land" d="M 792,275 L 820,270 L 838,280 L 842,298 L 828,312 L 805,312 L 792,298 Z"/>
+      <!-- Philippines -->
+      <path class="land" d="M 840,228 L 850,220 L 858,228 L 855,242 L 845,248 L 838,238 Z"/>
+      <!-- Taiwan -->
+      <ellipse class="land" cx="842" cy="208" rx="5" ry="9"/>
+      <!-- Arabian Peninsula -->
+      <path class="land" d="
+        M 590,202 L 615,198 L 635,205 L 645,220
+        L 648,242 L 640,258 L 625,265 L 605,258
+        L 592,242 L 588,222 Z
+      "/>
+
+      <!-- Australia -->
+      <path class="land" d="
+        M 790,325 L 820,315 L 855,315 L 885,322
+        L 910,335 L 918,355 L 912,382 L 898,405
+        L 872,425 L 842,432 L 812,428 L 788,412
+        L 772,388 L 768,360 L 772,340 Z
+      "/>
+      <!-- Tasmania -->
+      <ellipse class="land" cx="880" cy="440" rx="10" ry="7"/>
+      <!-- New Zealand (rough) -->
+      <path class="land" d="M 940,395 L 948,382 L 955,390 L 952,408 L 942,412 Z"/>
+      <path class="land" d="M 948,418 L 956,408 L 962,418 L 958,432 L 948,435 Z"/>
+
+      <!-- Vignette overlay -->
+      <rect width="1000" height="480" fill="url(#vignet)"/>
+
+      <!-- EMPIRE OVERLAYS (rendered by JS when conquest mode on) -->
+      <g id="empire-overlays"></g>
+      <!-- REGION NAME LABELS -->
+      <g id="region-labels"></g>
+      <!-- SITE MARKERS (rendered by JS) -->
+      <g id="markers"></g>
+    </svg>
+
+    <!-- Map tooltip -->
+    <div class="map-tooltip" id="mapTooltip">
+      <div class="map-tooltip-name" id="ttName"></div>
+      <div class="map-tooltip-loc"  id="ttLoc"></div>
+      <div class="map-tooltip-tag"  id="ttTag"></div>
+    </div>
+
+    <!-- Map badge -->
+    <div class="map-controls">
+      <div class="map-badge">Equirectangular projection · Scroll or +/− to zoom</div>
+    </div>
+
+    <!-- Zoom controls -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomIn"   title="Zoom in">+</button>
+      <button class="zoom-btn" id="zoomOut"  title="Zoom out">−</button>
+      <button class="zoom-btn zoom-reset" id="zoomReset" title="Reset to world view">⊡</button>
+      <button class="zoom-btn" id="locateMe" title="Zoom to my location" style="margin-top:6px;font-size:14px">📍</button>
+      <button class="conquest-btn" id="conqBtn" onclick="toggleConquest()" title="Toggle conquest timeline">⚔</button>
+    </div>
+
+    <!-- TIMELINE BAR -->
+    <div class="timeline-bar" id="timelineBar">
+      <div class="tl-top">
+        <button class="play-btn" id="tlPlay" onclick="playTimeline()">▶</button>
+        <div>
+          <div class="tl-year" id="tlYear">100 AD</div>
+          <div class="tl-sub"  id="tlSub">Pax Romana — Rome at Its Height</div>
+        </div>
+        <div class="tl-chips" id="tlChips"></div>
+      </div>
+      <input type="range" class="tl-slider" id="tlSlider" min="0" max="6" step="1" value="1"
+        oninput="setTLIndex(parseInt(this.value))">
+      <div class="tl-ticks" id="tlTicks"></div>
+      <div class="name-changes-bar" id="nameChangesBar"></div>
+    </div>
+
+    <!-- Locate toast -->
+    <div id="locateToast" style="
+      position:absolute;bottom:20px;right:16px;
+      background:rgba(8,7,5,0.92);border:1px solid var(--border-strong);
+      border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-secondary);
+      display:none;z-index:6;backdrop-filter:blur(4px);max-width:220px;line-height:1.5;
+    "></div>
+
+    <!-- Era legend -->
+    <div class="era-legend">
+      <div class="era-legend-title">Filter by Era</div>
+      <div class="era-item active" data-era="all">
+        <div class="era-dot" style="background:#666"></div> All Eras
+      </div>
+      <div class="era-item" data-era="ancient">
+        <div class="era-dot" style="background:var(--era-ancient)"></div> Ancient  <span style="font-size:9px;color:var(--text-muted);margin-left:4px">pre-500 BC</span>
+      </div>
+      <div class="era-item" data-era="classical">
+        <div class="era-dot" style="background:var(--era-classical)"></div> Classical  <span style="font-size:9px;color:var(--text-muted);margin-left:4px">500 BC – 500 AD</span>
+      </div>
+      <div class="era-item" data-era="medieval">
+        <div class="era-dot" style="background:var(--era-medieval)"></div> Medieval  <span style="font-size:9px;color:var(--text-muted);margin-left:4px">500 – 1500</span>
+      </div>
+      <div class="era-item" data-era="renaissance">
+        <div class="era-dot" style="background:var(--era-renaissance)"></div> Early Modern  <span style="font-size:9px;color:var(--text-muted);margin-left:4px">1500 – 1800</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <aside class="side-panel">
+    <div class="panel-filters">
+      <div class="filter-label">Filter by Type</div>
+      <div class="filter-pills">
+        <button class="pill active" data-type="all">All</button>
+        <button class="pill" data-type="wonder">⭐ Wonder</button>
+        <button class="pill" data-type="castle">🏰 Castle</button>
+        <button class="pill" data-type="sacred">✦ Sacred</button>
+        <button class="pill" data-type="lost">◎ Lost City</button>
+        <button class="pill" data-type="treasure">◆ Treasure</button>
+        <button class="pill" data-type="battle">⚔ Battlefield</button>
+      </div>
+    </div>
+    <div class="panel-list" id="siteList"></div>
+  </aside>
+</div>
+
+<!-- STORYBOARD OVERLAY -->
+<div class="storyboard" id="storyboard">
+  <div class="story-backdrop" id="storyBackdrop"></div>
+  <div class="story-panel">
+    <div class="story-hero" id="storyHero">
+      <div class="story-hero-bg" id="storyEmoji"></div>
+      <div class="story-hero-gradient"></div>
+      <div class="story-hero-content">
+        <div class="story-era-badge" id="storyEraBadge"></div>
+        <div class="story-title" id="storyTitle"></div>
+        <div class="story-location" id="storyLocation"></div>
+      </div>
+      <button class="story-close" onclick="closeStory()">✕</button>
+    </div>
+
+    <div class="story-tabs" id="storyTabs"></div>
+
+    <div class="story-body" id="storyBody"></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const ERAS = {
+  ancient:     { label: 'Ancient',     color: '#c9a84c' },
+  classical:   { label: 'Classical',   color: '#c05538' },
+  medieval:    { label: 'Medieval',    color: '#4a7fc1' },
+  renaissance: { label: 'Early Modern', color: '#4f8a5c' },
+  modern:      { label: 'Modern',      color: '#7a7a90' },
+};
+
+const TYPES = {
+  wonder:   { label: 'Wonder',      icon: '⭐', color: '#c9a84c' },
+  castle:   { label: 'Castle',      icon: '🏰', color: '#4a7fc1' },
+  sacred:   { label: 'Sacred',      icon: '✦',  color: '#9b6db5' },
+  lost:     { label: 'Lost City',   icon: '◎',  color: '#2a9d8f' },
+  treasure: { label: 'Treasure',    icon: '◆',  color: '#d4722a' },
+  battle:   { label: 'Battlefield', icon: '⚔',  color: '#b83a3a' },
+};
+
+// lat/lon → SVG coords (equirectangular, 1000×480)
+const toXY = (lat, lon) => ({
+  x: (lon + 180) / 360 * 1000,
+  y: (90 - lat)  / 180 * 480,
+});
+
+const SITES = [
+  {
+    id: 'colosseum',
+    name: 'Colosseum',
+    location: 'Rome, Italy',
+    lat: 41.89, lon: 12.49,
+    era: 'classical', type: 'wonder', tier: 5,
+    emoji: '🏛',
+    built: '70–80 AD',
+    civ: 'Roman Empire',
+    tagline: 'Where 65,000 Romans roared as one',
+    chapters: [
+      {
+        title: 'Origin',
+        eyebrow: 'The Gift to Rome',
+        heading: 'Built on the ruins of Nero\'s vanity',
+        body: `<p>When Emperor <strong>Vespasian</strong> came to power in 69 AD, Nero's monstrous private lake sat at the heart of Rome — a symbol of imperial excess. Vespasian's masterstroke: drain it, and build the greatest arena the world had ever seen on the same ground. A gift from the Emperor to the people.</p><p>Construction began in <strong>70 AD</strong>. The labour was partly provided by Jewish prisoners captured after the siege of Jerusalem. In just ten years, a structure of 100,000 tonnes of travertine limestone rose four storeys — the largest amphitheatre ever built.</p>`,
+        facts: [
+          { label: 'Built', value: '70–80 AD' },
+          { label: 'Capacity', value: '65,000–80,000 spectators' },
+          { label: 'Height', value: '48 metres (4 storeys)' },
+          { label: 'Material', value: '100,000 tonnes travertine' },
+        ]
+      },
+      {
+        title: 'At Its Peak',
+        eyebrow: 'The Spectacle of Power',
+        heading: 'A machine of death built with precision engineering',
+        body: `<p>Below the arena floor lay the <strong>hypogeum</strong> — two underground levels of tunnels, cages, and hydraulic lifts that could launch animals directly into the arena through trap doors. Gladiators, lions, bears, and elephants waited in darkness beneath the feet of 65,000 screaming Romans.</p><p>The <strong>velarium</strong> — a vast retractable canvas awning — was rigged by 1,000 sailors from the Roman fleet to shade the crowd. During inaugural games under Titus in 80 AD, <strong>9,000 animals</strong> were slaughtered over 100 days.</p>`,
+        facts: [
+          { label: 'Duration of Games', value: '100 days at opening' },
+          { label: 'Animals Killed', value: '9,000 (inaugural games)' },
+          { label: 'Underground Levels', value: '2 (the hypogeum)' },
+          { label: 'Shade System', value: 'Velarium — rigged by 1,000 sailors' },
+        ]
+      },
+      {
+        title: 'The Fall',
+        eyebrow: 'Stripped to the Bones',
+        heading: 'Quarried for centuries — saved by a Pope',
+        body: `<p>After Rome's fall, the Colosseum became a quarry. Its marble seating, bronze clamps, and stone were stripped — much of it used in the construction of <strong>St Peter's Basilica</strong> and other Roman churches. An earthquake in 1349 collapsed the south outer wall entirely.</p><p>In <strong>1749</strong>, Pope Benedict XIV finally halted the destruction by declaring the Colosseum sacred ground — consecrated by the blood of Christian martyrs who, according to tradition, had died within its walls.</p>`,
+        facts: [
+          { label: 'Sacking began', value: '6th century AD' },
+          { label: 'Major earthquake', value: '1349 AD' },
+          { label: 'Saved by', value: 'Pope Benedict XIV, 1749' },
+          { label: 'Stone reused in', value: 'St Peter\'s Basilica, Rome' },
+        ]
+      },
+      {
+        title: 'Today',
+        eyebrow: 'Living Monument',
+        heading: 'The most visited monument on Earth',
+        body: `<p>More than <strong>7 million people</strong> visit the Colosseum each year — more than any other monument in the world. The arena floor, long absent, was partially reconstructed in 2023 and will be fully restored by 2025, allowing visitors to stand where gladiators once stood.</p><p>At night, lit amber against the Roman darkness, it is an overwhelming thing to see. No photograph has ever done it justice. It demands to be stood before in person — which is precisely the point of Chronicarum.</p>`,
+        facts: [
+          { label: 'Annual visitors', value: '7 million+' },
+          { label: 'UNESCO listed', value: '1980' },
+          { label: 'Floor restoration', value: 'Completed 2024' },
+          { label: 'Night lighting', value: 'Amber LED since 2015' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'machu_picchu',
+    name: 'Machu Picchu',
+    location: 'Cusco Region, Peru',
+    lat: -13.16, lon: -72.54,
+    era: 'medieval', type: 'wonder', tier: 5,
+    emoji: '⛰',
+    built: 'c. 1450 AD',
+    civ: 'Inca Empire',
+    tagline: 'A royal city hidden in the clouds',
+    chapters: [
+      {
+        title: 'Origin',
+        eyebrow: 'The Emperor\'s Estate',
+        heading: 'Built by a conquering god — then abandoned to the clouds',
+        body: `<p>Around <strong>1450 AD</strong>, the Inca Emperor <strong>Pachacuti</strong> — the man who transformed a small Andean kingdom into the largest empire in the Americas — built Machu Picchu as his personal royal estate. It sat 2,430 metres above sea level, on a saddle between two mountain peaks, above a bend in the Urubamba River.</p><p>Some 200 stone structures were constructed without mortar, with such precision that a sheet of paper still cannot be inserted between the stones. The city aligned with astronomical events — the summer solstice sun rises directly over the Intihuatana stone.</p>`,
+        facts: [
+          { label: 'Built', value: 'c. 1450 AD' },
+          { label: 'Elevation', value: '2,430 metres' },
+          { label: 'Builder', value: 'Emperor Pachacuti' },
+          { label: 'Structures', value: '~200 buildings' },
+        ]
+      },
+      {
+        title: 'At Its Peak',
+        eyebrow: 'City in the Sky',
+        heading: 'An engineering marvel without mortar, wheel, or iron',
+        body: `<p>At its height, Machu Picchu housed around <strong>750 people</strong> — priests, workers, and selected women who served the Emperor. The Inca had no written language, no iron tools, no wheel. They used bronze chisels, rope, and human labour to move stones weighing up to 25 tonnes up a mountain.</p><p>An <strong>agricultural terrace system</strong> (andenes) cascaded down the mountainside, growing food for the city. Sophisticated drainage channels managed rainfall so effectively that the city has never flooded in nearly 600 years.</p>`,
+        facts: [
+          { label: 'Population (peak)', value: '~750 residents' },
+          { label: 'Heaviest stone', value: '~25 tonnes' },
+          { label: 'Terraces', value: '700+ agricultural terraces' },
+          { label: 'Technology used', value: 'Bronze, rope, human labour' },
+        ]
+      },
+      {
+        title: 'The Abandonment',
+        eyebrow: 'Vanished from History',
+        heading: 'Left intact — and completely forgotten for 350 years',
+        body: `<p>When the Spanish conquistadors swept through the Inca Empire after 1532, they never found Machu Picchu. The city was abandoned — possibly due to smallpox, which preceded the Spanish themselves — around <strong>1572</strong>. The jungle swallowed it completely.</p><p>For 350 years it sat in the mountains, known only to a handful of local farmers who quietly cultivated its terraces. No Spanish record mentions it. It was the most perfect secret in the Americas.</p>`,
+        facts: [
+          { label: 'Abandoned', value: 'c. 1572 AD' },
+          { label: 'Reason', value: 'Likely smallpox epidemic' },
+          { label: 'Spanish found it?', value: 'No — never discovered' },
+          { label: 'Years forgotten', value: '~350 years' },
+        ]
+      },
+      {
+        title: 'Rediscovery',
+        eyebrow: '1911',
+        heading: 'A Yale professor, a local boy, and the find of the century',
+        body: `<p>On <strong>24 July 1911</strong>, American explorer <strong>Hiram Bingham III</strong> was guided up the mountain by a local farmer and his 11-year-old son, Pablito Alvarez. Through the overgrowth, stone walls emerged. Bingham reported it as the "Lost City of the Incas" — though archaeologists now believe it was never truly lost to those who lived nearby.</p><p>Bingham's photographs, published in <strong>National Geographic</strong> in 1913, showed the world a city that seemed to hover in the clouds. The response was electrifying. Machu Picchu became the image of Inca civilisation forever.</p>`,
+        facts: [
+          { label: 'Rediscovered', value: '24 July 1911' },
+          { label: 'Discoverer', value: 'Hiram Bingham III' },
+          { label: 'Local guide', value: 'Pablito Alvarez (age 11)' },
+          { label: 'UNESCO listed', value: '1983' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'angkor_wat',
+    name: 'Angkor Wat',
+    location: 'Siem Reap, Cambodia',
+    lat: 13.41, lon: 103.87,
+    era: 'medieval', type: 'sacred', tier: 5,
+    emoji: '🛕',
+    built: '1113–1150 AD',
+    civ: 'Khmer Empire',
+    tagline: 'The largest religious monument ever built',
+    chapters: [
+      {
+        title: 'Origin',
+        eyebrow: 'A Temple to the Universe',
+        heading: 'Larger than anything Rome or Egypt ever built',
+        body: `<p><strong>King Suryavarman II</strong> began construction around 1113 AD. He intended Angkor Wat not merely as a temple but as a symbolic representation of <strong>Mount Meru</strong> — the home of the gods in Hindu cosmology. Every measurement was a metaphor. Every corridor told a story in stone.</p><p>The complex covers <strong>400 acres</strong>. Its outer wall alone is 3.6 kilometres long. By comparison, the entire city of Paris within its medieval walls would fit inside. It required an estimated <strong>300,000 workers</strong> and 30 years to complete.</p>`,
+        facts: [
+          { label: 'Built', value: '1113–1150 AD' },
+          { label: 'Area', value: '400 acres (162 hectares)' },
+          { label: 'Outer moat', value: '5.6km around, 190m wide' },
+          { label: 'Workers', value: 'est. 300,000' },
+        ]
+      },
+      {
+        title: 'At Its Peak',
+        eyebrow: 'Capital of a Million People',
+        heading: 'The largest pre-industrial city on Earth',
+        body: `<p>Angkor — the capital city surrounding the temple — was home to roughly <strong>one million people</strong> at its height, making it the largest pre-industrial city on Earth. Rome at its peak held perhaps 500,000. The hydraulic network feeding the city — canals, reservoirs, and rice paddies — stretched for thousands of square kilometres.</p><p>Angkor Wat's <strong>bas-reliefs</strong> stretch for 800 metres and are the longest continuous carved narrative in the world, depicting the Hindu epic Mahabharata, historic battles, and the churning of the cosmic ocean.</p>`,
+        facts: [
+          { label: 'City population', value: '~1 million (at peak)' },
+          { label: 'Bas-relief length', value: '800 metres continuous' },
+          { label: 'Water network', value: 'Thousands of sq km of canals' },
+          { label: 'Religion depicted', value: 'Hindu (later Buddhist)' },
+        ]
+      },
+      {
+        title: 'The Fall',
+        eyebrow: 'Swallowed by the Jungle',
+        heading: 'Thai invasion ends the empire — the forest takes the rest',
+        body: `<p>The Khmer Empire was weakened by repeated wars with the <strong>Thai Kingdom of Ayutthaya</strong>. In <strong>1431</strong>, Angkor was sacked and its royal court relocated to Phnom Penh. The city was gradually abandoned. Within decades, the jungle began its slow reclamation.</p><p>The temple itself was never fully abandoned — Buddhist monks maintained a presence continuously — but the city around it disappeared entirely. By the time Europeans arrived, trees hundreds of years old had grown through the stones, their roots gripping the walls in an eerie embrace.</p>`,
+        facts: [
+          { label: 'Sacked', value: '1431 by Ayutthaya Kingdom' },
+          { label: 'Capital moved to', value: 'Phnom Penh' },
+          { label: 'Buddhist monks', value: 'Present continuously since medieval era' },
+          { label: 'Notable tree', value: 'Ta Prohm — famous jungle-swallowed temple' },
+        ]
+      },
+      {
+        title: 'Rediscovery',
+        eyebrow: '1860',
+        heading: '"Grander than anything left to us by Greece or Rome"',
+        body: `<p>French explorer <strong>Henri Mouhot</strong> encountered Angkor Wat in 1860 while collecting insects for the British Museum. His description — published posthumously after his death from fever — described it as grander than anything left to us by Greece or Rome. The Western world was electrified.</p><p>Today Angkor Wat appears on the <strong>Cambodian national flag</strong> — the only building in the world so honoured. It receives over 2 million visitors per year, and UNESCO-led restoration work continues to stabilise the ancient stones against the encroaching jungle.</p>`,
+        facts: [
+          { label: 'Rediscovered (West)', value: '1860 by Henri Mouhot' },
+          { label: 'On national flag?', value: 'Yes — Cambodia (unique in world)' },
+          { label: 'UNESCO listed', value: '1992' },
+          { label: 'Annual visitors', value: '2.2 million' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'petra',
+    name: 'Petra',
+    location: 'Ma\'an, Jordan',
+    lat: 30.33, lon: 35.44,
+    era: 'ancient', type: 'lost', tier: 5,
+    emoji: '🏔',
+    built: '4th century BC',
+    civ: 'Nabataean Kingdom',
+    tagline: 'The rose-red city half as old as time',
+    chapters: [
+      {
+        title: 'Origin',
+        eyebrow: 'The Nabataeans',
+        heading: 'Carved from rose-red sandstone by desert traders',
+        body: `<p>The <strong>Nabataeans</strong> were Arab traders who carved an extraordinary civilisation from the cliff faces of southern Jordan. Beginning around the <strong>4th century BC</strong>, they began cutting the city of Petra directly into the pink and red sandstone — temples, tombs, a theatre, and colonnaded streets, all excavated rather than constructed.</p><p>Their supreme achievement was water. In a desert that receives less than 150mm of rain per year, the Nabataeans engineered an extraordinary system of cisterns, dams, and ceramic pipes that delivered fresh water to 20,000 people. It was the genius of Petra — not the architecture, but the plumbing.</p>`,
+        facts: [
+          { label: 'Founded', value: 'c. 4th century BC' },
+          { label: 'People', value: 'Nabataean Arabs' },
+          { label: 'Carved into', value: 'Sandstone cliffs' },
+          { label: 'Water system', value: 'Ceramic pipes, 200km of channels' },
+        ]
+      },
+      {
+        title: 'At Its Peak',
+        eyebrow: 'Crossroads of the World',
+        heading: 'Spices, silk, and incense flowed through its gates',
+        body: `<p>Petra sat at the intersection of trade routes connecting <strong>Arabia, Egypt, the Mediterranean, and China</strong>. Incense from Yemen, silk from China, spices from India — all passed through Petra. The Nabataeans taxed every caravan and grew fabulously wealthy.</p><p>At its height, Petra housed perhaps <strong>20,000 people</strong>. The Treasury — the Al-Khazneh — was almost certainly a royal tomb, not a treasury, but its 40-metre carved facade is the most photographed image in the Middle East. The rock face above it still bears the marks of Bedouin rifles, fired for centuries in hope of releasing gold hidden inside.</p>`,
+        facts: [
+          { label: 'Peak population', value: '~20,000' },
+          { label: 'The Treasury height', value: '40 metres' },
+          { label: 'Trade goods', value: 'Incense, silk, spices, gold' },
+          { label: 'The theatre', value: 'Seats 8,500 people' },
+        ]
+      },
+      {
+        title: 'The Fall',
+        eyebrow: 'Forgotten for 1,000 Years',
+        heading: 'Rome annexed it; an earthquake broke it; the desert buried it',
+        body: `<p>In <strong>106 AD</strong>, the Roman Emperor Trajan absorbed the Nabataean Kingdom as the province of Arabia Petraea. Rome built a colonnaded street through Petra, but trade routes began shifting north. In <strong>363 AD</strong>, a catastrophic earthquake destroyed much of the city. The Byzantine period brought churches and partial recovery, but the city was gradually abandoned.</p><p>By the medieval period, Petra had been entirely forgotten by the outside world. The Bedouin tribes of the region knew it simply as their ancestral home, never thinking to announce it to passing scholars.</p>`,
+        facts: [
+          { label: 'Roman annexation', value: '106 AD' },
+          { label: 'Major earthquake', value: '363 AD' },
+          { label: 'Christianity arrived', value: '4th century AD' },
+          { label: 'Fully abandoned', value: 'by ~8th century AD' },
+        ]
+      },
+      {
+        title: 'Rediscovery',
+        eyebrow: '1812',
+        heading: 'A Swiss scholar in disguise penetrates the forbidden valley',
+        body: `<p>In <strong>1812</strong>, Swiss explorer <strong>Johann Ludwig Burckhardt</strong> heard rumours of a lost city in the Jordanian desert. To gain access, he disguised himself as a Muslim pilgrim intending to sacrifice a goat at the tomb of the Prophet Aaron. His Bedouin guide led him through the narrow canyon of the <strong>Siq</strong> — and suddenly, through a crack in the cliff, the Treasury appeared.</p><p>Burckhardt wrote a brief description and said nothing more — afraid of betraying his disguise by showing too much excitement. He died of fever in Cairo six years later. His journals, published posthumously, changed the world's understanding of the ancient Near East.</p>`,
+        facts: [
+          { label: 'Rediscovered', value: '22 August 1812' },
+          { label: 'Discoverer', value: 'Johann Ludwig Burckhardt' },
+          { label: 'His disguise', value: 'Muslim pilgrim' },
+          { label: 'UNESCO listed', value: '1985' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'edinburgh',
+    name: 'Edinburgh Castle',
+    location: 'Edinburgh, Scotland',
+    lat: 55.95, lon: -3.20,
+    era: 'medieval', type: 'castle', tier: 4,
+    emoji: '🏰',
+    built: '12th century AD',
+    civ: 'Kingdom of Scotland',
+    tagline: '900 years of Scottish history on a volcanic rock',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The Rock of Scotland',
+        heading: 'Never taken by a direct assault in 900 years',
+        body: `<p>Edinburgh Castle sits atop <strong>Castle Rock</strong> — a volcanic plug formed 350 million years ago. The first fortifications appeared in the <strong>12th century</strong> under King David I. The castle has been besieged 26 times in its history, but was never taken by direct assault — only by treachery or starvation.</p><p>Within its walls: the Scottish Crown Jewels (the oldest surviving crown jewels in Britain), the Stone of Destiny upon which Scottish — and later British — monarchs were crowned, and St Margaret's Chapel, built in 1130 and the oldest surviving building in Edinburgh.</p>`,
+        facts: [
+          { label: 'Rock formed', value: '350 million years ago' },
+          { label: 'First fortified', value: '12th century AD' },
+          { label: 'Times besieged', value: '26 recorded sieges' },
+          { label: 'Crown Jewels', value: 'Oldest in Britain (Scottish Honours)' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'alhambra',
+    name: 'Alhambra',
+    location: 'Granada, Spain',
+    lat: 37.18, lon: -3.59,
+    era: 'medieval', type: 'castle', tier: 5,
+    emoji: '🕌',
+    built: '1238–1358 AD',
+    civ: 'Nasrid Dynasty (Islamic)',
+    tagline: 'The peak of Islamic art in the Western world',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The Red Fortress',
+        heading: 'Islam\'s last great monument in Europe',
+        body: `<p>The Alhambra — meaning "the red one" in Arabic, for the colour of its walls — was built by the <strong>Nasrid Dynasty</strong> as their royal palace and fortress from 1238 to 1358. It was the last great Muslim kingdom in Europe, surviving two centuries after the Christian Reconquista swept south.</p><p>The palace interiors are among the most breathtaking achievements in human architecture: honeycombed stucco ceilings containing <strong>8,000 individual muqarnas cells</strong>, geometric tilework, calligraphic panels, and the Court of the Lions — a marble fountain system of extraordinary hydraulic sophistication.</p>`,
+        facts: [
+          { label: 'Built', value: '1238–1358 AD' },
+          { label: 'Builders', value: 'Nasrid Dynasty (Moorish)' },
+          { label: 'Fell to Christians', value: '2 January 1492' },
+          { label: 'UNESCO listed', value: '1984' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'valley_kings',
+    name: 'Valley of the Kings',
+    location: 'Luxor, Egypt',
+    lat: 25.74, lon: 32.60,
+    era: 'ancient', type: 'treasure', tier: 5,
+    emoji: '⚱',
+    built: '16th–11th century BC',
+    civ: 'New Kingdom Egypt',
+    tagline: 'Where pharaohs hid their journey to eternity',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The Necropolis of Pharaohs',
+        heading: '63 royal tombs cut into limestone cliffs',
+        body: `<p>For 500 years — from roughly <strong>1539 to 1075 BC</strong> — every pharaoh of Egypt's New Kingdom was buried in the Valley of the Kings on the west bank of the Nile at Luxor. The valley contains <strong>63 known tombs</strong>, ranging from simple pits to elaborately decorated corridors stretching 200 metres into the cliff face.</p><p>Every tomb was robbed in antiquity — except one. On <strong>4 November 1922</strong>, Howard Carter's team discovered the untouched tomb of the boy-king <strong>Tutankhamun</strong>. The treasures inside took ten years to catalogue and redefined the world's understanding of ancient Egyptian wealth.</p>`,
+        facts: [
+          { label: 'In use', value: '1539–1075 BC (500 years)' },
+          { label: 'Known tombs', value: '63' },
+          { label: 'Notable tomb', value: 'KV62 — Tutankhamun (1922)' },
+          { label: 'Objects in KV62', value: '5,398 artefacts' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'terracotta',
+    name: 'Terracotta Army',
+    location: 'Xi\'an, China',
+    lat: 34.38, lon: 109.27,
+    era: 'ancient', type: 'treasure', tier: 5,
+    emoji: '⚔',
+    built: '246–206 BC',
+    civ: 'Qin Dynasty',
+    tagline: 'An emperor\'s army of 8,000 — buried to serve in death',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The First Emperor\'s Army',
+        heading: 'A buried army of 8,000 unique soldiers',
+        body: `<p>Emperor <strong>Qin Shi Huang</strong> — the first emperor of a unified China — ordered construction of his mausoleum complex when he was just 13 years old. At its heart was an army of <strong>8,000 life-sized terracotta soldiers</strong>, each with a unique face, ranked by function: infantry, cavalry, archers, charioteers, and generals.</p><p>They were discovered entirely by accident on <strong>29 March 1974</strong> by farmers digging a well. The largest pit alone contains 6,000 figures. After 2,200 years underground, the army still stands in formation — waiting.</p>`,
+        facts: [
+          { label: 'Built', value: '246–206 BC' },
+          { label: 'Total soldiers', value: '~8,000 unique figures' },
+          { label: 'Discovered', value: '29 March 1974' },
+          { label: 'Discovered by', value: 'Farmers digging a well' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'stonehenge',
+    name: 'Stonehenge',
+    location: 'Wiltshire, England',
+    lat: 51.18, lon: -1.83,
+    era: 'ancient', type: 'wonder', tier: 4,
+    emoji: '🗿',
+    built: '3000–1500 BC',
+    civ: 'Neolithic / Bronze Age Britain',
+    tagline: 'A calendar carved from stone — 4,500 years before GPS',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The Mystery of Salisbury Plain',
+        heading: 'No written record. No clear purpose. Perfect alignment.',
+        body: `<p>Stonehenge was built in three phases over <strong>1,500 years</strong>, beginning around 3000 BC. The largest sarsen stones — each weighing 25 tonnes — were transported from Marlborough Downs 25 miles away. The bluestones came from <strong>Wales, 150 miles away</strong>, a feat of prehistoric logistics that remains unexplained.</p><p>At sunrise on the summer solstice, the sun rises directly over the Heel Stone and illuminates the altar stone at the monument's centre. The alignment is exact to within fractions of a degree. Whatever Stonehenge was — a calendar, a temple, a burial ground — it was built by people who understood their sky.</p>`,
+        facts: [
+          { label: 'Built', value: '3000–1500 BC' },
+          { label: 'Sarsen stone weight', value: 'Up to 25 tonnes' },
+          { label: 'Bluestone origin', value: 'Preseli Hills, Wales (150 miles)' },
+          { label: 'Alignment', value: 'Summer solstice sunrise — exact' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'chichen_itza',
+    name: 'Chichen Itza',
+    location: 'Yucatan, Mexico',
+    lat: 20.68, lon: -88.57,
+    era: 'medieval', type: 'wonder', tier: 5,
+    emoji: '🔺',
+    built: '600–1200 AD',
+    civ: 'Maya / Toltec',
+    tagline: 'A pyramid that counts the days of the year',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The Feathered Serpent',
+        heading: 'A pyramid that becomes a calendar twice a year',
+        body: `<p>El Castillo — the pyramid of Kukulkan — was built by the Maya with a precision that seems impossible. It has <strong>365 steps</strong>, one for each day of the year. On the spring and autumn equinoxes, the afternoon sun creates a shadow pattern on the north staircase that makes a serpent appear to descend from sky to earth — the feathered god <strong>Kukulkan</strong> returning.</p><p>The effect is caused by triangular shadows cast by the nine stepped platforms. It lasts for 45 minutes. Thousands gather to watch it every equinox. No accident — it is 1,000-year-old engineering.</p>`,
+        facts: [
+          { label: 'Built', value: '600–1200 AD' },
+          { label: 'Pyramid steps', value: '365 (one per day)' },
+          { label: 'Equinox effect', value: 'Serpent shadow, 45 minutes' },
+          { label: 'UNESCO listed', value: '1988' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'hagia_sophia',
+    name: 'Hagia Sophia',
+    location: 'Istanbul, Turkey',
+    lat: 41.01, lon: 28.98,
+    era: 'classical', type: 'sacred', tier: 5,
+    emoji: '🕌',
+    built: '532–537 AD',
+    civ: 'Byzantine Empire',
+    tagline: '1,400 years as church, mosque, and museum',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'Holy Wisdom',
+        heading: 'For 1,000 years, the largest enclosed space on Earth',
+        body: `<p>Emperor <strong>Justinian I</strong> completed the Hagia Sophia — Church of Holy Wisdom — in just <strong>five years</strong> (532–537 AD). Its dome, 55 metres high and 31 metres across, appeared to float on a ring of 40 windows flooding the interior with light. For nearly 1,000 years it was the largest enclosed space on Earth.</p><p>When Constantinople fell to the Ottomans in <strong>1453</strong>, Sultan Mehmed II entered and converted it to a mosque within hours. In 1934, Ataturk made it a secular museum. In 2020, Turkey converted it back to a mosque — a controversy that continues today.</p>`,
+        facts: [
+          { label: 'Built', value: '532–537 AD (5 years)' },
+          { label: 'Dome diameter', value: '31 metres' },
+          { label: 'Dome height', value: '55 metres' },
+          { label: 'Converted to mosque', value: '1453 (Ottoman conquest)' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'acropolis',
+    name: 'Acropolis of Athens',
+    location: 'Athens, Greece',
+    lat: 37.97, lon: 23.73,
+    era: 'ancient', type: 'wonder', tier: 5,
+    emoji: '🏛',
+    built: '447–432 BC',
+    civ: 'Classical Athens',
+    tagline: 'The birthplace of democracy, drama, and philosophy',
+    chapters: [
+      {
+        title: 'Overview',
+        eyebrow: 'The High City',
+        heading: 'Built in the golden age — still commanding after 2,500 years',
+        body: `<p>The <strong>Parthenon</strong> was built under the leadership of the statesman Pericles between <strong>447 and 432 BC</strong> — at the height of Athenian democracy. Architects Ictinus and Callicrates and the sculptor Pheidias created a building so optically refined that not a single straight line exists in it. Every column subtly bulges in the middle; every surface is curved — all to correct for optical illusion and make the building appear perfect to the human eye.</p><p>Within it stood a 12-metre gold and ivory statue of <strong>Athena</strong> — lost entirely. The frieze that wrapped its exterior depicted the Panathenaic Procession. Half of what remains sits in the British Museum. The rest sits here, in Athens, waiting.</p>`,
+        facts: [
+          { label: 'Built', value: '447–432 BC' },
+          { label: 'Architects', value: 'Ictinus & Callicrates' },
+          { label: 'Columns', value: '46 outer, 23 inner' },
+          { label: 'Elgin Marbles', value: '50% in British Museum since 1816' },
+        ]
+      },
+    ]
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeEra  = 'all';
+let activeType = 'all';
+let activeSite = null;
+let activeChapter = 0;
+
+// ── RENDER MARKERS ────────────────────────────────────────────────────────────
+function renderMarkers() {
+  const g = document.getElementById('markers');
+  g.innerHTML = '';
+
+  SITES.forEach(site => {
+    const {x, y} = toXY(site.lat, site.lon);
+    const eraColor = ERAS[site.era].color;
+    const typeColor = TYPES[site.type].color;
+    const color = eraColor;
+
+    const dimmed = (activeEra  !== 'all' && site.era  !== activeEra) ||
+                   (activeType !== 'all' && site.type !== activeType);
+    const isActive = activeSite === site.id;
+
+    const mk = document.createElementNS('http://www.w3.org/2000/svg','g');
+    mk.setAttribute('class', `site-marker${dimmed ? ' dimmed' : ''}${isActive ? ' active' : ''}`);
+    mk.setAttribute('data-id', site.id);
+    mk.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+
+    // Pulse ring (active only)
+    if (isActive) {
+      const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      pulse.setAttribute('class','pulse-ring');
+      pulse.setAttribute('r','14');
+      pulse.setAttribute('fill','none');
+      pulse.setAttribute('stroke', color);
+      pulse.setAttribute('stroke-width','1.5');
+      mk.appendChild(pulse);
+    }
+
+    // Ring
+    const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('class','ring');
+    ring.setAttribute('r', isActive ? '14' : '10');
+    ring.setAttribute('stroke', color);
+    mk.appendChild(ring);
+
+    // Dot
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('class','dot');
+    dot.setAttribute('r', isActive ? '7' : '5');
+    dot.setAttribute('fill', color);
+    dot.setAttribute('filter', isActive ? 'url(#glow-gold)' : 'url(#glow-soft)');
+    mk.appendChild(dot);
+
+    // Label (only if not too many visible)
+    if (!dimmed) {
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('class','site-label');
+      lbl.setAttribute('x','8');
+      lbl.setAttribute('y','3');
+      lbl.textContent = site.name;
+      mk.appendChild(lbl);
+    }
+
+    // Events
+    mk.addEventListener('mouseenter', e => showTooltip(site, e));
+    mk.addEventListener('mouseleave', hideTooltip);
+    mk.addEventListener('click', () => openStory(site.id));
+    g.appendChild(mk);
+  });
+}
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+function showTooltip(site, e) {
+  const tt = document.getElementById('mapTooltip');
+  const mapRect = document.querySelector('.map-wrap').getBoundingClientRect();
+  const svgEl = document.getElementById('world-map');
+  // Get SVG coordinate
+  const vb = svgEl.viewBox.baseVal;
+  const svgRect = svgEl.getBoundingClientRect();
+  const scaleX = svgRect.width  / vb.width;
+  const scaleY = svgRect.height / vb.height;
+  const {x,y} = toXY(site.lat, site.lon);
+
+  const px = x * scaleX + svgRect.left - mapRect.left + 12;
+  const py = y * scaleY + svgRect.top  - mapRect.top  - 40;
+
+  tt.style.left = `${Math.min(px, mapRect.width - 210)}px`;
+  tt.style.top  = `${Math.max(py, 8)}px`;
+  document.getElementById('ttName').textContent = site.name;
+  document.getElementById('ttLoc').textContent  = site.location;
+  document.getElementById('ttTag').textContent  = site.tagline;
+  tt.classList.add('visible');
+}
+function hideTooltip() {
+  document.getElementById('mapTooltip').classList.remove('visible');
+}
+
+// ── SITE LIST ─────────────────────────────────────────────────────────────────
+function renderList() {
+  const list = document.getElementById('siteList');
+  const filtered = SITES.filter(s =>
+    (activeEra  === 'all' || s.era  === activeEra) &&
+    (activeType === 'all' || s.type === activeType)
+  );
+
+  list.innerHTML = '';
+  filtered.forEach(site => {
+    const era  = ERAS[site.era];
+    const type = TYPES[site.type];
+    const card = document.createElement('div');
+    card.className = `site-card${activeSite === site.id ? ' active' : ''}`;
+    card.dataset.id = site.id;
+
+    const tierDots = Array.from({length: 5}, (_, i) =>
+      `<div class="tier-dot" style="background:${i < site.tier ? era.color : 'rgba(255,255,255,0.12)'}"></div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-icon" style="background:${era.color}22;">${site.emoji}</div>
+        <div class="card-meta">
+          <div class="card-name">${site.name}</div>
+          <div class="card-loc">${site.location}</div>
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="era-badge" style="background:${era.color}22;color:${era.color}">${era.label}</span>
+        <span class="type-badge" style="background:${type.color}22;color:${type.color}">${type.icon} ${type.label}</span>
+        <span class="tier-dots" title="Significance tier ${site.tier}/5">${tierDots}</span>
+      </div>
+      <div class="card-tagline">${site.tagline}</div>
+    `;
+    card.addEventListener('click', () => openStory(site.id));
+    list.appendChild(card);
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">No sites match this filter</div>';
+  }
+}
+
+// ── STORYBOARD ────────────────────────────────────────────────────────────────
+function openStory(id) {
+  activeSite = id;
+  activeChapter = 0;
+  const site = SITES.find(s => s.id === id);
+  if (!site) return;
+
+  const era = ERAS[site.era];
+
+  // Hero
+  document.getElementById('storyEmoji').textContent = site.emoji;
+  document.getElementById('storyHero').style.background =
+    `linear-gradient(135deg, ${era.color}33, ${era.color}11)`;
+  const badge = document.getElementById('storyEraBadge');
+  badge.textContent = `${era.label} · ${site.civ}`;
+  badge.style.background = `${era.color}28`;
+  badge.style.color = era.color;
+  document.getElementById('storyTitle').textContent = site.name;
+  document.getElementById('storyLocation').textContent = `📍 ${site.location} · Built ${site.built}`;
+
+  // Tabs
+  const tabs = document.getElementById('storyTabs');
+  tabs.innerHTML = '';
+  site.chapters.forEach((ch, i) => {
+    const t = document.createElement('div');
+    t.className = `story-tab${i === 0 ? ' active' : ''}`;
+    t.textContent = ch.title;
+    t.addEventListener('click', () => switchChapter(i));
+    tabs.appendChild(t);
+  });
+
+  // Body
+  renderChapter(site, 0);
+
+  // Open overlay
+  document.getElementById('storyboard').classList.add('open');
+  renderMarkers();
+  renderList();
+}
+
+function switchChapter(i) {
+  activeChapter = i;
+  const site = SITES.find(s => s.id === activeSite);
+  document.querySelectorAll('.story-tab').forEach((t, j) =>
+    t.classList.toggle('active', j === i)
+  );
+  renderChapter(site, i);
+}
+
+function renderChapter(site, i) {
+  const ch = site.chapters[i];
+  const body = document.getElementById('storyBody');
+  const factsHTML = ch.facts ? `
+    <div class="story-facts">
+      ${ch.facts.map(f => `
+        <div class="fact-card">
+          <div class="fact-label">${f.label}</div>
+          <div class="fact-value">${f.value}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  body.innerHTML = `
+    <div class="story-chapter active">
+      <div class="chapter-eyebrow">${ch.eyebrow}</div>
+      <div class="chapter-heading">${ch.heading}</div>
+      <div class="chapter-body">${ch.body}${factsHTML}</div>
+    </div>
+  `;
+}
+
+function closeStory() {
+  activeSite = null;
+  document.getElementById('storyboard').classList.remove('open');
+  renderMarkers();
+  renderList();
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('.era-item').forEach(el => {
+  el.addEventListener('click', () => {
+    activeEra = el.dataset.era;
+    document.querySelectorAll('.era-item').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    renderMarkers();
+    renderList();
+  });
+});
+
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeType = btn.dataset.type;
+    document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderMarkers();
+    renderList();
+  });
+});
+
+document.getElementById('storyBackdrop').addEventListener('click', closeStory);
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.site-card').forEach(card => {
+    const site = SITES.find(s => s.id === card.dataset.id);
+    if (!site) return;
+    const match = !q || site.name.toLowerCase().includes(q) ||
+                  site.location.toLowerCase().includes(q) ||
+                  site.civ.toLowerCase().includes(q) ||
+                  ERAS[site.era].label.toLowerCase().includes(q);
+    card.style.display = match ? '' : 'none';
+  });
+});
+
+// ── ZOOM & PAN ───────────────────────────────────────────────────────────────
+const SVG_W = 1000, SVG_H = 480;
+const MIN_W = 120, MAX_W = 1000;  // min = 12× zoom, max = full world
+
+let vb = { x: 0, y: 0, w: SVG_W, h: SVG_H };
+
+function applyVB() {
+  // clamp so we never pan outside the world
+  vb.x = Math.max(0, Math.min(vb.x, SVG_W - vb.w));
+  vb.y = Math.max(0, Math.min(vb.y, SVG_H - vb.h));
+  document.getElementById('world-map')
+    .setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+}
+
+function zoomAt(svgX, svgY, factor) {
+  // factor < 1 = zoom in, factor > 1 = zoom out
+  const newW = Math.max(MIN_W, Math.min(MAX_W, vb.w * factor));
+  const newH = newW * (SVG_H / SVG_W);
+  // keep the point under the cursor fixed
+  vb.x = svgX - (svgX - vb.x) * (newW / vb.w);
+  vb.y = svgY - (svgY - vb.y) * (newH / vb.h);
+  vb.w = newW;
+  vb.h = newH;
+  applyVB();
+}
+
+// screen → SVG coordinate
+function screenToSVG(clientX, clientY) {
+  const el = document.getElementById('world-map');
+  const r  = el.getBoundingClientRect();
+  return {
+    x: (clientX - r.left)  / r.width  * vb.w + vb.x,
+    y: (clientY - r.top)   / r.height * vb.h + vb.y,
+  };
+}
+
+// Scroll-wheel zoom
+document.getElementById('world-map').addEventListener('wheel', e => {
+  e.preventDefault();
+  const { x, y } = screenToSVG(e.clientX, e.clientY);
+  const factor = e.deltaY > 0 ? 1.18 : 0.847; // out / in
+  zoomAt(x, y, factor);
+}, { passive: false });
+
+// Button zoom (centre of current view)
+document.getElementById('zoomIn').addEventListener('click', () =>
+  zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 0.6)
+);
+document.getElementById('zoomOut').addEventListener('click', () =>
+  zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 1.65)
+);
+document.getElementById('zoomReset').addEventListener('click', () => {
+  vb = { x: 0, y: 0, w: SVG_W, h: SVG_H };
+  applyVB();
+});
+
+// Drag-to-pan
+let dragging = false, lastMouse = null;
+const mapSVG = document.getElementById('world-map');
+
+mapSVG.addEventListener('mousedown', e => {
+  if (e.target.closest('.site-marker')) return; // let clicks through on markers
+  dragging = true;
+  lastMouse = { x: e.clientX, y: e.clientY };
+  mapSVG.classList.add('panning');
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging || !lastMouse) return;
+  const r = mapSVG.getBoundingClientRect();
+  const scaleX = vb.w / r.width;
+  const scaleY = vb.h / r.height;
+  vb.x -= (e.clientX - lastMouse.x) * scaleX;
+  vb.y -= (e.clientY - lastMouse.y) * scaleY;
+  lastMouse = { x: e.clientX, y: e.clientY };
+  applyVB();
+});
+window.addEventListener('mouseup', () => {
+  dragging = false;
+  lastMouse = null;
+  mapSVG.classList.remove('panning');
+});
+
+// Touch pinch-to-zoom + drag
+let touches = [];
+let lastPinchDist = null;
+
+mapSVG.addEventListener('touchstart', e => {
+  touches = Array.from(e.touches);
+  if (touches.length === 1) lastMouse = { x: touches[0].clientX, y: touches[0].clientY };
+  if (touches.length === 2) {
+    lastPinchDist = Math.hypot(
+      touches[1].clientX - touches[0].clientX,
+      touches[1].clientY - touches[0].clientY
+    );
+  }
+}, { passive: true });
+
+mapSVG.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = Array.from(e.touches);
+  if (t.length === 1 && lastMouse) {
+    const r = mapSVG.getBoundingClientRect();
+    vb.x -= (t[0].clientX - lastMouse.x) * (vb.w / r.width);
+    vb.y -= (t[0].clientY - lastMouse.y) * (vb.h / r.height);
+    applyVB();
+    lastMouse = { x: t[0].clientX, y: t[0].clientY };
+  }
+  if (t.length === 2 && lastPinchDist) {
+    const dist = Math.hypot(t[1].clientX - t[0].clientX, t[1].clientY - t[0].clientY);
+    const midX = (t[0].clientX + t[1].clientX) / 2;
+    const midY = (t[0].clientY + t[1].clientY) / 2;
+    const { x, y } = screenToSVG(midX, midY);
+    zoomAt(x, y, lastPinchDist / dist);
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+
+mapSVG.addEventListener('touchend', () => { lastPinchDist = null; lastMouse = null; });
+
+// ── GEOLOCATION ──────────────────────────────────────────────────────────────
+let userMarker = null;
+
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('locateToast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, duration);
+}
+
+function placeUserMarker(lat, lon) {
+  // Remove old marker if any
+  const old = document.getElementById('user-location-marker');
+  if (old) old.remove();
+
+  const { x, y } = toXY(lat, lon);
+  const g = document.getElementById('markers');
+
+  const mk = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  mk.id = 'user-location-marker';
+  mk.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+
+  // Pulsing accuracy ring
+  const pulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  pulse.setAttribute('r', '18');
+  pulse.setAttribute('fill', 'rgba(41,182,246,0.12)');
+  pulse.setAttribute('stroke', 'rgba(41,182,246,0.4)');
+  pulse.setAttribute('stroke-width', '1');
+  pulse.style.animation = 'pulse 2s ease-in-out infinite';
+  mk.appendChild(pulse);
+
+  // Dot
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('r', '5');
+  dot.setAttribute('fill', '#29b6f6');
+  dot.setAttribute('stroke', '#fff');
+  dot.setAttribute('stroke-width', '2');
+  mk.appendChild(dot);
+
+  // "You" label
+  const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  lbl.setAttribute('x', '8');
+  lbl.setAttribute('y', '3');
+  lbl.setAttribute('fill', '#29b6f6');
+  lbl.setAttribute('font-size', '9');
+  lbl.setAttribute('letter-spacing', '0.08');
+  lbl.textContent = 'YOU';
+  mk.appendChild(lbl);
+
+  g.appendChild(mk);
+}
+
+function zoomToLocation(lat, lon, zoomLevel = 180) {
+  // zoomLevel = viewBox width in SVG units (smaller = more zoomed in)
+  const { x, y } = toXY(lat, lon);
+  const aspect = SVG_H / SVG_W;
+  vb.w = zoomLevel;
+  vb.h = zoomLevel * aspect;
+  vb.x = x - vb.w / 2;
+  vb.y = y - vb.h / 2;
+  applyVB();
+}
+
+document.getElementById('locateMe').addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    showToast('Geolocation is not supported by your browser.');
+    return;
+  }
+  showToast('Finding your location…', 8000);
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      placeUserMarker(lat, lon);
+      zoomToLocation(lat, lon, 180);
+
+      // Find nearest site
+      let nearest = null, nearestDist = Infinity;
+      SITES.forEach(s => {
+        const d = Math.hypot(s.lat - lat, s.lon - lon);
+        if (d < nearestDist) { nearestDist = d; nearest = s; }
+      });
+      const km = Math.round(nearestDist * 111);
+      showToast(`📍 Located! Nearest heritage site: ${nearest.name} (~${km.toLocaleString()} km away)`, 5000);
+    },
+    err => {
+      showToast('Could not get location. Please allow location access and try again.');
+    },
+    { timeout: 8000, maximumAge: 60000 }
+  );
+});
+
+// ── CONQUEST TIMELINE DATA ───────────────────────────────────────────────────
+// Polygons: arrays of [lon, lat] pairs. Converted to SVG coords at render time.
+const p2s = a => a.map(([lo,la]) =>
+  `${((lo+180)/360*1000).toFixed(1)},${((90-la)/480*480).toFixed(1)}`
+).join(' ');
+// Correct lat conversion:
+const ll2s = a => a.map(([lo,la]) =>
+  `${((lo+180)/360*1000).toFixed(1)},${((90-la)/180*480).toFixed(1)}`
+).join(' ');
+
+const TIMELINE_DATA = [
+  {
+    year: -500, label: '500 BC', sub: 'Classical Antiquity — Rise of Persia & Greece',
+    empires: [
+      { name: 'Achaemenid Persian Empire', color: '#9b59b6',
+        poly: [[28,42],[44,43],[55,40],[68,37],[72,35],[70,25],[57,22],[44,22],[36,22],[32,26],[32,33],[26,34]],
+        llon:52, llat:32 },
+      { name: 'Greek City-States', color: '#2980b9',
+        poly: [[20,42],[26,42],[28,38],[22,36],[20,38]],
+        llon:23, llat:39 },
+      { name: 'Carthaginian Empire', color: '#c0392b',
+        poly: [[-2,36],[12,38],[16,34],[10,31],[0,33],[-5,35]],
+        llon:5, llat:34 },
+      { name: 'Celtic Europe', color: '#27ae60',
+        poly: [[-10,58],[-3,58],[16,55],[18,48],[10,44],[3,44],[-2,44],[-10,48]],
+        llon:4, llat:50 },
+    ],
+    names: [
+      [23,38,'HELLAS'],[52,32,'PERSIA'],[31,27,'AEGYPTUS'],
+      [44,34,'MESOPOTAMIA'],[67,37,'BACTRIA'],[78,22,'INDIA'],
+      [42,50,'SCYTHIA'],[2,47,'GAUL'],[-4,40,'IBERIA'],
+      [8,34,'CARTHAGO'],[32,18,'KUSH'],[110,34,'QIN DYNASTY'],
+    ],
+    changes: []
+  },
+  {
+    year: 100, label: '100 AD', sub: 'Pax Romana — The Roman Empire at Its Height',
+    empires: [
+      { name: 'Roman Empire', color: '#e74c3c',
+        poly: [[-9,44],[-9,37],[-6,36],[10,37],[24,32],[35,24],[35,32],[38,34],[44,37],[44,41],[40,43],[32,47],[29,46],[17,48],[8,47],[8,52],[5,52],[3,51],[-5,48],[-2,44]],
+        llon:13, llat:42 },
+      { name: 'Roman Britain', color: '#e74c3c',
+        poly: [[-5,58],[0,58],[2,52],[2,51],[-3,50],[-5,51],[-4,54]],
+        llon:-2, llat:53 },
+      { name: 'Parthian Empire', color: '#e67e22',
+        poly: [[44,37],[60,40],[68,37],[72,35],[68,22],[57,22],[44,22],[36,22],[38,34]],
+        llon:55, llat:30 },
+      { name: 'Han Dynasty', color: '#1abc9c',
+        poly: [[100,50],[130,50],[130,22],[112,22],[100,20],[80,30],[80,40],[90,45]],
+        llon:110, llat:36 },
+    ],
+    names: [
+      [13,42,'ROMA / ITALIA'],[2,47,'GALLIA'],[-4,40,'HISPANIA'],
+      [-2,53,'BRITANNIA'],[31,27,'AEGYPTUS'],[36,34,'SYRIA'],
+      [44,34,'MESOPOTAMIA'],[55,32,'PARTHIA'],[78,22,'INDIA'],
+      [110,36,'SINA (HAN)'],[14,52,'GERMANIA'],[40,50,'SARMATIA'],
+    ],
+    changes: []
+  },
+  {
+    year: 650, label: '650 AD', sub: 'The Caliphate Spreads — Islam Changes the World',
+    empires: [
+      { name: 'Umayyad Caliphate', color: '#27ae60',
+        poly: [[-9,36],[-6,36],[10,36],[25,33],[36,34],[44,38],[60,40],[68,37],[72,35],[68,22],[57,22],[44,22],[36,22],[32,26],[24,32],[10,34],[0,34],[-5,34]],
+        llon:30, llat:28 },
+      { name: 'Byzantine Empire', color: '#2980b9',
+        poly: [[24,38],[36,38],[42,42],[44,42],[44,40],[40,43],[32,47],[28,42],[22,38]],
+        llon:32, llat:39 },
+      { name: 'Tang Dynasty', color: '#e74c3c',
+        poly: [[80,50],[120,50],[130,40],[122,22],[110,20],[100,20],[85,28],[80,36]],
+        llon:106, llat:36 },
+      { name: 'Frankish Kingdom', color: '#f39c12',
+        poly: [[-5,50],[16,55],[18,48],[8,44],[3,44],[-2,44],[-5,48]],
+        llon:5, llat:49 },
+    ],
+    names: [
+      [-4,38,'AL-ANDALUS'],[10,34,'IFRIQIYA'],[31,27,'MISR (EGYPT)'],
+      [36,32,'BILAD AL-SHAM'],[44,34,'JAZIRA'],[60,34,'KHURASAN'],
+      [32,39,'BYZANTIUM'],[5,49,'FRANKIA'],[106,36,'TANG CHINA'],
+      [24,46,'BULGARIA'],[14,52,'SAXONY'],[24,22,'ARABIA'],
+    ],
+    changes: [
+      { old:'ROME', nw:'BYZANTIUM', yr:330 },
+      { old:'CONSTANTINOPLE', nw:'BYZANTIUM', yr:337 },
+    ]
+  },
+  {
+    year: 1250, label: '1250 AD', sub: 'The Mongol World Empire — Largest in History',
+    empires: [
+      { name: 'Mongol Empire', color: '#8e6914',
+        poly: [[22,48],[30,55],[60,56],[90,57],[120,55],[135,52],[135,30],[120,22],[106,18],[80,26],[68,22],[44,22],[36,34],[32,46]],
+        llon:82, llat:46 },
+      { name: 'Latin/European Kingdoms', color: '#34495e',
+        poly: [[-10,58],[-2,58],[18,60],[18,50],[10,44],[3,43],[-2,44],[-10,50]],
+        llon:4, llat:50 },
+      { name: 'Mamluk Egypt', color: '#c0392b',
+        poly: [[24,22],[36,22],[38,30],[36,34],[25,33]],
+        llon:30, llat:27 },
+    ],
+    names: [
+      [82,46,'MONGOL EMPIRE'],[50,52,'GOLDEN HORDE'],[54,36,'ILKHANATE'],
+      [76,42,'CHAGATAI KHANATE'],[5,49,'FRANCE'],[12,50,'HOLY ROMAN EMPIRE'],
+      [-2,53,'ENGLAND'],[20,52,'POLAND'],[30,27,'MAMLUK EGYPT'],
+      [78,28,'DELHI SULTANATE'],[112,30,'SONG DYNASTY'],
+    ],
+    changes: [
+      { old:'PERSIA', nw:'ILKHANATE (Mongol)', yr:1256 },
+      { old:'RUS', nw:'GOLDEN HORDE (Mongol)', yr:1240 },
+      { old:'CHINA (Jin)', nw:'MONGOL KHANATE', yr:1234 },
+    ]
+  },
+  {
+    year: 1500, label: '1500 AD', sub: 'Ottoman Supremacy & the Age of Exploration',
+    empires: [
+      { name: 'Ottoman Empire', color: '#c0392b',
+        poly: [[-2,36],[12,34],[30,32],[36,34],[44,38],[44,43],[34,47],[28,47],[20,46],[14,44],[20,40],[22,38],[26,38],[10,38]],
+        llon:30, llat:38 },
+      { name: 'Safavid Persia', color: '#9b59b6',
+        poly: [[44,38],[60,40],[68,37],[72,35],[68,22],[57,22],[44,22],[38,30],[38,34]],
+        llon:54, llat:32 },
+      { name: 'Ming Dynasty', color: '#1abc9c',
+        poly: [[100,42],[122,42],[130,30],[122,22],[110,18],[100,20],[90,28],[88,36]],
+        llon:108, llat:34 },
+      { name: 'Habsburg Spain', color: '#f39c12',
+        poly: [[-9,44],[-9,37],[-6,36],[3,36],[8,44],[16,50],[16,44],[8,42],[-2,44]],
+        llon:-2, llat:40 },
+      { name: 'Aztec Empire', color: '#27ae60',
+        poly: [[-102,22],[-88,22],[-88,16],[-95,14],[-102,18]],
+        llon:-96, llat:18 },
+      { name: 'Inca Empire', color: '#e67e22',
+        poly: [[-80,-5],[-70,-5],[-68,-18],[-70,-40],[-78,-40],[-80,-18]],
+        llon:-74, llat:-16 },
+    ],
+    names: [
+      [30,38,'OTTOMAN EMPIRE'],[54,32,'SAFAVID PERSIA'],[108,34,'MING CHINA'],
+      [-2,40,'CASTILE'],[12,50,'HOLY ROMAN EMPIRE'],[36,56,'MUSCOVY'],
+      [-96,18,'AZTEC'],[-74,-16,'INCA'],[-8,39,'PORTUGAL'],
+      [2,47,'FRANCE'],[-2,53,'ENGLAND'],[78,22,'VIJAYANAGARA'],
+    ],
+    changes: [
+      { old:'BYZANTIUM', nw:'OTTOMAN EMPIRE', yr:1453 },
+      { old:'CONSTANTINOPLE', nw:'ISTANBUL', yr:1453 },
+      { old:'GRANADA (Moorish)', nw:'CASTILE', yr:1492 },
+    ]
+  },
+  {
+    year: 1800, label: '1800 AD', sub: 'Napoleon & the British Empire — The World Divided',
+    empires: [
+      { name: 'British (India)', color: '#c0392b',
+        poly: [[68,36],[88,28],[92,22],[88,8],[80,8],[72,20],[68,28]],
+        llon:80, llat:22 },
+      { name: 'British (Australia)', color: '#c0392b',
+        poly: [[114,-22],[154,-22],[154,-38],[138,-38],[126,-34],[114,-34]],
+        llon:134, llat:-28 },
+      { name: 'French Empire (Napoleon)', color: '#2980b9',
+        poly: [[-5,50],[16,55],[18,48],[12,44],[6,44],[3,43],[-5,48]],
+        llon:5, llat:48 },
+      { name: 'Russian Empire', color: '#27ae60',
+        poly: [[22,70],[110,70],[120,62],[140,58],[140,40],[80,40],[44,42],[30,55],[22,62]],
+        llon:72, llat:58 },
+      { name: 'Ottoman Empire', color: '#e67e22',
+        poly: [[-2,36],[12,34],[30,32],[36,34],[44,38],[42,42],[34,47],[28,47],[22,46],[14,44],[20,40],[22,38],[26,38],[10,38]],
+        llon:28, llat:38 },
+      { name: 'Qing Dynasty', color: '#1abc9c',
+        poly: [[80,44],[134,44],[134,20],[110,18],[100,20],[90,28],[80,36]],
+        llon:108, llat:36 },
+    ],
+    names: [
+      [80,22,'BRITISH INDIA'],[134,-28,'NEW S. WALES'],[5,48,'FRANCE'],
+      [72,58,'RUSSIA'],[28,38,'OTTOMAN EMPIRE'],[56,32,'PERSIA'],
+      [108,36,'QING DYNASTY'],[-100,40,'UNITED STATES'],[-66,-10,'SPANISH AMERICA'],
+      [28,52,'PRUSSIA'],[14,42,'AUSTRIA'],[20,56,'POLAND (partitioned)'],
+    ],
+    changes: [
+      { old:'PERSIA', nw:'PERSIA (Qajar Dynasty)', yr:1796 },
+      { old:'NEW FRANCE', nw:'UPPER/LOWER CANADA (British)', yr:1763 },
+    ]
+  },
+  {
+    year: 1920, label: '1920 AD', sub: 'Peak of European Colonial Rule — The World Renamed',
+    empires: [
+      { name: 'British Empire', color: '#c0392b',
+        poly: [[28,-12],[40,-12],[40,4],[30,4],[24,4],[22,14],[36,22],[35,8],[30,-10]],
+        llon:32, llat:-2 },
+      { name: 'British S. Africa', color: '#c0392b',
+        poly: [[14,-18],[36,-18],[36,-34],[26,-34],[16,-34],[14,-26]],
+        llon:26, llat:-26 },
+      { name: 'British India', color: '#c0392b',
+        poly: [[68,36],[88,28],[92,22],[88,8],[80,8],[72,20],[68,28]],
+        llon:80, llat:22 },
+      { name: 'French Empire', color: '#2980b9',
+        poly: [[-18,28],[16,28],[10,10],[8,4],[-2,4],[-18,16]],
+        llon:-2, llat:18 },
+      { name: 'French N. Africa', color: '#2980b9',
+        poly: [[-2,36],[10,36],[15,33],[10,10],[-2,15],[-18,28],[-18,36]],
+        llon:4, llat:30 },
+    ],
+    names: [
+      [30,-16,'RHODESIA'],[8,-1,'GOLD COAST'],[6,10,'NIGERIA (Br.)'],
+      [-4,14,'FRENCH W. AFRICA'],[36,-4,'TANGANYIKA'],[39,9,'ABYSSINIA'],
+      [80,22,'BRITISH INDIA'],[101,15,'SIAM'],[117,-4,'DUTCH EAST INDIES'],
+      [107,16,'FRENCH INDOCHINA'],[81,8,'CEYLON'],[44,34,'MESOPOTAMIA'],
+      [56,32,'PERSIA'],[35,31,'PALESTINE (Mandate)'],[34,44,'IRAQ (Mandate)'],
+    ],
+    changes: [
+      { old:'RHODESIA', nw:'ZIMBABWE', yr:1980 },
+      { old:'GOLD COAST', nw:'GHANA', yr:1957 },
+      { old:'TANGANYIKA', nw:'TANZANIA', yr:1964 },
+      { old:'ABYSSINIA', nw:'ETHIOPIA (restored)', yr:1941 },
+      { old:'SIAM', nw:'THAILAND', yr:1939 },
+      { old:'DUTCH EAST INDIES', nw:'INDONESIA', yr:1945 },
+      { old:'FRENCH INDOCHINA', nw:'VIETNAM / LAOS / CAMBODIA', yr:1954 },
+      { old:'CEYLON', nw:'SRI LANKA', yr:1972 },
+      { old:'PERSIA', nw:'IRAN', yr:1935 },
+      { old:'MESOPOTAMIA', nw:'IRAQ', yr:1932 },
+      { old:'PALESTINE (Mandate)', nw:'ISRAEL + JORDAN', yr:1948 },
+      { old:'BRITISH INDIA', nw:'INDIA + PAKISTAN', yr:1947 },
+    ]
+  },
+];
+
+// ── CONQUEST STATE & FUNCTIONS ────────────────────────────────────────────────
+let tlIndex = 1;      // default: 100 AD
+let conquestOn = false;
+let tlPlaying = false;
+let tlTimer = null;
+
+const ll2xy2 = (lon, lat) => ({
+  x: ((lon+180)/360*1000).toFixed(1),
+  y: ((90-lat)/180*480).toFixed(1),
+});
+
+function renderEmpires() {
+  const gE = document.getElementById('empire-overlays');
+  const gL = document.getElementById('region-labels');
+  gE.innerHTML = '';
+  gL.innerHTML = '';
+  if (!conquestOn) return;
+
+  const snap = TIMELINE_DATA[tlIndex];
+
+  // Empire polygons
+  snap.empires.forEach(emp => {
+    const pts = ll2s(emp.poly);
+    const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points', pts);
+    poly.setAttribute('fill', emp.color);
+    poly.setAttribute('fill-opacity', '0.3');
+    poly.setAttribute('stroke', emp.color);
+    poly.setAttribute('stroke-opacity', '0.65');
+    poly.setAttribute('stroke-width', '1.2');
+    poly.setAttribute('stroke-linejoin', 'round');
+    gE.appendChild(poly);
+
+    // Empire label
+    const {x,y} = ll2xy2(emp.llon, emp.llat);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('class','empire-label-text');
+    t.setAttribute('fill', emp.color);
+    t.textContent = emp.name.toUpperCase();
+    gE.appendChild(t);
+  });
+
+  // Region name labels
+  snap.names.forEach(([lon, lat, text]) => {
+    const {x,y} = ll2xy2(lon, lat);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('class','region-name-text');
+    t.setAttribute('fill','rgba(255,255,255,0.55)');
+    t.textContent = text;
+    gL.appendChild(t);
+  });
+}
+
+function setTLIndex(i) {
+  tlIndex = i;
+  const snap = TIMELINE_DATA[i];
+  document.getElementById('tlYear').textContent = snap.label;
+  document.getElementById('tlSub').textContent  = snap.sub;
+  document.getElementById('tlSlider').value = i;
+
+  // Tick highlights
+  document.querySelectorAll('.tl-tick').forEach((t, j) =>
+    t.classList.toggle('active', j === i)
+  );
+
+  // Empire chips
+  document.getElementById('tlChips').innerHTML = snap.empires.map(e =>
+    `<span class="empire-chip">
+       <span class="empire-chip-dot" style="background:${e.color}"></span>
+       ${e.name}
+     </span>`
+  ).join('');
+
+  // Name changes bar
+  const nc = document.getElementById('nameChangesBar');
+  nc.innerHTML = snap.changes.length
+    ? snap.changes.map(c =>
+        `<span class="name-change-item">
+          <span class="old">${c.old}</span>
+          <span class="arrow">→</span>
+          <span class="new">${c.nw}</span>
+          <span class="yr">(${c.yr})</span>
+        </span>`
+      ).join('')
+    : '';
+
+  renderEmpires();
+}
+
+function toggleConquest() {
+  conquestOn = !conquestOn;
+  document.getElementById('conqBtn').classList.toggle('active', conquestOn);
+  document.getElementById('timelineBar').style.display = conquestOn ? 'block' : 'none';
+  if (conquestOn) setTLIndex(tlIndex);
+  else renderEmpires();
+}
+
+function playTimeline() {
+  if (tlPlaying) {
+    clearInterval(tlTimer);
+    tlPlaying = false;
+    document.getElementById('tlPlay').textContent = '▶';
+    return;
+  }
+  tlPlaying = true;
+  document.getElementById('tlPlay').textContent = '⏸';
+  tlTimer = setInterval(() => {
+    const next = tlIndex + 1;
+    if (next >= TIMELINE_DATA.length) {
+      clearInterval(tlTimer);
+      tlPlaying = false;
+      document.getElementById('tlPlay').textContent = '▶';
+      return;
+    }
+    setTLIndex(next);
+  }, 3200);
+}
+
+// Build timeline ticks
+function buildTicks() {
+  const t = document.getElementById('tlTicks');
+  TIMELINE_DATA.forEach((snap, i) => {
+    const el = document.createElement('span');
+    el.className = `tl-tick${i===tlIndex ? ' active' : ''}`;
+    el.textContent = snap.label;
+    el.addEventListener('click', () => setTLIndex(i));
+    t.appendChild(el);
+  });
+}
+
+// ── DEFAULT VIEW — zoom to Europe/Mediterranean where most V1 sites cluster ──
+(function setDefaultView() {
+  // Centre on ~30°E, 35°N — Mediterranean basin
+  const { x, y } = toXY(35, 22);
+  vb.w = 520; vb.h = 520 * (SVG_H / SVG_W);
+  vb.x = x - vb.w / 2;
+  vb.y = y - vb.h / 2;
+  applyVB();
+})();
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderMarkers();
+renderList();
+buildTicks();
+setTLIndex(1);
+</script>
+</body>
+</html>

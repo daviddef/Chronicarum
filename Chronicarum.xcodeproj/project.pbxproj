@@ -1,0 +1,459 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */; };
+		027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */; };
+		1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */; };
+		14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */; };
+		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
+		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
+		835DEAA8877E78EC9B5751EE /* Site.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D077ED9B01BBFC0966CC7DB /* Site.swift */; };
+		863E6279E1558654BF5B95CE /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C381E3019A64B55DD81919 /* SavedView.swift */; };
+		916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5253630662A704FABEE643A /* ContentView.swift */; };
+		9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2656A9226831B85426DAF9 /* SiteData.swift */; };
+		B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */; };
+		C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1288A7864863444DEA3835A /* ChronicArumApp.swift */; };
+		C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111ECDBF6E6398A93E34711C /* MapRootView.swift */; };
+		CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1389CCD88C933F622515A48F /* SiteDetailView.swift */; };
+		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
+		DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73170330E1865B973F1BE67 /* Empire.swift */; };
+		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
+		EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF03E268E066215CE65549FC /* ChapterMarkup.swift */; };
+		EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85E35BAD09F94104E31D296 /* LocationService.swift */; };
+		F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1C8EB07A51868342759E1E2F /* Assets.xcassets */; };
+		F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		111ECDBF6E6398A93E34711C /* MapRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRootView.swift; sourceTree = "<group>"; };
+		1389CCD88C933F622515A48F /* SiteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteDetailView.swift; sourceTree = "<group>"; };
+		1C8EB07A51868342759E1E2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlsView.swift; sourceTree = "<group>"; };
+		230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConquestTimelineBar.swift; sourceTree = "<group>"; };
+		33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineData.swift; sourceTree = "<group>"; };
+		37C381E3019A64B55DD81919 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
+		39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
+		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
+		7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMarkerView.swift; sourceTree = "<group>"; };
+		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
+		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
+		D73170330E1865B973F1BE67 /* Empire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Empire.swift; sourceTree = "<group>"; };
+		DB2656A9226831B85426DAF9 /* SiteData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteData.swift; sourceTree = "<group>"; };
+		E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
+		E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		EF03E268E066215CE65549FC /* ChapterMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMarkup.swift; sourceTree = "<group>"; };
+		F1288A7864863444DEA3835A /* ChronicArumApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChronicArumApp.swift; sourceTree = "<group>"; };
+		F85E35BAD09F94104E31D296 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0437AB89BEF9EA7D4A59BF1C /* Sites */ = {
+			isa = PBXGroup;
+			children = (
+				1389CCD88C933F622515A48F /* SiteDetailView.swift */,
+			);
+			path = Sites;
+			sourceTree = "<group>";
+		};
+		3631DA8D80B9F796CEA6B907 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				37C381E3019A64B55DD81919 /* SavedView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		54BDAC5EEB7D93EB7FF1862D /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */,
+				1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */,
+				5B769AD962F594322CDA0274 /* MapFilterView.swift */,
+				111ECDBF6E6398A93E34711C /* MapRootView.swift */,
+				D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */,
+				7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+		5B01C089DA9143BFB09ED01F /* Chronicarum */ = {
+			isa = PBXGroup;
+			children = (
+				1C8EB07A51868342759E1E2F /* Assets.xcassets */,
+				F1288A7864863444DEA3835A /* ChronicArumApp.swift */,
+				B724BE458905B86C36C49E1C /* Models */,
+				F64D4A0E766E0BE438490235 /* Services */,
+				900DB24C6B5BD25016609F22 /* ViewModels */,
+				6BF738DD4E06899C0EE5E2BC /* Views */,
+			);
+			path = Chronicarum;
+			sourceTree = "<group>";
+		};
+		6BF738DD4E06899C0EE5E2BC /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C5253630662A704FABEE643A /* ContentView.swift */,
+				E3DA4422D438494A7AD06520 /* Explore */,
+				54BDAC5EEB7D93EB7FF1862D /* Map */,
+				3631DA8D80B9F796CEA6B907 /* Settings */,
+				0437AB89BEF9EA7D4A59BF1C /* Sites */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		900DB24C6B5BD25016609F22 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */,
+				D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		9CB300B496E9171B9CE17E67 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AF25BC3464565211CC5D1F7F = {
+			isa = PBXGroup;
+			children = (
+				5B01C089DA9143BFB09ED01F /* Chronicarum */,
+				9CB300B496E9171B9CE17E67 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B724BE458905B86C36C49E1C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				EF03E268E066215CE65549FC /* ChapterMarkup.swift */,
+				D73170330E1865B973F1BE67 /* Empire.swift */,
+				5D077ED9B01BBFC0966CC7DB /* Site.swift */,
+				DB2656A9226831B85426DAF9 /* SiteData.swift */,
+				33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E3DA4422D438494A7AD06520 /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */,
+			);
+			path = Explore;
+			sourceTree = "<group>";
+		};
+		F64D4A0E766E0BE438490235 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F85E35BAD09F94104E31D296 /* LocationService.swift */,
+				39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A96F664C924C23A958433DFE /* Chronicarum */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E63230794CAD3C17DE0A9B74 /* Build configuration list for PBXNativeTarget "Chronicarum" */;
+			buildPhases = (
+				433236A8E6B6FC91AAC17660 /* Sources */,
+				A0CBA4505D6A211B60480234 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Chronicarum;
+			packageProductDependencies = (
+			);
+			productName = Chronicarum;
+			productReference = A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9EA8026FB3241EDB1CE43AE3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					A96F664C924C23A958433DFE = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 3D75414B4979207D708178DD /* Build configuration list for PBXProject "Chronicarum" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = AF25BC3464565211CC5D1F7F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9CB300B496E9171B9CE17E67 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A96F664C924C23A958433DFE /* Chronicarum */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A0CBA4505D6A211B60480234 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		433236A8E6B6FC91AAC17660 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */,
+				C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */,
+				027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */,
+				916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */,
+				DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */,
+				B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */,
+				EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */,
+				1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */,
+				544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */,
+				C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */,
+				2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */,
+				14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */,
+				DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */,
+				863E6279E1558654BF5B95CE /* SavedView.swift in Sources */,
+				835DEAA8877E78EC9B5751EE /* Site.swift in Sources */,
+				9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */,
+				CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */,
+				F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */,
+				02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */,
+				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		436D24CA9D5110E1C2A4AA73 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentGold;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Chronicarum;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Chronicarum uses your location to show heritage sites near you and centre the map on where you are.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chronicarum.app;
+				PRODUCT_NAME = Chronicarum;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		463FBD41E52235D1991CF786 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		59182345F1820E96E1E7EAD1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentGold;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Chronicarum;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Chronicarum uses your location to show heritage sites near you and centre the map on where you are.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chronicarum.app;
+				PRODUCT_NAME = Chronicarum;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8F99CC4BF1F0061B54922CA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3D75414B4979207D708178DD /* Build configuration list for PBXProject "Chronicarum" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				463FBD41E52235D1991CF786 /* Debug */,
+				8F99CC4BF1F0061B54922CA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E63230794CAD3C17DE0A9B74 /* Build configuration list for PBXNativeTarget "Chronicarum" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59182345F1820E96E1E7EAD1 /* Debug */,
+				436D24CA9D5110E1C2A4AA73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9EA8026FB3241EDB1CE43AE3 /* Project object */;
+}
