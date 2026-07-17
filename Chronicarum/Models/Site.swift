@@ -9,6 +9,10 @@ enum Era: String, Codable, CaseIterable {
     case medieval    = "medieval"
     case renaissance = "renaissance"
     case modern      = "modern"
+    /// Formed by geology rather than people — Uluru, the Grand Canyon, the Twelve
+    /// Apostles. Their human story is custodianship, not construction, so none of the
+    /// historical eras fit.
+    case geological  = "geological"
 
     var displayName: String {
         switch self {
@@ -17,6 +21,7 @@ enum Era: String, Codable, CaseIterable {
         case .medieval:    return "Medieval"
         case .renaissance: return "Renaissance"
         case .modern:      return "Modern"
+        case .geological:  return "Geological"
         }
     }
 
@@ -27,6 +32,7 @@ enum Era: String, Codable, CaseIterable {
         case .medieval:    return "#4A7FC1"
         case .renaissance: return "#4F8A5C"
         case .modern:      return "#6B7280"
+        case .geological:  return "#8B6F47"
         }
     }
 }
@@ -38,6 +44,18 @@ enum SiteType: String, Codable, CaseIterable {
     case battlefield = "battle"
     case lostCity    = "lost"
     case treasure    = "treasure"
+    /// Landscape rather than building — Uluru, Victoria Falls, the Grand Canyon.
+    case natural     = "natural"
+    /// The institution itself, when it's the destination — the Louvre, the British Museum.
+    case museum      = "museum"
+    /// A specific object you travel to see, pinned at whatever houses it — the Mona Lisa,
+    /// the Rosetta Stone. Distinct from `treasure`, which is a hoard rather than one work.
+    case artefact    = "artefact"
+    /// Built to be looked at rather than used — Christ the Redeemer, the moai, Rushmore.
+    case monument    = "monument"
+    /// Standing remains of a place still known and named, unlike `lostCity`, which was
+    /// forgotten and rediscovered.
+    case ruin        = "ruin"
 
     var displayName: String {
         switch self {
@@ -47,6 +65,11 @@ enum SiteType: String, Codable, CaseIterable {
         case .battlefield: return "Battlefield"
         case .lostCity:    return "Lost City"
         case .treasure:    return "Treasure"
+        case .natural:     return "Natural Wonder"
+        case .museum:      return "Museum"
+        case .artefact:    return "Artefact"
+        case .monument:    return "Monument"
+        case .ruin:        return "Ruin"
         }
     }
 
@@ -58,6 +81,11 @@ enum SiteType: String, Codable, CaseIterable {
         case .battlefield: return "shield.lefthalf.filled"
         case .lostCity:    return "map"
         case .treasure:    return "crown"
+        case .natural:     return "mountain.2"
+        case .museum:      return "building.2"
+        case .artefact:    return "photo.artframe"
+        case .monument:    return "figure.stand"
+        case .ruin:        return "building.columns.circle"
         }
     }
 
@@ -69,6 +97,11 @@ enum SiteType: String, Codable, CaseIterable {
         case .battlefield: return "⚔️"
         case .lostCity:    return "🏚"
         case .treasure:    return "👑"
+        case .natural:     return "🏔"
+        case .museum:      return "🖼"
+        case .artefact:    return "🏺"
+        case .monument:    return "🗿"
+        case .ruin:        return "🧱"
         }
     }
 }

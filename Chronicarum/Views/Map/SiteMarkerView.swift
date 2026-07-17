@@ -6,15 +6,7 @@ struct SiteMarkerView: View {
     let isSelected: Bool
 
     private var markerColor: Color {
-        // Map era hex strings to SwiftUI Color
-        // TODO: Replace with a proper color from a design token extension
-        switch site.era {
-        case .ancient:     return Color(hex: "#C9A84C")
-        case .classical:   return Color(hex: "#C05538")
-        case .medieval:    return Color(hex: "#4A7FC1")
-        case .renaissance: return Color(hex: "#4F8A5C")
-        case .modern:      return Color(hex: "#6B7280")
-        }
+        Color(hex: site.era.color)
     }
 
     var body: some View {
