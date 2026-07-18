@@ -163,12 +163,35 @@ struct Site: Codable, Identifiable {
     /// a church and a Shinto shrine are all `.sacred`. When set, this wins.
     var glyph: String? = nil
 
+    /// Wikimedia Commons filename, e.g. `"Burg Eltz am frühen Morgen.jpg"`. Stored as the
+    /// bare filename, not a URL, so thumbnail width stays a display decision.
+    var imageFile: String? = nil
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
     /// The emoji actually drawn on the map: the site's own override, else its type's.
     var markerGlyph: String { glyph ?? type.emoji }
+
+    /// Commons thumbnail at the requested width. `Special:FilePath` redirects to the real
+    /// file, so this stays valid even if the underlying storage path changes.
+    func imageURL(width: Int = 800) -> URL? {
+        guard let name = encodedImageName else { return nil }
+        return URL(string: "https://commons.wikimedia.org/wiki/Special:FilePath/\(name)?width=\(width)")
+    }
+
+    /// The Commons file page, where the photo's licence and author are recorded. These
+    /// images are free but not unconditional — anything displaying one should link here.
+    var imageCreditURL: URL? {
+        guard let name = encodedImageName else { return nil }
+        return URL(string: "https://commons.wikimedia.org/wiki/File:\(name)")
+    }
+
+    private var encodedImageName: String? {
+        guard let imageFile, !imageFile.isEmpty else { return nil }
+        return imageFile.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+    }
 
     var isBookmarked: Bool = false
     var isVisited: Bool = false
@@ -178,7 +201,7 @@ struct Site: Codable, Identifiable {
         case builtDescription = "built"
         case civilisation = "civ"
         case tagline, chapters
-        case nearestAirport, bestTimeToVisit, visaNote, glyph
+        case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile
     }
 }
 

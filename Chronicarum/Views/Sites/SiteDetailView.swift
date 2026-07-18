@@ -90,29 +90,71 @@ struct SiteDetailView: View {
 struct SiteHeroView: View {
     let site: Site
 
+    /// Era-tinted panel with the site's glyph — shown while the photo loads, and kept
+    /// as the final state for sites that have none.
+    private var placeholder: some View {
+        Rectangle()
+            .fill(Color(hex: site.era.color).opacity(0.3))
+            .overlay(Text(site.markerGlyph).font(.system(size: 72)))
+    }
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Placeholder — replace with AsyncImage once photo URLs are in data
-            Rectangle()
-                .fill(Color(hex: site.era.color).opacity(0.3))
+            Group {
+                if let url = site.imageURL(width: 900) {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            // Covers both loading and failure: a broken or missing photo
+                            // degrades to the glyph rather than an empty grey box.
+                            placeholder
+                        }
+                    }
+                } else {
+                    placeholder
+                }
+            }
+            .frame(height: 200)
+            .frame(maxWidth: .infinity)
+            .clipped()
+
+            // Keeps the tagline legible over an arbitrary photo.
+            LinearGradient(colors: [.clear, .black.opacity(0.55)],
+                           startPoint: .center, endPoint: .bottom)
                 .frame(height: 200)
-                .overlay(
-                    Text(site.markerGlyph)
-                        .font(.system(size: 72))
-                )
+                .allowsHitTesting(false)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     EraTagView(era: site.era)
                     TypeTagView(type: site.type)
                 }
-                Text(site.tagline)
-                    .font(.callout.italic())
-                    .foregroundColor(.white)
-                    .shadow(radius: 2)
+                if !site.tagline.isEmpty {
+                    Text(site.tagline)
+                        .font(.callout.italic())
+                        .foregroundColor(.white)
+                        .shadow(radius: 2)
+                }
             }
             .padding(12)
+
+            // These photos are freely licensed but not unconditional — the licence and
+            // author live on the Commons file page, so always offer the way there.
+            if let credit = site.imageCreditURL {
+                Link(destination: credit) {
+                    Text("Wikimedia Commons")
+                        .font(.system(size: 9))
+                        .foregroundColor(.white.opacity(0.85))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(.black.opacity(0.35), in: Capsule())
+                }
+                .frame(maxWidth: .infinity, maxHeight: 200, alignment: .topTrailing)
+                .padding(8)
+            }
         }
+        .frame(height: 200)
     }
 }
 

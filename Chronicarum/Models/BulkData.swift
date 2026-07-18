@@ -15,6 +15,8 @@ struct BulkSite: Decodable {
     let era: String
     let country: String
     let desc: String
+    /// Wikimedia Commons filename; absent for the ~7% of sites with no P18 image.
+    let img: String?
 
     var asSite: Site {
         Site(
@@ -34,22 +36,39 @@ struct BulkSite: Decodable {
             chapters: [],
             nearestAirport: nil,
             bestTimeToVisit: nil,
-            visaNote: nil
+            visaNote: nil,
+            imageFile: img
         )
     }
 }
 
 extension SiteData {
     /// The full catalogue: curated featured sites first, then the bulk import.
-    static let all: [Site] = featured + bulk
+    static let all: [Site] = featuredWithPhotos + bulk
+
+    /// The hand-authored sites are written in Swift and carry no Wikidata id, so they
+    /// have no photo of their own. The import records the Commons image of each bulk
+    /// entry it dropped as a duplicate of a curated site — that mapping is applied here.
+    private static let featuredWithPhotos: [Site] = {
+        let photos = loadJSON([String: String].self, named: "featured_images") ?? [:]
+        return featured.map { site in
+            guard site.imageFile == nil, let file = photos[site.id] else { return site }
+            var copy = site
+            copy.imageFile = file
+            return copy
+        }
+    }()
+
+    private static func loadJSON<T: Decodable>(_ type: T.Type, named name: String) -> T? {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
+    }
 
     /// Decoded once, lazily, from the app bundle. An absent or unreadable file yields an
     /// empty layer rather than a crash — the featured sites still work.
     static let bulk: [Site] = {
-        guard let url = Bundle.main.url(forResource: "bulk_sites", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let rows = try? JSONDecoder().decode([BulkSite].self, from: data)
-        else { return [] }
+        guard let rows = loadJSON([BulkSite].self, named: "bulk_sites") else { return [] }
         return rows.map(\.asSite)
     }()
 }

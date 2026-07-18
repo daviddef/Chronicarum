@@ -1,6 +1,6 @@
 """Merge the per-category Wikidata pulls into one compact bundle:
 dedupe across categories and against the curated sites, map era from inception."""
-import json, re, glob
+import json, os, re, glob
 
 SP = "/private/tmp/claude-501/-Users-daviddefranceski-Claude-Projects-Chronicarum/2e1454ca-a069-4f93-baf5-8ff725f648bc/scratchpad"
 CURATED = "/Users/daviddefranceski/Claude/Projects/Chronicarum/Chronicarum/Models/SiteData.swift"
@@ -27,21 +27,31 @@ def norm(name):
 
 # Curated sites: collect names + coords so bulk duplicates defer to the rich version.
 src = open(CURATED).read()
-cur_names, cur_coords = set(), []
+cur_by_name, cur_points = {}, []   # name -> id, and (lat, lon, id)
 for blk in re.split(r"\n        Site\(", src)[1:]:
-    n = re.search(r'name: "([^"]+)"', blk)
+    i  = re.search(r'id: "([^"]+)"', blk)
+    n  = re.search(r'name: "([^"]+)"', blk)
     la = re.search(r"latitude: (-?[\d.]+)", blk)
     lo = re.search(r"longitude: (-?[\d.]+)", blk)
-    if n:  cur_names.add(norm(n.group(1)))
-    if la and lo: cur_coords.append((float(la.group(1)), float(lo.group(1))))
+    if not i: continue
+    if n:  cur_by_name[norm(n.group(1))] = i.group(1)
+    if la and lo: cur_points.append((float(la.group(1)), float(lo.group(1)), i.group(1)))
 
-def collides_curated(s):
-    if norm(s["name"]) in cur_names:
-        return True
-    for cla, clo in cur_coords:
+def curated_match(s):
+    """Which curated site this bulk row duplicates, and whether the name matched.
+
+    Proximity alone is good enough to suppress a duplicate pin, but NOT to hand over a
+    photo: within ~1.1 km of the Colosseum sit a dozen other Roman structures, and an
+    earlier version of this happily put a floor plan of the Porticus Margaritaria on the
+    Colosseum's page. Only a name match may donate an image.
+    """
+    hit = cur_by_name.get(norm(s["name"]))
+    if hit:
+        return hit, True
+    for cla, clo, cid in cur_points:
         if abs(s["lat"] - cla) < 0.01 and abs(s["lon"] - clo) < 0.01:
-            return True
-    return False
+            return cid, False
+    return None, False
 
 # Category precedence when the same QID appears in several pulls: the most specific type
 # wins, so a castle that is also a WHS reads as a castle, not a generic heritage site.
@@ -57,16 +67,26 @@ for f in inputs:
         if q not in by_qid or PRIORITY[r["stype"]] < PRIORITY[by_qid[q]["stype"]]:
             by_qid[q] = r
 
+# Wikimedia Commons filenames keyed by QID (see fetch_images.py).
+images = json.load(open(f"{SP}/images.json")) if os.path.exists(f"{SP}/images.json") else {}
+
 out, dropped_cur, dropped_thin = [], 0, 0
+featured_images = {}
 for r in by_qid.values():
-    if collides_curated(r):
+    cid, by_name = curated_match(r)
+    if cid:
         dropped_cur += 1
+        # The curated sites are hand-authored and have no QID of their own, so they'd
+        # otherwise get no photo. Their dropped bulk twin carries exactly the right one —
+        # but only trust it when the *name* matched (see curated_match).
+        if by_name and cid not in featured_images and r["qid"] in images:
+            featured_images[cid] = images[r["qid"]]
         continue
     # A bare name pin with neither country nor description is too thin to be worth showing.
     if not r.get("country") and not r.get("desc"):
         dropped_thin += 1
         continue
-    out.append({
+    row = {
         "id":   "wd-" + r["qid"],
         "name": r["name"],
         "lat":  r["lat"],
@@ -75,14 +95,19 @@ for r in by_qid.values():
         "era":  era_from_inception(r.get("inception")),
         "country": r.get("country") or "",
         "desc": (r.get("desc") or "").strip(),
-    })
+    }
+    if r["qid"] in images:
+        row["img"] = images[r["qid"]]
+    out.append(row)
 
 out.sort(key=lambda s: s["id"])
 json.dump(out, open(f"{SP}/bulk_sites.json", "w"), ensure_ascii=False, separators=(",", ":"))
+json.dump(featured_images, open(f"{SP}/featured_images.json", "w"), ensure_ascii=False, indent=1)
 
 from collections import Counter
 print(f"bulk sites written: {len(out)}")
 print(f"  dropped {dropped_cur} colliding with curated, {dropped_thin} too thin")
+print(f"  with photo: {sum(1 for s_ in out if s_.get('img'))} bulk, {len(featured_images)} featured")
 print("  by type:", dict(Counter(s['type'] for s in out)))
 print("  by era: ", dict(Counter(s['era'] for s in out)))
 print(f"  file size: {len(open(f'{SP}/bulk_sites.json').read())//1024} KB")

@@ -46,14 +46,18 @@ Two layers (see [`scripts/`](scripts/)):
 The map culls to the visible region before clustering, so the on-screen marker count stays
 near ~100 regardless of catalogue size.
 
+**Photos** come from Wikimedia Commons (Wikidata P18), loaded on demand via
+`Special:FilePath` — 93% of bulk and 80% of featured sites have one; the rest fall back to
+an era-tinted glyph. Each photo links to its Commons file page. See the attribution note
+in [ROADMAP.md](ROADMAP.md) before shipping publicly.
+
 ## Status
 
-Working: clustered map of ~14k sites, era/type/tier filters, empire polygon overlay across
+Working: clustered map of ~24k sites with photos, era/type/tier filters, empire polygon overlay across
 all seven timeline periods, "locate me", site detail sheets, search, bookmarks.
 
 Known gaps:
 
-- **No site photos** — `SiteHeroView` shows an emoji placeholder pending an image source.
 - **Travel/visa fields are hardcoded** on featured sites and will go stale.
 - Bookmarks/visited are in-memory only — `PersistenceService` is not yet wired up.
 - A handful of featured sites carry "Do Not Travel" advisories (Bagan, Krak des

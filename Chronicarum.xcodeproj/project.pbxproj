@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */; };
 		027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */; };
+		02B4817F6DD3407982657B74 /* featured_images.json in Resources */ = {isa = PBXBuildFile; fileRef = A85F2D259BED16C5C1BD66E3 /* featured_images.json */; };
 		1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */; };
 		14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */; };
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
@@ -47,6 +48,7 @@
 		7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMarkerView.swift; sourceTree = "<group>"; };
 		8A9F74C0BE405A0D5C654CDE /* BulkData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkData.swift; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				2D9E036B6177AFED11EC148E /* bulk_sites.json */,
+				A85F2D259BED16C5C1BD66E3 /* featured_images.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -240,6 +243,7 @@
 			files = (
 				F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */,
 				E34D2B51D554844E68AA68EA /* bulk_sites.json in Resources */,
+				02B4817F6DD3407982657B74 /* featured_images.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
