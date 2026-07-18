@@ -13,6 +13,9 @@ enum Era: String, Codable, CaseIterable {
     /// Apostles. Their human story is custodianship, not construction, so none of the
     /// historical eras fit.
     case geological  = "geological"
+    /// Build date not known. Bulk-imported sites often have no inception date to bucket,
+    /// and an honest "unknown" beats guessing an era from when a site was list-inscribed.
+    case unknown     = "unknown"
 
     var displayName: String {
         switch self {
@@ -22,6 +25,7 @@ enum Era: String, Codable, CaseIterable {
         case .renaissance: return "Renaissance"
         case .modern:      return "Modern"
         case .geological:  return "Geological"
+        case .unknown:     return "Undated"
         }
     }
 
@@ -33,6 +37,7 @@ enum Era: String, Codable, CaseIterable {
         case .renaissance: return "#4F8A5C"
         case .modern:      return "#6B7280"
         case .geological:  return "#8B6F47"
+        case .unknown:     return "#9AA0A6"
         }
     }
 }
@@ -56,6 +61,9 @@ enum SiteType: String, Codable, CaseIterable {
     /// Standing remains of a place still known and named, unlike `lostCity`, which was
     /// forgotten and rediscovered.
     case ruin        = "ruin"
+    /// Generic bucket for bulk-imported sites of significance whose specific kind isn't
+    /// known from the source data — most World Heritage sites arrive this way.
+    case heritage    = "heritage"
 
     var displayName: String {
         switch self {
@@ -70,6 +78,7 @@ enum SiteType: String, Codable, CaseIterable {
         case .artefact:    return "Artefact"
         case .monument:    return "Monument"
         case .ruin:        return "Ruin"
+        case .heritage:    return "Heritage Site"
         }
     }
 
@@ -86,6 +95,7 @@ enum SiteType: String, Codable, CaseIterable {
         case .artefact:    return "photo.artframe"
         case .monument:    return "figure.stand"
         case .ruin:        return "building.columns.circle"
+        case .heritage:    return "mappin.and.ellipse"
         }
     }
 
@@ -105,6 +115,7 @@ enum SiteType: String, Codable, CaseIterable {
         case .artefact:    return "🏺"
         case .monument:    return "🗿"
         case .ruin:        return "🧱"
+        case .heritage:    return "📍"
         }
     }
 }

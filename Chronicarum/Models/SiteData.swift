@@ -3,7 +3,9 @@ import Foundation
 /// V1 site catalogue — mirrors SITES array from chronicarum.html.
 /// Extend with UNESCO JSON feed once backend is wired.
 enum SiteData {
-    static let all: [Site] = [
+    /// The hand-authored sites — rich taglines, curated facts, multi-chapter storyboards.
+    /// `all` (see BulkData.swift) is these plus the bulk-imported catalogue.
+    static let featured: [Site] = [
         Site(
             id: "colosseum",
             name: "Colosseum",

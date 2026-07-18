@@ -219,19 +219,27 @@ struct FactsGridView: View {
 struct TravelLayerView: View {
     let site: Site
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Getting There")
-                .font(.headline)
+    private var hasTravelInfo: Bool {
+        site.nearestAirport != nil || site.bestTimeToVisit != nil || site.visaNote != nil
+    }
 
-            if let airport = site.nearestAirport {
-                TravelRow(icon: "airplane", label: "Nearest airport", value: airport)
-            }
-            if let timing = site.bestTimeToVisit {
-                TravelRow(icon: "sun.max", label: "Best time", value: timing)
-            }
-            if let visa = site.visaNote {
-                TravelRow(icon: "doc.text", label: "Visa", value: visa)
+    var body: some View {
+        // Bulk-imported sites carry no travel fields — skip the section entirely rather
+        // than show a "Getting There" header with nothing under it.
+        if hasTravelInfo {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Getting There")
+                    .font(.headline)
+
+                if let airport = site.nearestAirport {
+                    TravelRow(icon: "airplane", label: "Nearest airport", value: airport)
+                }
+                if let timing = site.bestTimeToVisit {
+                    TravelRow(icon: "sun.max", label: "Best time", value: timing)
+                }
+                if let visa = site.visaNote {
+                    TravelRow(icon: "doc.text", label: "Visa", value: visa)
+                }
             }
         }
     }

@@ -30,15 +30,29 @@ xcodebuild -project Chronicarum.xcodeproj -scheme Chronicarum \
 Location permission is declared via `INFOPLIST_KEY_*` build settings in `project.yml`
 rather than a checked-in `Info.plist`.
 
+## Data
+
+Two layers (see [`scripts/`](scripts/)):
+
+- **~123 featured sites** — hand-authored in `Chronicarum/Models/SiteData.swift`, each with
+  a tagline, four facts, and a multi-chapter storyboard.
+- **~14k bulk sites** — `Chronicarum/Resources/bulk_sites.json`, imported from Wikidata
+  (UNESCO + castles + notable museums) and decoded at runtime by `BulkData.swift`. These
+  carry a name, place, type, best-effort era, and a one-line description. They are
+  `tier: 2`, so raising the significance filter shows the featured layer alone.
+
+The map culls to the visible region before clustering, so the on-screen marker count stays
+near ~100 regardless of catalogue size.
+
 ## Status
 
-Working: map with site markers, era/type/tier filters, empire polygon overlay across all
-seven timeline periods, "locate me", site detail sheets, search, bookmarks.
+Working: clustered map of ~14k sites, era/type/tier filters, empire polygon overlay across
+all seven timeline periods, "locate me", site detail sheets, search, bookmarks.
 
 Known gaps:
 
-- **Site content is mostly empty** — 11 of 12 sites have empty `chapters` arrays; only the
-  Colosseum is written. The prose exists in `chronicarum.html` and needs porting.
 - **No site photos** — `SiteHeroView` shows an emoji placeholder pending an image source.
-- Data is hardcoded in `SiteData.swift`; Phase 2 is the UNESCO Open Data feed.
+- **Travel/visa fields are hardcoded** on featured sites and will go stale.
 - Bookmarks/visited are in-memory only — `PersistenceService` is not yet wired up.
+- A handful of featured sites carry "Do Not Travel" advisories (Bagan, Krak des
+  Chevaliers, the Russia entries) — honestly documented but not currently visitable.

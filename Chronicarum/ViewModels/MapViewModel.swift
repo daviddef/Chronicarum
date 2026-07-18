@@ -77,8 +77,24 @@ final class MapViewModel: ObservableObject {
     /// Sites bucketed into grid cells sized relative to the current zoom, so a dense
     /// region collapses to a few count-bubbles when zoomed out and breaks apart as you
     /// zoom in. Recomputes when `visibleRegion` changes (via `onMapCameraChange`).
+    ///
+    /// Culls to the visible region (plus a margin) *before* clustering. With a catalogue
+    /// of tens of thousands this is essential — without it, a zoomed-in view would still
+    /// build an annotation for every distant off-screen site. Culled span ≈ 1.2× the
+    /// screen and cells are span/9, so the on-screen marker count stays near ~100
+    /// regardless of zoom or catalogue size.
     var clusteredItems: [SiteCluster] {
-        Self.cluster(visibleSites, in: visibleRegion)
+        let region = visibleRegion
+        let latPad = region.span.latitudeDelta  * 0.6
+        let lonPad = region.span.longitudeDelta * 0.6
+        let latMin = region.center.latitude  - latPad, latMax = region.center.latitude  + latPad
+        let lonMin = region.center.longitude - lonPad, lonMax = region.center.longitude + lonPad
+
+        let inView = visibleSites.filter {
+            $0.latitude  >= latMin && $0.latitude  <= latMax &&
+            $0.longitude >= lonMin && $0.longitude <= lonMax
+        }
+        return Self.cluster(inView, in: region)
     }
 
     /// Number of grid columns across the visible span. Higher = finer cells = sites

@@ -11,6 +11,7 @@
 		027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */; };
 		1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */; };
 		14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */; };
+		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
 		835DEAA8877E78EC9B5751EE /* Site.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D077ED9B01BBFC0966CC7DB /* Site.swift */; };
@@ -24,6 +25,7 @@
 		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
 		DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73170330E1865B973F1BE67 /* Empire.swift */; };
 		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
+		E34D2B51D554844E68AA68EA /* bulk_sites.json in Resources */ = {isa = PBXBuildFile; fileRef = 2D9E036B6177AFED11EC148E /* bulk_sites.json */; };
 		EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF03E268E066215CE65549FC /* ChapterMarkup.swift */; };
 		EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85E35BAD09F94104E31D296 /* LocationService.swift */; };
 		F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1C8EB07A51868342759E1E2F /* Assets.xcassets */; };
@@ -36,12 +38,14 @@
 		1C8EB07A51868342759E1E2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlsView.swift; sourceTree = "<group>"; };
 		230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConquestTimelineBar.swift; sourceTree = "<group>"; };
+		2D9E036B6177AFED11EC148E /* bulk_sites.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bulk_sites.json; sourceTree = "<group>"; };
 		33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineData.swift; sourceTree = "<group>"; };
 		37C381E3019A64B55DD81919 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
 		39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
 		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
 		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
 		7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMarkerView.swift; sourceTree = "<group>"; };
+		8A9F74C0BE405A0D5C654CDE /* BulkData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkData.swift; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
@@ -62,6 +66,14 @@
 				1389CCD88C933F622515A48F /* SiteDetailView.swift */,
 			);
 			path = Sites;
+			sourceTree = "<group>";
+		};
+		195513595B5A7D73760400EB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2D9E036B6177AFED11EC148E /* bulk_sites.json */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		3631DA8D80B9F796CEA6B907 /* Settings */ = {
@@ -91,6 +103,7 @@
 				1C8EB07A51868342759E1E2F /* Assets.xcassets */,
 				F1288A7864863444DEA3835A /* ChronicArumApp.swift */,
 				B724BE458905B86C36C49E1C /* Models */,
+				195513595B5A7D73760400EB /* Resources */,
 				F64D4A0E766E0BE438490235 /* Services */,
 				900DB24C6B5BD25016609F22 /* ViewModels */,
 				6BF738DD4E06899C0EE5E2BC /* Views */,
@@ -138,6 +151,7 @@
 		B724BE458905B86C36C49E1C /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8A9F74C0BE405A0D5C654CDE /* BulkData.swift */,
 				EF03E268E066215CE65549FC /* ChapterMarkup.swift */,
 				D73170330E1865B973F1BE67 /* Empire.swift */,
 				5D077ED9B01BBFC0966CC7DB /* Site.swift */,
@@ -225,6 +239,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */,
+				E34D2B51D554844E68AA68EA /* bulk_sites.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,6 +250,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */,
 				EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */,
 				C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */,
 				027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */,
