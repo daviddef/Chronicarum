@@ -59,6 +59,5 @@ all seven timeline periods, "locate me", site detail sheets, search, bookmarks.
 Known gaps:
 
 - **Travel/visa fields are hardcoded** on featured sites and will go stale.
-- Bookmarks/visited are in-memory only — `PersistenceService` is not yet wired up.
 - A handful of featured sites carry "Do Not Travel" advisories (Bagan, Krak des
   Chevaliers, the Russia entries) — honestly documented but not currently visitable.

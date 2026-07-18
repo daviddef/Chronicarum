@@ -66,11 +66,22 @@ struct SiteDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
+                        // The Saved tab has always had a Visited section, but nothing
+                        // could fill it — there was no way to mark a site visited.
+                        Button {
+                            siteVM.toggleVisited(site)
+                        } label: {
+                            Image(systemName: siteVM.isVisited(site)
+                                  ? "checkmark.circle.fill" : "checkmark.circle")
+                        }
+                        .accessibilityLabel(siteVM.isVisited(site) ? "Mark as not visited" : "Mark as visited")
+
                         Button {
                             siteVM.toggleBookmark(site)
                         } label: {
                             Image(systemName: siteVM.isBookmarked(site) ? "bookmark.fill" : "bookmark")
                         }
+                        .accessibilityLabel(siteVM.isBookmarked(site) ? "Remove bookmark" : "Bookmark")
 
                         Button {
                             mapVM.zoomToSite(site)

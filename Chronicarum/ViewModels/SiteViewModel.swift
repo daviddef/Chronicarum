@@ -6,10 +6,20 @@ import Combine
 final class SiteViewModel: ObservableObject {
 
     @Published var searchText: String = ""
-    @Published var bookmarkedIDs: Set<String> = []
-    @Published var visitedIDs: Set<String> = []
+    @Published private(set) var bookmarkedIDs: Set<String> = []
+    @Published private(set) var visitedIDs: Set<String> = []
     @Published var selectedEra: Era? = nil
     @Published var selectedType: SiteType? = nil
+
+    private let persistence: PersistenceService
+
+    /// Saved state is read once at construction; every mutation below writes straight
+    /// back through, so a bookmark survives the app being killed.
+    init(persistence: PersistenceService = .shared) {
+        self.persistence = persistence
+        self.bookmarkedIDs = persistence.bookmarkedIDs
+        self.visitedIDs = persistence.visitedIDs
+    }
 
     var allSites: [Site] { SiteData.all }
 
@@ -42,12 +52,18 @@ final class SiteViewModel: ObservableObject {
         } else {
             bookmarkedIDs.insert(site.id)
         }
-        // TODO: persist to UserDefaults / CloudKit
+        persistence.bookmarkedIDs = bookmarkedIDs
     }
 
-    func markVisited(_ site: Site) {
-        visitedIDs.insert(site.id)
-        // TODO: persist
+    /// Toggles rather than only setting: marking a site visited by mistake should be
+    /// undoable, and the Saved tab offers no other way to take it back.
+    func toggleVisited(_ site: Site) {
+        if visitedIDs.contains(site.id) {
+            visitedIDs.remove(site.id)
+        } else {
+            visitedIDs.insert(site.id)
+        }
+        persistence.visitedIDs = visitedIDs
     }
 
     func isBookmarked(_ site: Site) -> Bool {

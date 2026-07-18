@@ -36,23 +36,26 @@ The starting point: a SwiftUI project that modelled the app but could not build.
       sitelink bands lost to Wikidata 502s were recovered on retry, so nothing was
       silently dropped. 24,281 sites total, verified rendering smoothly.
 
-## Phase 3 — Depth and durability (not started)
+## Phase 3 — Depth and durability (in progress)
 
-Ordered by my sense of value. None of these are begun.
+Ordered by my sense of value.
 
 - [x] **Site photos** — Wikimedia Commons images via Wikidata P18, rendered with
       `AsyncImage` and falling back to the era-tinted glyph. 22,351/24,158 bulk (93%)
       and 98/123 featured (80%) have a photo. Each links to its Commons file page,
       where the licence and author live.
-- [ ] **◀ YOU ARE HERE** — **Persistence**: bookmarks/visited are in-memory only;
-      `PersistenceService` exists but isn't wired up. Restarting the app loses saves.
-- [ ] **Travel data goes stale** — visa/best-time fields are hardcoded on featured sites
-      with 2026-dated advice. Needs a live source, or to be removed before real release.
+- [x] **Persistence** — `PersistenceService` wired into `SiteViewModel`: saved state
+      loads at construction and every mutation writes through, so bookmarks survive the
+      app being killed. Also added the missing "visited" control — the Saved tab had a
+      Visited section that nothing could ever fill.
+- [ ] **◀ YOU ARE HERE** — **Travel data goes stale**: visa/best-time fields are
+      hardcoded on featured sites with 2026-dated advice. Needs a live source, or to be
+      removed before real release.
 - [ ] **"Do Not Travel" sites** — Bagan, Krak des Chevaliers, and the Russia entries are
       honestly documented but not currently visitable. Decide: keep, flag, or hide.
 - [ ] **Bulk sites are thin** — a name + one-line description. Optionally enrich the
       notable ones with a Wikipedia paragraph.
-- [ ] **Explore search cost** — filters + sorts ~14k on each keystroke; fine now, worth
+- [ ] **Explore search cost** — filters + sorts ~24k on each keystroke; fine now, worth
       watching as the catalogue grows.
 
 ## Photo attribution — needs a decision before release
