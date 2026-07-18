@@ -3,6 +3,34 @@
 Where the project has been, where it is now, and what's left. Newest work at the bottom
 of each done-list. Commits referenced by short SHA.
 
+## How far along are we?
+
+**20 of 24 tracked items done.** The app is feature-complete for personal use and runs on
+a real iPhone. What remains is the work that separates "works for me" from "shippable to
+strangers" — none of it blocks daily use.
+
+| Phase | Status | |
+|---|---|---|
+| 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
+| 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
+| 2 · Content: handful → thousands | ✅ Done | 6/6 — 24,281 sites |
+| 3 · Depth and durability | ◐ 2 of 6 | Photos ✅ · Persistence ✅ · **4 open** |
+
+Where it stands today:
+
+- **24,281 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and 24,158
+  bulk-imported from Wikidata
+- **22,449 photos** — 93% of bulk sites, 80% of featured
+- Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
+  location; search; bookmarks that survive a restart
+- Runs on a physical iPhone under a paid signing team, profile valid to June 2027
+
+Of the four open items, **two are decisions** (what to do about stale travel data, and
+about sites under "Do Not Travel" advisories) and **two are optional work** (enriching
+thin bulk entries, and watching Explore's search cost as the catalogue grows). Separately,
+photo attribution needs a call before any public release — see the note near the bottom.
+Nothing here blocks using the app.
+
 ---
 
 ## Phase 0 — Skeleton (inherited)
