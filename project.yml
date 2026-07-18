@@ -30,5 +30,9 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Chronicarum
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Chronicarum uses your location to show heritage sites near you and centre the map on where you are."
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        # The app only makes standard HTTPS requests (map tiles, Commons photos), which is
+        # exempt. Declaring it here stops TestFlight holding every build for a manual
+        # export-compliance answer.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentGold
         TARGETED_DEVICE_FAMILY: "1,2"
