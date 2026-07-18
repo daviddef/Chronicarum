@@ -150,17 +150,21 @@ struct SiteHeroView: View {
             }
             .padding(12)
 
-            // These photos are freely licensed but not unconditional — the licence and
-            // author live on the Commons file page, so always offer the way there.
-            if let credit = site.imageCreditURL {
-                Link(destination: credit) {
-                    Text("Wikimedia Commons")
+            // Most of these licences (CC BY-SA and friends) require naming the author,
+            // so credit them on the image itself and link to the file page for the full
+            // terms. Falls back to the bare source when the credit isn't known.
+            if let creditURL = site.imageCreditURL {
+                Link(destination: creditURL) {
+                    Text(site.photoCredit?.summary ?? "Wikimedia Commons")
                         .font(.system(size: 9))
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(.black.opacity(0.35), in: Capsule())
+                        .background(.black.opacity(0.4), in: Capsule())
                 }
+                .frame(maxWidth: 260, alignment: .trailing)
                 .frame(maxWidth: .infinity, maxHeight: 200, alignment: .topTrailing)
                 .padding(8)
             }

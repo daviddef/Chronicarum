@@ -48,8 +48,8 @@ near ~100 regardless of catalogue size.
 
 **Photos** come from Wikimedia Commons (Wikidata P18), loaded on demand via
 `Special:FilePath` — 93% of bulk and 80% of featured sites have one; the rest fall back to
-an era-tinted glyph. Each photo links to its Commons file page. See the attribution note
-in [ROADMAP.md](ROADMAP.md) before shipping publicly.
+an era-tinted glyph. Each photo shows its author and licence (e.g. "FeaturedPics · CC BY-SA 4.0")
+and links to its Commons file page — most of these licences require naming the author.
 
 ## Status
 
@@ -58,6 +58,6 @@ all seven timeline periods, "locate me", site detail sheets, search, bookmarks.
 
 Known gaps:
 
-- **Travel/visa fields are hardcoded** on featured sites and will go stale.
-- A handful of featured sites carry "Do Not Travel" advisories (Bagan, Krak des
-  Chevaliers, the Russia entries) — honestly documented but not currently visitable.
+- **Travel/visa fields are hardcoded** on featured sites. The UI now says when they
+  were researched and flags sites under advisories, but they still want a live source.
+- Bulk sites carry only a one-line description; enriching them is optional future work.
