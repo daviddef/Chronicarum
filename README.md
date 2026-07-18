@@ -7,6 +7,7 @@ conquest timeline that overlays empire borders from 500 BC to 1920 AD.
 - `chronicarum.html` — the web prototype, and the source of truth for site content and
   timeline polygon data
 - `HANDOFF.md` — original porting notes
+- `ROADMAP.md` — what's done, where we are, what's next
 
 ## Building
 
