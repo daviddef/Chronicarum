@@ -32,17 +32,17 @@ The starting point: a SwiftUI project that modelled the app but could not build.
 - [x] Research + add 50 castles and monuments worldwide · `556af88`
 - [x] Cluster map markers by zoom so dense regions stay legible · `b87c81f`
 - [x] Bulk layer: ~14k sites from Wikidata, loaded from bundled JSON at runtime · `f49741b`
-- [ ] **◀ YOU ARE HERE** — widen the bulk import to ~25k (adding monuments +
-      archaeological sites). Pipeline updated; fetch in progress and fighting Wikidata
-      timeouts/502s (monument missing one sitelink band, archaeological still fetching).
-      Not yet transformed, bundled, or committed.
+- [x] Widen the bulk import to ~24k (added monuments + archaeological sites). Two
+      sitelink bands lost to Wikidata 502s were recovered on retry, so nothing was
+      silently dropped. 24,281 sites total, verified rendering smoothly.
 
 ## Phase 3 — Depth and durability (not started)
 
 Ordered by my sense of value. None of these are begun.
 
-- [ ] **Site photos** — `SiteHeroView` shows an emoji placeholder; needs an image source
-      and `AsyncImage`. The single biggest lift to how the app *feels*.
+- [ ] **◀ YOU ARE HERE** — **Site photos**: `SiteHeroView` shows an emoji placeholder;
+      needs an image source and `AsyncImage`. The single biggest lift to how the app
+      *feels*.
 - [ ] **Persistence** — bookmarks/visited are in-memory only; `PersistenceService`
       exists but isn't wired up. Restarting the app loses saves.
 - [ ] **Travel data goes stale** — visa/best-time fields are hardcoded on featured sites

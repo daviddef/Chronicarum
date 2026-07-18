@@ -1,6 +1,9 @@
 """Fetch heritage sites from Wikidata in sitelink bands (to dodge the 60s query
-timeout), dedupe, and write one compact raw file per category."""
-import json, subprocess, sys, time
+timeout), dedupe, and write one compact raw file per category.
+
+Skips any category whose bulk_<cat>.json already exists, so it's cheap to re-run when
+adding a new category. Delete the file to force a refetch."""
+import json, os, subprocess, sys, time
 
 SP = "/private/tmp/claude-501/-Users-daviddefranceski-Claude-Projects-Chronicarum/2e1454ca-a069-4f93-baf5-8ff725f648bc/scratchpad"
 UA = "ChronicarumHeritageApp/0.1 (david.defranceski@gmail.com)"
@@ -8,9 +11,11 @@ ENDPOINT = "https://query.wikidata.org/sparql"
 
 # (category label, WHERE clause selecting the class, our site type)
 CATS = [
-    ("unesco",  "?item wdt:P1435 wd:Q9259 .",              "unesco"),
-    ("castle",  "?item wdt:P31/wdt:P279* wd:Q23413 .",     "castle"),
-    ("museum",  "?item wdt:P31/wdt:P279* wd:Q33506 .",     "museum"),
+    ("unesco",        "?item wdt:P1435 wd:Q9259 .",             "unesco"),
+    ("castle",        "?item wdt:P31/wdt:P279* wd:Q23413 .",    "castle"),
+    ("museum",        "?item wdt:P31/wdt:P279* wd:Q33506 .",    "museum"),
+    ("monument",      "?item wdt:P31/wdt:P279* wd:Q4989906 .",  "monument"),
+    ("archaeological","?item wdt:P31/wdt:P279* wd:Q839954 .",   "archaeological"),
 ]
 # sitelink bands: UNESCO keeps all (>=0); castles/museums notability-filtered (>=5).
 BANDS = [(5, 7), (8, 11), (12, 24), (25, 1000)]
@@ -44,6 +49,9 @@ SELECT ?item ?lab ?lat ?lon ?countryLabel ?desc ?inception WHERE {{
 
 def main():
     for cat, where, stype in CATS:
+        if os.path.exists(f"{SP}/bulk_{cat}.json"):
+            print(f"{cat}: already fetched, skipping")
+            continue
         seen, rows = {}, []
         bands = [(0, 100000)] if cat == "unesco" else BANDS
         for lo, hi in bands:

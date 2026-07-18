@@ -37,10 +37,11 @@ Two layers (see [`scripts/`](scripts/)):
 
 - **~123 featured sites** — hand-authored in `Chronicarum/Models/SiteData.swift`, each with
   a tagline, four facts, and a multi-chapter storyboard.
-- **~14k bulk sites** — `Chronicarum/Resources/bulk_sites.json`, imported from Wikidata
-  (UNESCO + castles + notable museums) and decoded at runtime by `BulkData.swift`. These
-  carry a name, place, type, best-effort era, and a one-line description. They are
-  `tier: 2`, so raising the significance filter shows the featured layer alone.
+- **~24k bulk sites** — `Chronicarum/Resources/bulk_sites.json`, imported from Wikidata
+  (UNESCO + castles + museums + monuments + archaeological sites) and decoded at runtime
+  by `BulkData.swift`. These carry a name, place, type, best-effort era, and a one-line
+  description. They are `tier: 2`, so raising the significance filter shows the featured
+  layer alone.
 
 The map culls to the visible region before clustering, so the on-screen marker count stays
 near ~100 regardless of catalogue size.

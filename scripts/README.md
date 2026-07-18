@@ -23,9 +23,11 @@ python3 transform_bulk.py   # merges, dedupes vs featured, maps era → bulk_sit
 Then copy `bulk_sites.json` into `Chronicarum/Resources/` and rebuild.
 
 - **Source:** Wikidata SPARQL (`query.wikidata.org/sparql`). Needs a `User-Agent`.
-- **Scope:** all UNESCO World Heritage sites + castles + museums, the latter two
-  filtered to Wikipedia sitelinks ≥ 5 (a notability floor). Tune `BANDS` / the
-  category list in `fetch_bulk.py` to widen or narrow.
+- **Scope:** all UNESCO World Heritage sites + castles + museums + monuments +
+  archaeological sites, the non-UNESCO categories filtered to Wikipedia sitelinks ≥ 5
+  (a notability floor). Tune `BANDS` / the `CATS` list in `fetch_bulk.py` to widen or
+  narrow. `fetch_bulk.py` skips categories whose `bulk_<cat>.json` already exists —
+  delete one to refetch it.
 - **Era** is inferred from each site's inception date (Wikidata P571); sites with no
   date map to `Era.unknown` ("Undated") rather than a guess.
 - Bulk sites are `tier: 2`, below the featured 3–5, so the significance filter doubles

@@ -5,7 +5,8 @@ import json, re, glob
 SP = "/private/tmp/claude-501/-Users-daviddefranceski-Claude-Projects-Chronicarum/2e1454ca-a069-4f93-baf5-8ff725f648bc/scratchpad"
 CURATED = "/Users/daviddefranceski/Claude/Projects/Chronicarum/Chronicarum/Models/SiteData.swift"
 
-STYPE = {"castle": "castle", "museum": "museum", "unesco": "heritage"}
+STYPE = {"castle": "castle", "museum": "museum", "unesco": "heritage",
+         "monument": "monument", "archaeological": "ruin"}
 
 def era_from_inception(iso):
     """Wikidata P571 → an era bucket. Handles BC via a leading '-'."""
@@ -42,11 +43,15 @@ def collides_curated(s):
             return True
     return False
 
-# Category precedence when the same QID appears in several pulls: a castle that is also
-# a WHS should read as a castle, not a generic heritage site.
-PRIORITY = {"castle": 0, "museum": 1, "unesco": 2}
+# Category precedence when the same QID appears in several pulls: the most specific type
+# wins, so a castle that is also a WHS reads as a castle, not a generic heritage site.
+PRIORITY = {"castle": 0, "museum": 1, "monument": 2, "archaeological": 3, "unesco": 4}
 by_qid = {}
-for f in sorted(glob.glob(f"{SP}/bulk_*.json")):
+# Per-category inputs only — NOT bulk_sites.json, which is this script's own output
+# (its rows use `id`, not `qid`) and would otherwise be re-ingested on a second run.
+inputs = [f for f in sorted(glob.glob(f"{SP}/bulk_*.json"))
+          if not f.endswith("bulk_sites.json")]
+for f in inputs:
     for r in json.load(open(f)):
         q = r["qid"]
         if q not in by_qid or PRIORITY[r["stype"]] < PRIORITY[by_qid[q]["stype"]]:
