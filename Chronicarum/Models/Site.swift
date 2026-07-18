@@ -193,6 +193,20 @@ struct Site: Codable, Identifiable {
         return imageFile.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
     }
 
+    /// Whether this site's visa note carries a government travel warning.
+    ///
+    /// Read from the note's own wording rather than a hardcoded list of sites, so a
+    /// newly added entry is covered the moment its advisory is written. A few sites in
+    /// the catalogue (Bagan, Krak des Chevaliers, the Russia entries) are documented
+    /// honestly but are not currently safe to visit — the app should say so plainly
+    /// rather than bury it at the end of a paragraph.
+    var hasTravelAdvisory: Bool {
+        guard let note = visaNote?.lowercased() else { return false }
+        return ["do not travel", "against all travel", "against all but essential",
+                "level 4", "martial law", "state of emergency", "civil war"]
+            .contains { note.contains($0) }
+    }
+
     var isBookmarked: Bool = false
     var isVisited: Bool = false
 

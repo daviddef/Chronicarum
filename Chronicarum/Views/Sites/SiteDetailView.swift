@@ -284,6 +284,22 @@ struct TravelLayerView: View {
                 Text("Getting There")
                     .font(.headline)
 
+                // Sites under a government warning say so up front, not buried at the
+                // end of the visa paragraph.
+                if site.hasTravelAdvisory {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text("This site is under a government travel advisory. Check your "
+                             + "foreign ministry's current guidance before making plans.")
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                }
+
                 if let airport = site.nearestAirport {
                     TravelRow(icon: "airplane", label: "Nearest airport", value: airport)
                 }
@@ -293,6 +309,15 @@ struct TravelLayerView: View {
                 if let visa = site.visaNote {
                     TravelRow(icon: "doc.text", label: "Visa", value: visa)
                 }
+
+                // These fields are hand-written and frozen at research time — visa rules
+                // and opening arrangements move. Saying so is the honest minimum; a live
+                // source is the real fix (see ROADMAP).
+                Text("Travel details were researched in July 2026 and are indicative "
+                     + "only. Verify with official sources before booking.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 2)
             }
         }
     }

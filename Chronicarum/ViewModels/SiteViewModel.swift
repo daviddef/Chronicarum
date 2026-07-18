@@ -21,21 +21,26 @@ final class SiteViewModel: ObservableObject {
         self.visitedIDs = persistence.visitedIDs
     }
 
-    var allSites: [Site] { SiteData.all }
+    /// Sorted once, not per keystroke. `filteredSites` is recomputed on every character
+    /// typed, and re-sorting ~24k sites each time was its dominant cost. Filtering
+    /// preserves order, so the sort hoists out. Tier-descending also keeps the curated
+    /// sites (tier 3–5) above the bulk layer (tier 2) for free.
+    private static let sitesByTier: [Site] = SiteData.all.sorted { $0.tier > $1.tier }
+
+    var allSites: [Site] { Self.sitesByTier }
 
     var filteredSites: [Site] {
+        // Cheap predicates first: era/type are enum compares, the text search is
+        // locale-aware and far more expensive, so && short-circuits away most of it.
         allSites.filter { site in
-            let matchesSearch = searchText.isEmpty ||
-                site.name.localizedCaseInsensitiveContains(searchText) ||
-                site.location.localizedCaseInsensitiveContains(searchText) ||
-                site.civilisation.localizedCaseInsensitiveContains(searchText)
+            guard selectedEra == nil  || site.era == selectedEra   else { return false }
+            guard selectedType == nil || site.type == selectedType else { return false }
+            guard !searchText.isEmpty else { return true }
 
-            let matchesEra  = selectedEra == nil  || site.era == selectedEra
-            let matchesType = selectedType == nil || site.type == selectedType
-
-            return matchesSearch && matchesEra && matchesType
+            return site.name.localizedCaseInsensitiveContains(searchText)
+                || site.location.localizedCaseInsensitiveContains(searchText)
+                || site.civilisation.localizedCaseInsensitiveContains(searchText)
         }
-        .sorted { $0.tier > $1.tier }
     }
 
     var bookmarkedSites: [Site] {

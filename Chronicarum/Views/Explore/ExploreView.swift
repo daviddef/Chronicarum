@@ -75,13 +75,25 @@ struct SiteListRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Small thumbnail; the glyph tile stays as the loading and no-photo state.
+            // Requests a 120px image rather than the hero's 900 so a long list doesn't
+            // pull full-size photos for rows the reader scrolls straight past.
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(hex: site.era.color).opacity(0.2))
-                    .frame(width: 44, height: 44)
                 Text(site.markerGlyph)
                     .font(.title3)
+
+                if let url = site.imageURL(width: 120) {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Color.clear
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
             }
+            .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(site.name)
