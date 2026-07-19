@@ -92,9 +92,144 @@ Ordered by my sense of value.
       removing the fields; this only stops them implying an authority they lack.
 - [x] **Explore search cost** — the per-keystroke sort of ~24k sites is hoisted out, and
       predicates reordered so cheap enum compares short-circuit the locale-aware search.
-- [ ] **◀ YOU ARE HERE** — **Bulk sites are thin**: a name plus a one-line description.
-      Optionally enrich the notable ones with a Wikipedia paragraph. The last open item,
-      and purely additive.
+- [x] **Map delight** — satellite/hybrid style cycling, a "surprise me" dice that flies to
+      a random notable site, and `emphasis: .muted` so Apple's POIs stop competing with our
+      markers. Elevation is flat by necessity: `.realistic` occludes annotations in imagery
+      mode, verified on device.
+- [ ] **Bulk sites are thin** — a name plus a one-line description. Optionally enrich the
+      notable ones with a Wikipedia paragraph. Purely additive.
+- [ ] **◀ YOU ARE HERE** — see *What's next* below: the retention work, starting with a
+      `sensitive` site flag before any collection mechanic ships.
+
+---
+
+# What's next — making people actually come back
+
+Researched July 2026 across Atlas Obscura, Geocaching, Pokémon GO, Foursquare, AllTrails,
+Duolingo, Letterboxd and Untappd. Much of the received wisdom about engagement turns out to
+be vendor marketing, so claims below are either **documented** (with a source) or flagged as
+inference.
+
+## The finding that should shape everything
+
+**Two independent companies converged on monetising the archive, not the content.**
+Letterboxd Pro's headline benefit is *statistics over your own diary*; Untappd Insiders' is
+*backdated check-ins and history export*. Neither charges for content or reach — both charge
+for the integrity and interpretation of a record the user built themselves.
+
+Why it matters: **willingness to pay rises with tenure automatically.** A stats page is
+worth nothing on day one and a great deal in year ten. Letterboxd members created 12.9M
+lists in 2025, **+88% year on year — the fastest-growing activity on the platform**, ahead
+of logs, ratings and reviews.
+([Letterboxd 2025 Year in Review](https://letterboxd.com/journal/2025-year-in-review/))
+
+Chronicarum has the raw material — bookmarks, a visited list, 24k sites with eras and types.
+What it lacks is anything turning that into *a record worth keeping*.
+
+## Ranked by impact × feasibility for a solo developer
+
+**1. Turn "visited" into a personal archive.** Today it's a flat list. Give it a date, an
+optional note, and a stats view over the result — "your oldest site: 3200 BC", "12
+countries", "furthest from home". Polarsteps gets real emotion from two framings: a
+**superlative** you can beat, and a **gentle deficit** ("days since you last travelled")
+that nudges without a streak's punishment. *Inference, but it follows from the archive
+finding above.*
+
+**2. A Year in Review with an eligibility gate.** Letterboxd's requires **≥10 films logged
+that year**, making the reward conditional on year-round logging — a commitment device
+rather than a punishment. It works: their servers **crashed on 2 January 2026** under the
+traffic. Far better suited than a daily streak to something done a few times a year.
+([YiR FAQ](https://letterboxd.com/journal/2025-letterboxd-year-in-review-faq/))
+
+**3. Bounded collections, not open-ended points.** **Been** scores against finite sets so
+100% means something. The **US National Park Passport** (~433 units, stamps since 1986)
+exists explicitly to push visitors toward "smaller hidden gems", and collectors report
+visiting parks they'd otherwise skip purely for the stamp. This is the most credible
+mechanism found for the **24,158 bulk sites** problem — popularity ranking can never surface
+the long tail; a collection frame redistributes attention toward it.
+([Eastern National](https://easternnational.org/get-stamped-new-passport-national-parks-collection/))
+
+**4. Look Around in the detail sheet.** `LookAroundPreview` (iOS 17) puts street-level
+imagery beside the photo. Free, no entitlement, ~half a day. Fetch lazily on detail open —
+there's no batch or coverage API, so prefetching triggers `.loadingThrottled`. Many
+heritage sites will return nothing: coverage follows drivable roads, and archaeological
+sites often aren't on one.
+([MKLookAroundSceneRequest](https://developer.apple.com/documentation/mapkit/mklookaroundscenerequest))
+
+**5. Time-index the sites, not just the polygons.** The conquest timeline moves empire
+polygons while 24k markers sit static. Filtering *sites* by the scrubbed period would make
+it feel alive rather than decorative.
+
+**6. Cache `clusteredItems`.** A real performance bug, not a feature: it's a computed
+property, so it re-filters all 24k sites on **every** SwiftUI body pass, including ones from
+unrelated state (sheets, filters, timeline ticks). Should be `@Published private(set)`,
+recomputed only on camera and filter changes.
+
+## Traps — mechanics that look obvious and are documented to backfire
+
+**Daily streaks.** Duolingo's works because the streaked behaviour *is* the goal — a
+5-minute lesson, any hour, fully under the user's control. Visiting a heritage site is not.
+Where behaviour is instrumental rather than terminal, streaks reward app-opening instead of
+experiencing. And breaking one is worse than never having one: **66.23% continued with an
+intact streak vs 57.86% after a broken one, with identical prior behaviour** — motivation
+after a break falls *below* having no streak at all.
+([Silverman & Barasch, *J. Consumer Research* 2023](https://academic.oup.com/jcr/article/49/6/1095/6623414))
+Duolingo's own published effect sizes are small (+1.7%, +0.38%) and its DAU growth fell from
+40% to 21% in four quarters — the mythology outruns the data.
+
+**Points and global leaderboards.** Foursquare stripped its own gamification and said why:
+points were **arbitrary** across heterogeneous places ("a check-in at a concert in Istanbul
+is really different than one at a dog park"), hundreds of badges meant badges "stopped
+feeling special", and global mayorships were unwinnable at scale. Friends-only replacements
+were winnable but meaningless.
+
+**Retracting gamification is worse than never shipping it.** When points were removed from
+an enterprise social network, contributions fell *below* their pre-gamification baseline
+(n=3,486, peer-reviewed).
+([Thom-Santelli et al., CSCW 2012](https://dl.acm.org/doi/10.1145/2145204.2145362))
+
+**Social features** need critical mass to be anything but an empty room. X shut down
+Communities in 2026: **under 0.4% of users, 80% of spam reports.**
+([TechCrunch](https://techcrunch.com/2026/04/23/x-is-shutting-down-communities-because-of-low-usage-and-lots-of-spam/))
+
+## The risk to handle before any of the above
+
+**24k bulk-imported heritage sites certainly include massacre sites, memorials and burial
+grounds.** Pokémon GO placed capture points at Auschwitz-Birkenau, the Holocaust Memorial
+Museum, the 9/11 Memorial and Hiroshima Peace Memorial Park — a foreseeable, documented
+incident. ([Pokémon Go](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Go))
+
+Any collection, badge or points layer will eventually award something for a genocide
+memorial. The mitigation is a `sensitive` flag on the site model excluding those sites from
+gamified surfaces — **cheap now, expensive retrofitted.** It should land before feature 1,
+not after feature 3.
+
+## Business model, for reference
+
+- **Atlas Obscura**, the closest competitor: $18.3M revenue in 2025 and its **first annual
+  profit in 16 years** ($2.6M), from brand partnerships with tourism bureaus — not the app.
+  It **scrapped its experiences division in 2024**; the CEO said such ventures "are not the
+  easiest things to do at scale profitably." Its app rates 4.8 from only ~9.5K ratings — a
+  small happy base, not a retention success.
+  ([Adweek](https://www.adweek.com/media/atlas-obscura-first-annual-profit/) ·
+  [The Rebooting](https://www.therebooting.com/p/atlas-obscuras-next-chapter))
+- **AllTrails** paywalls *moment-of-use* capability — offline maps, wrong-turn alerts, live
+  location sharing — and keeps content free. ~**1M paid on 25M registered (~4%)** in 2021,
+  against a 2.3% median for travel apps.
+  ([Spectrum Equity](https://www.spectrumequity.com/news/alltrails-celebrates-1-million-paid-subscribers/) ·
+  [RevenueCat](https://www.revenuecat.com/state-of-subscription-apps))
+- **Geocaching** keeps content free — 3.4M caches made and maintained by 361k owners,
+  reviewed by ~200 unpaid volunteers, 1.2B logs since 2000 — and charges $39.99/yr.
+  ([Geocaching newsroom](https://newsroom.geocaching.com/fast-facts))
+
+## Suggested order
+
+**Sensitive-site flag** → **archive + stats** → **Look Around** → **bounded collections** →
+**Year in Review**. Notifications only once there's something worth being notified about;
+travel apps do enjoy unusually high push opt-in and open rates, but the widely-cited "3×
+retention" figure is correlational and vendor-published — treat it as a hypothesis.
+
+---
 
 ## Known limitations to keep in view
 
