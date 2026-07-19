@@ -5,15 +5,15 @@ of each done-list. Commits referenced by short SHA.
 
 ## How far along are we?
 
-**23 of 25 tracked items done**, 1 partly, 1 open. The app is feature-complete and runs
-on a real iPhone. The remaining item is additive, not a gap.
+**26 of 29 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
 | 2 · Content: handful → thousands | ✅ Done | 6/6 — 24,281 sites |
-| 3 · Depth and durability | ◐ 5 of 7 | 1 partial (travel staleness), 1 open (thin bulk) |
+| 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
@@ -21,7 +21,9 @@ Where it stands today:
   bulk-imported from Wikidata
 - **22,449 photos** — 93% of bulk sites, 80% of featured
 - Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
-  location; search; bookmarks that survive a restart
+  search; bookmarks and dated visits that survive a restart
+- Location-aware: opens where you are, Explore sorted nearest-first with distances,
+  cluster overlays with spread and a suggested route
 - Runs on a physical iPhone under a paid signing team, profile valid to June 2027
 
 What's genuinely left:
@@ -113,6 +115,12 @@ Ordered by my sense of value.
       serves no Look Around imagery, so the section never appears there. It fails closed
       (hidden when no scene), so it's safe to ship — but it needs a device check at a
       well-covered site like the Eiffel Tower before being called done.
+- [x] **Location-aware throughout** — the map opens where the user is, Explore defaults
+      to nearest-first with a distance on every row, and tapping a count bubble opens an
+      overlay with the places there, how far apart they are, and a suggested route. Two
+      separate bugs defeated the auto-centre before instrumenting found them:
+      `onMapCameraChange` fires twice on first layout, and the location fix usually lands
+      before the map appears.
 - [ ] **◀ YOU ARE HERE** — see *What's next* below. Next: bounded collections, then a
       Year in Review.
 
