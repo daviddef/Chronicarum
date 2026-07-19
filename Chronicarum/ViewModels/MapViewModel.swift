@@ -20,6 +20,12 @@ final class MapViewModel: ObservableObject {
     @Published var isLocating: Bool = false
     @Published var locationError: String? = nil
 
+    private var hasRequestedInitialLocation = false
+    /// True between "the map appeared" and "we've centred once on a fix".
+    private var wantsInitialCentre = false
+    /// Set the moment the user pans or zooms, so a late location fix can't yank the map.
+    private(set) var hasUserMovedMap = false
+
     // MARK: - Filters
     @Published var activeEras: Set<Era> = Set(Era.allCases)
     @Published var activeTypes: Set<SiteType> = Set(SiteType.allCases)
@@ -100,10 +106,15 @@ final class MapViewModel: ObservableObject {
                 // otherwise a background fix would yank the map out from under them.
                 if self.isLocating {
                     self.isLocating = false
+                    guard !self.hasUserMovedMap else { return }
                     self.setRegion(MKCoordinateRegion(
                         center: coordinate,
                         span: MKCoordinateSpan(latitudeDelta: 5, longitudeDelta: 5)
                     ))
+                } else {
+                    // An unsolicited fix — from the authorisation callback — still counts
+                    // for the open-where-I-am behaviour.
+                    self.centreOnInitialFix(coordinate)
                 }
             }
             .store(in: &cancellables)
@@ -287,9 +298,77 @@ final class MapViewModel: ObservableObject {
         locationService.requestLocation()
     }
 
+    /// Called once when the map first appears, so the app opens where the user is rather
+    /// than in the Mediterranean.
+    ///
+    /// Sets `isLocating`, which is what makes the fix recentre the map — but the sink
+    /// checks `hasUserMovedMap` first, so a fix arriving after the user has already
+    /// started panning is recorded without hijacking their view. A location prompt on a
+    /// map screen is expected; a map that jumps out from under you is not.
+    func requestInitialLocationIfNeeded() {
+        guard !hasRequestedInitialLocation else { return }
+        hasRequestedInitialLocation = true
+        wantsInitialCentre = true
+
+        // A fix may already be in hand: LocationService requests one as soon as it sees
+        // an authorised status, which typically resolves before the map's first layout.
+        // Asking again here would also race that in-flight request — CLLocationManager
+        // cancels the earlier one and reports a failure, which is what silently defeated
+        // the first version of this.
+        if let existing = userLocation {
+            centreOnInitialFix(existing)
+        } else {
+            locationService.requestLocation()
+        }
+    }
+
+    /// Centres once, on whichever fix arrives first, and never against the user's wishes.
+    private func centreOnInitialFix(_ coordinate: CLLocationCoordinate2D) {
+        guard wantsInitialCentre, !hasUserMovedMap else { return }
+        wantsInitialCentre = false
+        setRegion(MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 3, longitudeDelta: 3)
+        ))
+    }
+
     func setRegion(_ region: MKCoordinateRegion) {
+        expectedRegion = region
         visibleRegion = region
         cameraPosition = .region(region)
+    }
+
+    /// Called from `onMapCameraChange`. Distinguishes our own camera writes from the
+    /// user's gestures, so a location fix arriving mid-pan doesn't hijack the view.
+    ///
+    /// Compares against the region we last asked for rather than using a simple flag:
+    /// the map settles at *approximately* what we requested (MapKit adjusts the span to
+    /// the view's aspect ratio), and `onMapCameraChange` also fires once on first layout
+    /// before any interaction. A flag treated that first layout as a user gesture, which
+    /// silently defeated the whole start-at-my-location feature.
+    func noteCameraChanged(to region: MKCoordinateRegion) {
+        if let expected = expectedRegion, Self.regionsRoughlyMatch(expected, region) {
+            // Deliberately *not* cleared. MapKit emits onMapCameraChange more than once
+            // for a single settle — twice on first layout with an identical region — so
+            // consuming the expectation on first match made the second event look like a
+            // user gesture and silently cancelled the open-at-my-location behaviour.
+            // Keeping it means only a genuinely different region counts as movement.
+        } else {
+            hasUserMovedMap = true
+        }
+        visibleRegion = region
+    }
+
+    /// Seeded with the initial camera, so the first layout event is recognised as ours.
+    private var expectedRegion: MKCoordinateRegion? = MapViewModel.mediterraneanRegion
+
+    private static func regionsRoughlyMatch(_ a: MKCoordinateRegion,
+                                            _ b: MKCoordinateRegion) -> Bool {
+        // Within a tenth of the span counts as "the map landed where we put it".
+        let latTolerance = max(a.span.latitudeDelta, b.span.latitudeDelta) * 0.1
+        let lonTolerance = max(a.span.longitudeDelta, b.span.longitudeDelta) * 0.1
+        return abs(a.center.latitude - b.center.latitude) <= latTolerance
+            && abs(a.center.longitude - b.center.longitude) <= lonTolerance
     }
 
     func zoomIn() {

@@ -86,6 +86,42 @@ final class SiteViewModel: ObservableObject {
 
     var allSites: [Site] { Self.sitesByTier }
 
+    /// How the Explore list is ordered. Defaults to nearest, which is only meaningful
+    /// once a location fix exists — `filteredSites(near:)` falls back to significance
+    /// until then rather than showing an arbitrary order.
+    enum SortMode: String, CaseIterable {
+        case nearest, significance, name
+
+        var label: String {
+            switch self {
+            case .nearest:      return "Nearest"
+            case .significance: return "Significance"
+            case .name:         return "Name"
+            }
+        }
+    }
+
+    @Published var sortMode: SortMode = .nearest
+
+    /// Ordered for display. Sorting is done on the *filtered* subset, not the full 24k —
+    /// with an empty search that's still the whole catalogue, which is why the distance
+    /// used here is the cheap approximation rather than `CLLocation.distance`.
+    func filteredSites(near origin: CLLocationCoordinate2D?) -> [Site] {
+        let matches = filteredSites
+        switch sortMode {
+        case .name:
+            return matches.sorted { $0.name < $1.name }
+        case .significance:
+            return matches.sorted { $0.tier > $1.tier }
+        case .nearest:
+            guard let origin else { return matches.sorted { $0.tier > $1.tier } }
+            return matches
+                .map { ($0, $0.approxDistanceKm(from: origin)) }
+                .sorted { $0.1 < $1.1 }
+                .map(\.0)
+        }
+    }
+
     var filteredSites: [Site] {
         // Cheap predicates first: era/type are enum compares, the text search is
         // locale-aware and far more expensive, so && short-circuits away most of it.

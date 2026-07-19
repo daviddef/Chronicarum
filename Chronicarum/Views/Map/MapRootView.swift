@@ -8,6 +8,7 @@ struct MapRootView: View {
     @State private var showSiteSheet = false
     @State private var showFilters   = false
     @State private var surprisedSite: Site? = nil
+    @State private var tappedCluster: SiteCluster? = nil
 
     /// Flat elevation throughout, deliberately. `.realistic` renders lovely 3D terrain but
     /// occludes the site annotations in imagery mode — markers simply vanish, which was
@@ -69,12 +70,7 @@ struct MapRootView: View {
                                 }
                         } else {
                             ClusterMarkerView(cluster: item)
-                                .onTapGesture {
-                                    if let site = mapVM.expandCluster(item) {
-                                        mapVM.selectSite(site)
-                                        showSiteSheet = true
-                                    }
-                                }
+                                .onTapGesture { tappedCluster = item }
                         }
                     }
                     .annotationTitles(.hidden)
@@ -84,9 +80,10 @@ struct MapRootView: View {
             }
             .mapStyle(mapStyle)
             .onMapCameraChange(frequency: .onEnd) { context in
-                mapVM.visibleRegion = context.region
+                mapVM.noteCameraChanged(to: context.region)
             }
             .ignoresSafeArea()
+            .task { mapVM.requestInitialLocationIfNeeded() }
 
             // ── HUD ──────────────────────────────────────────────────────────
             // The controls rail sits *below* the top bar in the same stack rather
@@ -120,6 +117,24 @@ struct MapRootView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+        }
+        // ── Cluster Overlay ───────────────────────────────────────────────
+        .sheet(item: $tappedCluster) { cluster in
+            ClusterSheetView(
+                cluster: cluster,
+                userLocation: mapVM.userLocation,
+                onSelect: { site in
+                    mapVM.selectSite(site)
+                    // Let the cluster sheet finish dismissing before the detail appears;
+                    // presenting both in the same runloop turn drops the second one.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        showSiteSheet = true
+                    }
+                },
+                onZoomToArea: { mapVM.expandCluster(cluster) }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         // ── Filter Sheet ──────────────────────────────────────────────────
         .sheet(isPresented: $showFilters) {

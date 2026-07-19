@@ -32,9 +32,28 @@ struct ExploreView: View {
 
                 Divider()
 
+                // Sort control — nearest by default, which is why the map asks for
+                // location on launch.
+                Picker("Sort", selection: $siteVM.sortMode) {
+                    ForEach(SiteViewModel.SortMode.allCases, id: \.self) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+
+                if siteVM.sortMode == .nearest && mapVM.userLocation == nil {
+                    Text("Showing most significant — allow location to sort by distance.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 6)
+                }
+
                 // Site list
-                List(siteVM.filteredSites) { site in
-                    SiteListRow(site: site)
+                List(siteVM.filteredSites(near: mapVM.userLocation)) { site in
+                    SiteListRow(site: site,
+                                distanceKm: mapVM.userLocation.map { site.approxDistanceKm(from: $0) })
                         .onTapGesture {
                             selectedSite = site
                         }
@@ -74,6 +93,8 @@ struct SiteListRow: View {
     let site: Site
     /// Shown in the Saved tab's Visited list; nil everywhere else.
     var visitedOn: Date? = nil
+    /// Straight-line distance from the user, when their location is known.
+    var distanceKm: Double? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -118,6 +139,13 @@ struct SiteListRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
+                if let distanceKm {
+                    Text(distanceKm < 1 ? "\(Int(distanceKm * 1000)) m"
+                         : (distanceKm < 10 ? String(format: "%.1f km", distanceKm)
+                            : "\(Int(distanceKm.rounded()).formatted()) km"))
+                        .font(.caption.bold())
+                        .foregroundColor(.primary)
+                }
                 Text(site.era.displayName)
                     .font(.caption2)
                     .foregroundColor(Color(hex: site.era.color))

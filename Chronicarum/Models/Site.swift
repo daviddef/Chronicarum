@@ -174,6 +174,20 @@ struct Site: Codable, Identifiable {
     /// The emoji actually drawn on the map: the site's own override, else its type's.
     var markerGlyph: String { glyph ?? type.emoji }
 
+    /// Great-circle-ish distance in kilometres, via the equirectangular approximation.
+    ///
+    /// `CLLocation.distance(from:)` is exact but comparatively slow, and sorting 24k sites
+    /// by proximity on every keystroke needs 24k of them. This is within a fraction of a
+    /// percent at any distance the app shows and costs a few arithmetic ops. Exactness
+    /// isn't the point when the label reads "412 km".
+    func approxDistanceKm(from origin: CLLocationCoordinate2D) -> Double {
+        let earthRadius = 6371.0
+        let meanLat = ((latitude + origin.latitude) / 2) * .pi / 180
+        let dLat = (latitude - origin.latitude) * .pi / 180
+        let dLon = (longitude - origin.longitude) * .pi / 180 * cos(meanLat)
+        return earthRadius * (dLat * dLat + dLon * dLon).squareRoot()
+    }
+
     /// Commons thumbnail at the requested width. `Special:FilePath` redirects to the real
     /// file, so this stays valid even if the underlying storage path changes.
     func imageURL(width: Int = 800) -> URL? {
@@ -269,6 +283,58 @@ struct SiteCluster: Identifiable {
 
     var count: Int { sites.count }
     var isSingle: Bool { sites.count == 1 }
+
+    /// Roughly how spread out the group is: the distance across its bounding box.
+    /// Cheaper and more intuitive than a true diameter — it answers "is this a
+    /// walkable cluster or a whole region?".
+    var spanKm: Double {
+        guard let minLat = sites.map(\.latitude).min(),
+              let maxLat = sites.map(\.latitude).max(),
+              let minLon = sites.map(\.longitude).min(),
+              let maxLon = sites.map(\.longitude).max() else { return 0 }
+        let earthRadius = 6371.0
+        let meanLat = ((minLat + maxLat) / 2) * .pi / 180
+        let dLat = (maxLat - minLat) * .pi / 180
+        let dLon = (maxLon - minLon) * .pi / 180 * cos(meanLat)
+        return earthRadius * (dLat * dLat + dLon * dLon).squareRoot()
+    }
+
+    /// An order to walk the group in, nearest-neighbour from `origin` (the user, when
+    /// known, else the northern-most site).
+    ///
+    /// Nearest-neighbour is a greedy heuristic, not an optimal tour — solving that
+    /// properly is the travelling salesman problem. For a handful of sites in one
+    /// neighbourhood it produces a sensible order, and it's honest to call it a
+    /// suggestion rather than the shortest possible route.
+    func route(from origin: CLLocationCoordinate2D?) -> (stops: [Site], totalKm: Double) {
+        guard !sites.isEmpty else { return ([], 0) }
+        var remaining = sites
+        var ordered: [Site] = []
+        var total = 0.0
+
+        var cursor: CLLocationCoordinate2D
+        if let origin {
+            cursor = origin
+        } else {
+            let start = remaining.max { $0.latitude < $1.latitude }!
+            cursor = start.coordinate
+            remaining.removeAll { $0.id == start.id }
+            ordered.append(start)
+        }
+
+        while !remaining.isEmpty {
+            let cursorPoint = cursor
+            guard let idx = remaining.indices.min(by: {
+                remaining[$0].approxDistanceKm(from: cursorPoint)
+                    < remaining[$1].approxDistanceKm(from: cursorPoint)
+            }) else { break }
+            let next = remaining.remove(at: idx)
+            total += next.approxDistanceKm(from: cursorPoint)
+            ordered.append(next)
+            cursor = next.coordinate
+        }
+        return (ordered, total)
+    }
 
     /// The site that represents the group — highest tier wins, so a cluster takes the
     /// colour and (when single) the marker of its most significant member.
