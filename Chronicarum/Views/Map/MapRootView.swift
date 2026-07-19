@@ -7,6 +7,23 @@ struct MapRootView: View {
     @EnvironmentObject private var siteVM: SiteViewModel
     @State private var showSiteSheet = false
     @State private var showFilters   = false
+    @State private var surprisedSite: Site? = nil
+
+    /// Flat elevation throughout, deliberately. `.realistic` renders lovely 3D terrain but
+    /// occludes the site annotations in imagery mode — markers simply vanish, which was
+    /// verified on device. Markers are the app; terrain relief is decoration. Realistic is
+    /// also A12-only, limited to Apple's 3D metros, and silently disabled whenever an
+    /// overlay is present — which the conquest timeline always is.
+    ///
+    /// `.muted` emphasis pulls back Apple's own POI pins so 24k heritage markers read as
+    /// the foreground rather than competing with restaurant labels.
+    private var mapStyle: MapStyle {
+        switch mapVM.styleMode {
+        case .standard: return .standard(elevation: .flat, emphasis: .muted)
+        case .hybrid:   return .hybrid(elevation: .flat)
+        case .imagery:  return .imagery(elevation: .flat)
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -65,6 +82,7 @@ struct MapRootView: View {
 
                 UserAnnotation()
             }
+            .mapStyle(mapStyle)
             .onMapCameraChange(frequency: .onEnd) { context in
                 mapVM.visibleRegion = context.region
             }
@@ -79,7 +97,7 @@ struct MapRootView: View {
 
                 HStack {
                     Spacer()
-                    MapControlsView()
+                    MapControlsView(surprisedSite: $surprisedSite)
                         .padding(.trailing, 12)
                         .padding(.top, 12)
                 }
@@ -91,6 +109,9 @@ struct MapRootView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
+        }
+        .onChange(of: surprisedSite?.id) { _, newID in
+            if newID != nil { showSiteSheet = true }
         }
         // ── Site Detail Sheet ─────────────────────────────────────────────
         .sheet(isPresented: $showSiteSheet) {

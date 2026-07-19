@@ -28,6 +28,41 @@ final class MapViewModel: ObservableObject {
     // MARK: - Conquest timeline
     @Published var timelineState: TimelineState = TimelineState()
 
+    // MARK: - Map style
+
+    /// Cycled from the controls rail. Satellite earns its place here more than in most
+    /// apps: the Nazca Lines, Giza and Uluru are shapes you can only read from above.
+    enum StyleMode: String, CaseIterable {
+        case standard, hybrid, imagery
+
+        var icon: String {
+            switch self {
+            case .standard: return "map"
+            case .hybrid:   return "globe.americas"
+            case .imagery:  return "globe.americas.fill"
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .standard: return "Map"
+            case .hybrid:   return "Hybrid"
+            case .imagery:  return "Satellite"
+            }
+        }
+
+        var next: StyleMode {
+            let all = StyleMode.allCases
+            return all[(all.firstIndex(of: self)! + 1) % all.count]
+        }
+    }
+
+    @Published var styleMode: StyleMode = .standard
+
+    func cycleMapStyle() {
+        styleMode = styleMode.next
+    }
+
     // MARK: - Dependencies
     private let locationService: LocationService
     private var cancellables = Set<AnyCancellable>()
@@ -187,6 +222,30 @@ final class MapViewModel: ObservableObject {
                                    longitudeDelta: max((maxLon - minLon) * 1.5, 0.15))
         ))
         return nil
+    }
+
+    /// A random notable site, flown to and selected — the "show me something" button.
+    ///
+    /// Drawn from the curated sites plus World Heritage entries with a photo, not the
+    /// whole catalogue: a uniform pick across 24k would usually land on a minor regional
+    /// museum, which is accurate but a poor answer to "surprise me".
+    private static let surprisePool: [Site] = {
+        let curated = SiteData.featured
+        let heritage = SiteData.bulk.filter { $0.type == .heritage && $0.imageFile != nil }
+        return curated + heritage
+    }()
+
+    @discardableResult
+    func surpriseMe() -> Site? {
+        // Avoid repeating the site already on screen when the pool allows it.
+        let pool = Self.surprisePool.filter { $0.id != selectedSite?.id }
+        guard let site = pool.randomElement() ?? Self.surprisePool.randomElement() else { return nil }
+        selectSite(site)
+        setRegion(MKCoordinateRegion(
+            center: site.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        ))
+        return site
     }
 
     /// Asks for a location fix and centres the map on it once it arrives.

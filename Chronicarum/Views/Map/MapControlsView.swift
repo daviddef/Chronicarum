@@ -1,11 +1,28 @@
 import SwiftUI
 
-/// Right-rail floating controls: zoom in/out, reset, locate me, conquest toggle.
+/// Right-rail floating controls: surprise, map style, zoom, reset, locate, conquest.
 struct MapControlsView: View {
     @EnvironmentObject private var mapVM: MapViewModel
+    /// Set when "surprise me" picks a site, so the map can open its detail sheet.
+    @Binding var surprisedSite: Site?
 
     var body: some View {
         VStack(spacing: 8) {
+            // Surprise me — jump to a random world treasure
+            MapControlButton(icon: "die.face.5", tint: Color(hex: "#C9A84C")) {
+                withAnimation { surprisedSite = mapVM.surpriseMe() }
+            }
+            .accessibilityLabel("Surprise me — show a random site")
+
+            // Map style: standard → hybrid → satellite
+            MapControlButton(icon: mapVM.styleMode.icon,
+                             tint: mapVM.styleMode == .standard ? .primary : Color(hex: "#C9A84C")) {
+                withAnimation { mapVM.cycleMapStyle() }
+            }
+            .accessibilityLabel("Map style: \(mapVM.styleMode.label)")
+
+            Divider().frame(width: 32)
+
             // Zoom In
             MapControlButton(icon: "plus") {
                 withAnimation { mapVM.zoomIn() }
