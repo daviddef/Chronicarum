@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 /// Bottom sheet that appears when a map marker is tapped.
 /// Shows the storyboard chapters, facts, and travel info.
@@ -23,6 +24,10 @@ struct SiteDetailView: View {
                         .padding(.vertical, 12)
 
                     Divider()
+
+                    // ── Look Around ───────────────────────────────────────
+                    SiteLookAroundView(site: site)
+                        .padding(.horizontal, 16)
 
                     // ── Chapter picker ────────────────────────────────────
                     if !site.chapters.isEmpty {
@@ -413,5 +418,48 @@ struct TypeTagView: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(Color.black.opacity(0.5), in: Capsule())
+    }
+}
+
+
+// MARK: - Look Around
+
+/// Street-level imagery for the site, when Apple has any.
+///
+/// Fetched lazily when the sheet opens rather than prefetched for a list: there is no
+/// batch or coverage API, and firing a request per visible row trips `.loadingThrottled`.
+/// Many heritage sites legitimately have no imagery — coverage follows drivable roads, and
+/// a hilltop ruin or a walled archaeological site often isn't on one — so the whole
+/// section simply doesn't appear rather than showing an empty frame.
+struct SiteLookAroundView: View {
+    let site: Site
+
+    @State private var scene: MKLookAroundScene?
+    @State private var hasLoaded = false
+
+    var body: some View {
+        Group {
+            if let scene {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Look Around")
+                        .font(.headline)
+
+                    LookAroundPreview(initialScene: scene)
+                        .frame(height: 170)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .padding(.top, 12)
+            }
+        }
+        .task(id: site.id) { await loadScene() }
+    }
+
+    private func loadScene() async {
+        guard !hasLoaded else { return }
+        hasLoaded = true
+        // `try?` deliberately collapses "no coverage here" and "request failed" — both
+        // resolve to hiding the section, so distinguishing them would change nothing the
+        // reader sees.
+        scene = try? await MKLookAroundSceneRequest(coordinate: site.coordinate).scene
     }
 }

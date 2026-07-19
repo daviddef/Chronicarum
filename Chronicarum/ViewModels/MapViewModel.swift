@@ -70,6 +70,24 @@ final class MapViewModel: ObservableObject {
     init(locationService: LocationService) {
         self.locationService = locationService
         bindLocationService()
+        bindClusterInputs()
+    }
+
+    /// Recomputes the clusters when — and only when — one of their inputs changes: the
+    /// visible region (set by `onMapCameraChange` and `setRegion`) or any of the filters.
+    /// `CombineLatest4` fires once immediately, which populates the initial clusters.
+    ///
+    /// The recompute takes its inputs as parameters rather than reading them back off
+    /// `self`. `@Published` emits during `willSet`, so at the moment this fires the stored
+    /// properties still hold their *previous* values — reading them here would leave the
+    /// map one update behind every pan.
+    private func bindClusterInputs() {
+        Publishers.CombineLatest4($visibleRegion, $activeEras, $activeTypes, $minimumTier)
+            .sink { [weak self] region, eras, types, minTier in
+                self?.recomputeClusters(region: region, eras: eras,
+                                        types: types, minTier: minTier)
+            }
+            .store(in: &cancellables)
     }
 
     private func bindLocationService() {
@@ -118,18 +136,30 @@ final class MapViewModel: ObservableObject {
     /// build an annotation for every distant off-screen site. Culled span ≈ 1.2× the
     /// screen and cells are span/9, so the on-screen marker count stays near ~100
     /// regardless of zoom or catalogue size.
-    var clusteredItems: [SiteCluster] {
-        let region = visibleRegion
+    ///
+    /// Stored, not computed. As a computed property this re-filtered all 24k sites on
+    /// every SwiftUI `body` pass — including passes triggered by entirely unrelated state
+    /// such as presenting a sheet or ticking the timeline animation. It now recomputes
+    /// only when something it actually depends on changes.
+    @Published private(set) var clusteredItems: [SiteCluster] = []
+
+    private func recomputeClusters(region: MKCoordinateRegion,
+                                   eras: Set<Era>,
+                                   types: Set<SiteType>,
+                                   minTier: Int) {
         let latPad = region.span.latitudeDelta  * 0.6
         let lonPad = region.span.longitudeDelta * 0.6
         let latMin = region.center.latitude  - latPad, latMax = region.center.latitude  + latPad
         let lonMin = region.center.longitude - lonPad, lonMax = region.center.longitude + lonPad
 
-        let inView = visibleSites.filter {
-            $0.latitude  >= latMin && $0.latitude  <= latMax &&
-            $0.longitude >= lonMin && $0.longitude <= lonMax
+        // Bounds first: it rejects most of the catalogue with two comparisons, before the
+        // set lookups run.
+        let inView = SiteData.all.filter { site in
+            site.latitude  >= latMin && site.latitude  <= latMax &&
+            site.longitude >= lonMin && site.longitude <= lonMax &&
+            eras.contains(site.era) && types.contains(site.type) && site.tier >= minTier
         }
-        return Self.cluster(inView, in: region)
+        clusteredItems = Self.cluster(inView, in: region)
     }
 
     /// Number of grid columns across the visible span. Higher = finer cells = sites

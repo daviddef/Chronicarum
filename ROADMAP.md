@@ -106,8 +106,15 @@ Ordered by my sense of value.
 - [x] **Visited becomes an archive** — visits now carry a date, and the Saved tab shows a
       record: sites, countries, oldest site, furthest from you, last visited. The first
       piece of the archive loop the research identified.
-- [ ] **◀ YOU ARE HERE** — see *What's next* below. Next up: Look Around in the detail
-      sheet, then bounded collections, then a Year in Review.
+- [x] **Cache `clusteredItems`** — was a computed property re-filtering all 24k sites on
+      every SwiftUI body pass, including ones from unrelated state. Now stored, recomputed
+      only when the visible region or a filter changes.
+- [~] **Look Around** — implemented in the detail sheet, *unverified*: the iOS Simulator
+      serves no Look Around imagery, so the section never appears there. It fails closed
+      (hidden when no scene), so it's safe to ship — but it needs a device check at a
+      well-covered site like the Eiffel Tower before being called done.
+- [ ] **◀ YOU ARE HERE** — see *What's next* below. Next: bounded collections, then a
+      Year in Review.
 
 ---
 
