@@ -8,6 +8,7 @@ final class SiteViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published private(set) var bookmarkedIDs: Set<String> = []
     @Published private(set) var visitedIDs: Set<String> = []
+    @Published private(set) var visitDates: [String: Date] = [:]
     @Published var selectedEra: Era? = nil
     @Published var selectedType: SiteType? = nil
 
@@ -19,6 +20,62 @@ final class SiteViewModel: ObservableObject {
         self.persistence = persistence
         self.bookmarkedIDs = persistence.bookmarkedIDs
         self.visitedIDs = persistence.visitedIDs
+        self.visitDates = persistence.visitDates
+    }
+
+    // MARK: - Travel record
+
+    /// A summary of everywhere the user has been, in the spirit of the archive loops that
+    /// actually retain people (Letterboxd's stats, Polarsteps' superlatives) rather than
+    /// a score. Every figure is derived from data already stored — nothing new to collect.
+    struct TravelRecord {
+        var visitedCount: Int
+        var countries: Int
+        var oldestSite: Site?
+        var furthestSite: Site?
+        var furthestKm: Int?
+        var lastVisit: Date?
+        var eraCounts: [(era: Era, count: Int)]
+    }
+
+    /// `from` is the user's location when known, used only for the "furthest" superlative.
+    func travelRecord(from origin: CLLocationCoordinate2D? = nil) -> TravelRecord {
+        let sites = visitedSites
+
+        // Ranks eras by how long ago they began, so "oldest" means earliest in time
+        // rather than first in the enum. Undated and geological sites can't be ranked.
+        let order: [Era: Int] = [.ancient: 0, .classical: 1, .medieval: 2,
+                                 .renaissance: 3, .modern: 4]
+        let oldest = sites
+            .compactMap { site in order[site.era].map { (site, $0) } }
+            .min { $0.1 < $1.1 }?.0
+
+        var furthest: Site?
+        var furthestKm: Int?
+        if let origin {
+            let here = CLLocation(latitude: origin.latitude, longitude: origin.longitude)
+            let ranked = sites
+                .map { ($0, here.distance(from: CLLocation(latitude: $0.latitude,
+                                                            longitude: $0.longitude))) }
+                .max { $0.1 < $1.1 }
+            furthest = ranked?.0
+            furthestKm = ranked.map { Int(($0.1 / 1000).rounded()) }
+        }
+
+        let counts = Dictionary(grouping: sites, by: \.era)
+            .map { (era: $0.key, count: $0.value.count) }
+            .sorted { $0.count > $1.count }
+
+        return TravelRecord(
+            visitedCount: sites.count,
+            countries: Set(sites.map { $0.location.split(separator: ",").last.map(String.init)?
+                .trimmingCharacters(in: .whitespaces) ?? $0.location }).count,
+            oldestSite: oldest,
+            furthestSite: furthest,
+            furthestKm: furthestKm,
+            lastVisit: visitDates.values.max(),
+            eraCounts: counts
+        )
     }
 
     /// Sorted once, not per keystroke. `filteredSites` is recomputed on every character
@@ -62,14 +119,19 @@ final class SiteViewModel: ObservableObject {
 
     /// Toggles rather than only setting: marking a site visited by mistake should be
     /// undoable, and the Saved tab offers no other way to take it back.
-    func toggleVisited(_ site: Site) {
+    func toggleVisited(_ site: Site, on date: Date = Date()) {
         if visitedIDs.contains(site.id) {
             visitedIDs.remove(site.id)
+            visitDates[site.id] = nil
         } else {
             visitedIDs.insert(site.id)
+            visitDates[site.id] = date
         }
         persistence.visitedIDs = visitedIDs
+        persistence.visitDates = visitDates
     }
+
+    func visitDate(for site: Site) -> Date? { visitDates[site.id] }
 
     func isBookmarked(_ site: Site) -> Bool {
         bookmarkedIDs.contains(site.id)

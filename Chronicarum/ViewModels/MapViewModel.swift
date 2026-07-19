@@ -229,10 +229,12 @@ final class MapViewModel: ObservableObject {
     /// Drawn from the curated sites plus World Heritage entries with a photo, not the
     /// whole catalogue: a uniform pick across 24k would usually land on a minor regional
     /// museum, which is accurate but a poor answer to "surprise me".
+    /// Sensitive sites are excluded: a dice roll is a playful surface, and landing a user
+    /// on a death camp as a fun surprise is exactly the failure this guard exists for.
     private static let surprisePool: [Site] = {
         let curated = SiteData.featured
         let heritage = SiteData.bulk.filter { $0.type == .heritage && $0.imageFile != nil }
-        return curated + heritage
+        return (curated + heritage).filter { !$0.isSensitive }
     }()
 
     @discardableResult

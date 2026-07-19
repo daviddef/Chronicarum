@@ -8,8 +8,25 @@ final class PersistenceService {
     private let defaults = UserDefaults.standard
 
     private enum Keys {
-        static let bookmarked = "chronicarum.bookmarked"
-        static let visited    = "chronicarum.visited"
+        static let bookmarked  = "chronicarum.bookmarked"
+        static let visited     = "chronicarum.visited"
+        static let visitDates  = "chronicarum.visitDates"
+    }
+
+    /// When each site was marked visited, keyed by site id.
+    ///
+    /// Stored separately from `visitedIDs` rather than replacing it, so an install that
+    /// already has visits keeps them — they simply carry no date until re-marked. A
+    /// migration that dropped the old key would silently erase people's records.
+    var visitDates: [String: Date] {
+        get {
+            guard let raw = defaults.dictionary(forKey: Keys.visitDates) as? [String: Double]
+            else { return [:] }
+            return raw.mapValues { Date(timeIntervalSince1970: $0) }
+        }
+        set {
+            defaults.set(newValue.mapValues(\.timeIntervalSince1970), forKey: Keys.visitDates)
+        }
     }
 
     var bookmarkedIDs: Set<String> {

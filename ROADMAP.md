@@ -98,8 +98,16 @@ Ordered by my sense of value.
       mode, verified on device.
 - [ ] **Bulk sites are thin** — a name plus a one-line description. Optionally enrich the
       notable ones with a Wikipedia paragraph. Purely additive.
-- [ ] **◀ YOU ARE HERE** — see *What's next* below: the retention work, starting with a
-      `sensitive` site flag before any collection mechanic ships.
+- [x] **Sensitive-site flag** — `Site.isSensitive` excludes death camps, massacre sites,
+      slave forts, war graves and political prisons from playful surfaces (currently the
+      "surprise me" dice; the guard is in place before any collection mechanic). Keyword
+      scan over name and tagline for the 24k bulk, plus an explicit list for curated sites
+      whose names give nothing away. 130 of the 1,333-site surprise pool excluded.
+- [x] **Visited becomes an archive** — visits now carry a date, and the Saved tab shows a
+      record: sites, countries, oldest site, furthest from you, last visited. The first
+      piece of the archive loop the research identified.
+- [ ] **◀ YOU ARE HERE** — see *What's next* below. Next up: Look Around in the detail
+      sheet, then bounded collections, then a Year in Review.
 
 ---
 

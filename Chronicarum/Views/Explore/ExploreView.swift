@@ -72,6 +72,8 @@ struct EraFilterChip: View {
 
 struct SiteListRow: View {
     let site: Site
+    /// Shown in the Saved tab's Visited list; nil everywhere else.
+    var visitedOn: Date? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -101,10 +103,16 @@ struct SiteListRow: View {
                 Text(site.location)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(site.tagline)
-                    .font(.caption2.italic())
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
+                if let visitedOn {
+                    Text("Visited \(visitedOn.formatted(.dateTime.day().month(.abbreviated).year()))")
+                        .font(.caption2)
+                        .foregroundColor(Color(hex: "#C9A84C"))
+                } else {
+                    Text(site.tagline)
+                        .font(.caption2.italic())
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
             }
 
             Spacer()

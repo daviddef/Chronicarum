@@ -193,6 +193,43 @@ struct Site: Codable, Identifiable {
         return imageFile.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
     }
 
+    /// Places where treating a visit as something to *collect* would be offensive —
+    /// death camps, massacre sites, slave forts, war graves, atomic bombing sites,
+    /// political prisons.
+    ///
+    /// This exists because the catalogue is 24k sites bulk-imported from Wikidata, which
+    /// certainly contains such places, and any future badge or collection layer would
+    /// otherwise eventually award points for a genocide memorial. Pokémon GO did exactly
+    /// this at Auschwitz-Birkenau and Hiroshima. Excluded from playful surfaces.
+    ///
+    /// Two mechanisms, because neither alone is sufficient. The keyword scan covers the
+    /// bulk sites nobody can hand-review; the explicit list covers curated sites whose
+    /// names give nothing away — Robben Island and Port Arthur read as a rock and a
+    /// harbour. It deliberately over-flags: missing a death camp is unacceptable, while
+    /// wrongly excluding a monument from a random-site button costs almost nothing.
+    ///
+    /// Only `name` and `tagline` are scanned, never the chapter body. Searching prose
+    /// inverts meaning — the Pyramids entry says "Not slaves: organised labour gangs",
+    /// which a body scan flagged as a slavery site.
+    var isSensitive: Bool {
+        if Self.explicitlySensitiveIDs.contains(id) { return true }
+        let haystack = (name + " " + tagline).lowercased()
+        return Self.sensitiveKeywords.contains { haystack.contains($0) }
+    }
+
+    private static let explicitlySensitiveIDs: Set<String> = [
+        "robben-island",   // apartheid-era political prison
+        "port-arthur",     // convict penal settlement; also a 1996 massacre site
+    ]
+
+    private static let sensitiveKeywords: [String] = [
+        "holocaust", "auschwitz", "concentration camp", "extermination camp", "genocide",
+        "shoah", "massacre", "atrocity", "killing field", "mass grave", "war crime",
+        "cemetery", "burial ground", "graveyard", "necropolis", "ossuary", "war grave",
+        "crematorium", "slave", "slavery", "atomic bomb", "hypocenter", "ground zero",
+        "political prison", "gulag", "internment camp", "prison camp", "memorial", "victims",
+    ]
+
     /// Whether this site's visa note carries a government travel warning.
     ///
     /// Read from the note's own wording rather than a hardcoded list of sites, so a
