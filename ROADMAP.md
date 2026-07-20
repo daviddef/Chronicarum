@@ -1,25 +1,76 @@
 # Chronicarum Roadmap
 
-Where the project has been, where it is now, and what's left. Newest work at the bottom
-of each done-list. Commits referenced by short SHA.
+## Where this is going
+
+> **"I'm going to Croatia for 7 days. I like castles and Roman history — where should I go?"**
+>
+> Chronicarum answers that with a real itinerary: day by day, routed, sized to the time
+> available, matched to what you actually care about. Printable as a PDF. Emailed to you.
+> Something you take with you.
+
+That is the product. Everything below is either a step toward it or a lesson learned on
+the way. The catalogue was never the goal — it is the raw material the planner needs, and
+the reason so much of this document is about heritage registers is that **a trip planner
+is only as good as the places it knows about.** A planner that answers that Croatia
+question with seven pins is worthless; that is precisely where the app was in July 2026,
+when Dubrovnik had exactly one site in it.
+
+### The arc
+
+| Stage | | Where it stands |
+|---|---|---|
+| **1. A map** | Points on a map you can look at | ✅ Done |
+| **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
+| **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
+| **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ○ Not started |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ○ Not started |
+| **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
+| **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
+
+Stages 1–3 are infrastructure and are largely done. **Stages 4–6 are the actual product**
+and none of it is built yet. Stage 7 is what brings people back, and the retention research
+below argues it is what people would eventually pay for.
+
+### What stage 4–6 needs that we do not have
+
+Being honest about the gap, because the catalogue work makes the app look closer to this
+than it is:
+
+- **Opening hours, closures, admission.** Not in any register. A plan that sends someone to
+  a closed monastery on a Monday is worse than no plan.
+- **Travel time between places.** We have straight-line distance and a nearest-neighbour
+  ordering. A real day plan needs road and walking time — self-hosted Valhalla over OSM is
+  the identified route, and it is a server, not a bundled file.
+- **What a place is *for*.** "Roman history" is not a filter we can express. `era` and
+  `type` are crude proxies; there is no theme model.
+- **How long to spend somewhere.** Diocletian's Palace is a morning. A roadside chapel is
+  ten minutes. Nothing in the data says so.
+- **PDF and email.** Both are straightforward to build, and both are the *last* step —
+  worth nothing until the plan behind them is good. Email in particular is a send-on-
+  behalf-of-user action and needs explicit consent per send.
+
+None of these are blocked by anything. They are simply not started, and the catalogue work
+was a prerequisite rather than a substitute.
+
+---
 
 ## How far along are we?
 
-**31 of 34 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**32 of 35 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 11/11 — 258,743 sites |
+| 2 · Content: handful → thousands | ✅ Done | 12/12 — 260,131 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
-- **258,743 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
-  258,620 imported by heritage designation: ~104k UK, ~71k US, ~44k French,
-  ~14.5k Australian, the rest global
+- **260,131 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
+  260,008 imported by heritage designation: ~104k UK, ~71k US, ~44k French,
+  ~14.5k Australian, ~1.4k Croatian, the rest global
 - **163,386 photos** — 63% of bulk sites, 80% of featured. Varies hugely by source:
   UK Grade I 99%, France 84%, US 81%, Scotland's Category B far less.
 - **~95k sites carry a real description** — 23,811 in French prose from Mérimée, ~71k
@@ -87,6 +138,9 @@ The starting point: a SwiftUI project that modelled the app but could not build.
       question came due. Measured, not guessed: see *Making 187k rows load* below.
 - [x] **United States from the NRHP** — 71,113 National Register listings, 81% with a
       photo and 99% with a description, both from the Wikidata P649 join. Public domain.
+- [x] **Croatia from Wikidata, *not* its national register** — 1,388 sites, 86% with a
+      photo. Dubrovnik went from 1 to 49. The register itself is off limits; see
+      *Croatia, and a register we cannot use* below.
 
 ## Phase 3 — Depth and durability (in progress)
 
@@ -377,6 +431,43 @@ all ten key names 187,507 times.
 produces what ships. Getting below ~300 ms would need a binary format or SQLite — worth
 doing if the catalogue roughly doubles again, not before.
 
+## Croatia, and a register we cannot use
+
+Croatia keeps an excellent register, and it is the first source in this project that had
+to be **read and then walked away from**.
+
+The Ministry of Culture's Geoportal publishes a genuine INSPIRE **WFS with GeoJSON
+output** — 7,302 protected cultural goods across 20 typed feature classes (sacred
+buildings, military and defensive structures, archaeological zones, cultural landscapes),
+each carrying a name, dating, architect, a prose description and an image path. Better
+structured than Mérimée, and roughly seven times what Wikidata holds for Croatia.
+
+Its [terms of use](https://geoportal.kulturnadobra.hr/api/app/get-terms-of-use/cro) say:
+
+> *"Podaci ... isključivo su informativnog karaktera i služe za osobnu uporabu, te se ne
+> smiju koristiti u komercijalne svrhe niti distribuirati trećoj strani."*
+>
+> *"Zabranjeno je svako mijenjanje, umnožavanje, distribuiranje podataka, na bilo kojoj
+> vrsti medija ..."*
+
+**Personal use only. No commercial use. No distribution to third parties. No reproduction
+on any medium.** Photographs additionally require a signed agreement with each individual
+author. Bundling those records into a shipped app is distribution on media however the app
+is priced, so the service was queried twice to establish its schema and licence, and then
+left alone.
+
+This is worth recording prominently precisely *because* the data is right there and
+technically trivial to take. Every other register in this project has been open — CC BY,
+Licence Ouverte, public domain, CC0 — and it would be easy to assume that is the norm and
+stop reading terms. It is not the norm. If Croatia matters commercially, the route is an
+agreement with the Ministry, not a crawler.
+
+**What shipped instead:** Wikidata, CC0, filtered by a positive allowlist of classes a
+traveller would go to — 1,388 sites, 86% with a photo. Dubrovnik went from **1 site to 49**,
+Split 21 → 180, Zagreb 23 → 405. Better, and honestly ours. But it is worth being clear
+that Croatia is now the best example in the catalogue of the gap between *what exists* and
+*what we are allowed to ship*: 1,388 against a register of 7,302.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
@@ -396,26 +487,57 @@ abuse — but several are also ordinary museums today (Eastern State Penitentiar
 tours). The plantation case was clear-cut and was acted on; this one is not, and it is
 left visible here rather than decided quietly. ~226 sites either way.
 
-## Where to go next, ranked
+## Where to go next — toward the itinerary
 
-1. **Other markets, same query.** One line changes (`P17`). France, US and the Netherlands
-   all have deep `P1435` coverage. Expect each large market to raise the same
-   which-tier question the UK did.
-2. **Official registers where the local layer is thin.** Historic England (OGL), France's
-   Mérimée (46,714 monuments, Licence Ouverte), US NRHP (public domain, 72,668 points),
-   Netherlands RCE (~63,000), Ireland NIAH (CC BY 4.0, *includes image links*). Cost is
-   an attribution string. Note NRHP deliberately withholds archaeological sites, and
-   Australia generalises sensitive sites to a 250 km mapsheet — don't render those as
-   confident pins.
-3. **Commons geosearch to close the photo gap.** We have coordinates for 99.4% of items;
-   `generator=geosearch` at 500 m finds images the item itself lacks. Needs a relevance
-   heuristic — a photo 400 m away may be the wrong building.
-4. **Trails: generate, don't import.** Structured heritage-trail geodata barely exists —
-   worldwide only Melbourne and Washington DC publish it cleanly licensed. Zero councils
-   found publishing GPX; Sydney ships 14 MB PDFs. OSM has no `route=heritage` schema
-   (Australia: 719 foot/hiking relations, **12** heritage-named). The path is heritage
-   registers for POIs + OSM footways for the network + self-hosted **Valhalla** (MIT)
-   `optimized_route` to order the stops.
+The catalogue is now large enough that **more imports are no longer the highest-value
+work.** 260k sites is enough to answer the Croatia question anywhere in the UK, US, France
+or Australia. What is missing is everything between "here are pins near you" and "here is
+your Tuesday".
+
+Ranked by what actually moves the app toward a printable itinerary:
+
+**1. A theme model — so "Roman history" means something.** Today the only axes are `era`
+(seven European period names) and `type` (eleven categories). Neither expresses "Roman",
+"maritime", "industrial", "religious architecture", "wartime". This is the single blocker
+on stage 4: without it the planner cannot take a preference, only a checkbox. Cheapest
+credible route is deriving themes from the text and classes already held — Mérimée's
+`historique`, Wikidata's P31 chain, NRHP's descriptions — rather than hand-labelling 260k
+rows.
+
+**2. Visit duration and opening hours.** A day plan needs to know that Diocletian's Palace
+is a morning and a roadside chapel is ten minutes, and that the monastery is shut on
+Mondays. **Neither is in any heritage register.** Wikidata has `P3025` (opening hours) on
+a rounding error of items. This is the hardest missing piece and probably the one that
+decides whether the planner is genuinely useful or merely plausible — a plan that sends
+someone to a closed site is worse than no plan.
+
+**3. Real travel time.** `SiteCluster.route(from:)` already does nearest-neighbour ordering
+on straight-line distance, which is fine for "these five are near each other" and useless
+for "you can see these four on Tuesday". Self-hosted **Valhalla** (MIT, permits closed-
+source commercial use, no per-call cost) over OSM footways and roads is the identified
+route. Note this is a *server*, the first the project would need.
+
+**4. Day-shaping.** Given themed sites, durations and travel times, produce N days that a
+person would actually enjoy: clustered geographically, varied in kind, not eight churches
+in a row, with a sensible start and end. This is the part that is genuinely *the product*
+and it is a solved-shape problem once 1–3 exist.
+
+**5. PDF and email.** Both are simple and both are last. A beautiful PDF of a bad plan is
+still a bad plan. Email is a send-on-behalf-of-user action — one explicit confirmation per
+send, no standing permission.
+
+**6. Photo and description gaps, opportunistically.** 37% of sites still have no
+description and 37% no photo. Commons `generator=geosearch` at 500 m can close much of the
+photo gap using coordinates we already have, with a relevance heuristic — a photo 400 m
+away may be the wrong building.
+
+### Imports still worth doing, but no longer urgent
+
+Netherlands RCE (~63,000), Ireland NIAH (CC BY 4.0, includes image links), Historic England
+(OGL) to reconcile UK names. Each is a day's work and adds breadth to markets the planner
+already covers adequately. **Croatia is the argument for doing these later, not sooner:**
+the constraint there was licensing, not effort, and no amount of importing fixes a
+catalogue that cannot say when a place is open.
 
 ## Decisions still open
 
@@ -433,7 +555,13 @@ left visible here rather than decided quietly. ~226 sites either way.
 
 ---
 
-# What's next — making people actually come back
+# Retention research — why stage 7 is the one that pays
+
+Researched July 2026. Kept because its central finding survived contact with the trip
+planner idea and in fact points straight at it: **people pay for the record of what they
+did, not for the content itself.** An itinerary is what produces that record — you plan a
+trip, you take it, and what you are left with is a diary. Stages 5 and 7 are the same loop
+seen from either end.
 
 Researched July 2026 across Atlas Obscura, Geocaching, Pokémon GO, Foursquare, AllTrails,
 Duolingo, Letterboxd and Untappd. Much of the received wisdom about engagement turns out to
