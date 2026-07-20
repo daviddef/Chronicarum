@@ -10,6 +10,9 @@ struct MapRootView: View {
     @State private var surprisedSite: Site? = nil
     @State private var tappedCluster: SiteCluster? = nil
 
+    /// Screen-space points of the loop being drawn, in the map's local coordinate space.
+    @State private var lassoPoints: [CGPoint] = []
+
     /// Flat elevation throughout, deliberately. `.realistic` renders lovely 3D terrain but
     /// occludes the site annotations in imagery mode — markers simply vanish, which was
     /// verified on device. Markers are the app; terrain relief is decoration. Realistic is
@@ -30,8 +33,11 @@ struct MapRootView: View {
         ZStack(alignment: .top) {
 
             // ── Base Map ─────────────────────────────────────────────────────
+            // `MapReader` hands us a proxy that converts between screen points and map
+            // coordinates — the one capability the draw-a-region feature needs.
             // Content order is z-order: empire fills sit beneath their labels,
             // which sit beneath the site markers.
+            MapReader { proxy in
             Map(position: $mapVM.cameraPosition) {
 
                 if mapVM.timelineState.isVisible, let period = mapVM.timelineState.currentPeriod {
@@ -84,6 +90,18 @@ struct MapRootView: View {
             }
             .ignoresSafeArea()
             .task { mapVM.requestInitialLocationIfNeeded() }
+            // ── Draw-a-region layer ──────────────────────────────────────
+            // Only present while lassoing, so it never steals the map's pan/zoom the
+            // rest of the time. It sits on top and captures the drag itself, tracing a
+            // loop; on release the loop becomes coordinates and then a cluster.
+            .overlay {
+                if mapVM.isLassoActive {
+                    LassoDrawingLayer(points: $lassoPoints) {
+                        finishLasso(using: proxy)
+                    }
+                }
+            }
+            } // MapReader
 
             // ── HUD ──────────────────────────────────────────────────────────
             // The controls rail sits *below* the top bar in the same stack rather
@@ -100,6 +118,17 @@ struct MapRootView: View {
                 }
 
                 Spacer()
+
+                if mapVM.isLassoActive {
+                    Text("Draw a loop around the places you want to explore")
+                        .font(.footnote.weight(.medium))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(.regularMaterial, in: Capsule())
+                        .shadow(radius: 3)
+                        .padding(.bottom, 24)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
 
                 if mapVM.timelineState.isVisible {
                     ConquestTimelineBar()
@@ -142,6 +171,52 @@ struct MapRootView: View {
                 .presentationDetents([.medium])
         }
         .animation(.easeInOut(duration: 0.3), value: mapVM.timelineState.isVisible)
+        .animation(.easeInOut(duration: 0.2), value: mapVM.isLassoActive)
+    }
+
+    /// Turn the drawn screen loop into a cluster of the sites inside it.
+    private func finishLasso(using proxy: MapProxy) {
+        defer {
+            lassoPoints = []
+            mapVM.isLassoActive = false
+        }
+        // A stray tap is not a region. Three points is the minimum for an area, and a few
+        // more avoids treating an accidental flick as a loop.
+        guard lassoPoints.count >= 5 else { return }
+
+        // Screen points → coordinates. Points that fall off the projected map (past the
+        // poles, off the edge of an imagery tile) simply drop out.
+        let coords = lassoPoints.compactMap { proxy.convert($0, from: .local) }
+        guard coords.count >= 3, let cluster = mapVM.lassoCluster(from: coords) else { return }
+        tappedCluster = cluster
+    }
+}
+
+/// The transparent layer that captures the drag and traces the loop while the user draws.
+///
+/// It sits over the map only while lassoing and swallows the gesture, so the map's own
+/// pan and zoom never fight the drawing. The trace is closed back to its start as it goes,
+/// so the shape reads as an enclosed region rather than an open squiggle.
+private struct LassoDrawingLayer: View {
+    @Binding var points: [CGPoint]
+    let onEnd: () -> Void
+
+    var body: some View {
+        Canvas { context, _ in
+            guard points.count > 1 else { return }
+            var path = Path()
+            path.addLines(points)
+            path.closeSubpath()
+            context.stroke(path, with: .color(Color(hex: "#C9A84C")),
+                           style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+            context.fill(path, with: .color(Color(hex: "#C9A84C").opacity(0.12)))
+        }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                .onChanged { value in points.append(value.location) }
+                .onEnded { _ in onEnd() }
+        )
     }
 }
 

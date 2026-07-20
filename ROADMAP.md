@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**41 of 43 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
+**42 of 44 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -856,6 +856,31 @@ perfectly — only planning, which reads the derived fields, exposed that they w
 find-replacing "United Kingdom" → "Italy" missed the f-string that builds the location
 line, so 1,350 Italian sites briefly read "San Giuliano Milanese, United Kingdom". Caught
 by sampling the merged output, not by the merge succeeding.
+
+## Draw a region — lasso the map
+
+Answering a direct request: draw a loop on the map, and everything inside it becomes a
+group you can summarise and route through.
+
+It reuses the whole existing cluster path. A drawn region produces a `SiteCluster`, which
+feeds the *same* overlay a tapped count-bubble already used — spread, nearest, total time,
+containment note, "Plan a route", "Zoom". The only genuinely new capability is
+screen↔coordinate conversion, which `MapReader`'s `MapProxy` provides on iOS 17.
+
+- A lasso button on the controls rail toggles drawing mode. While active, a transparent
+  layer over the map captures the drag and traces the loop, so the map's own pan and zoom
+  never fight it.
+- On release the screen loop is converted to coordinates; sites are found by a bounding-box
+  reject then ray-cast point-in-polygon on lat/lon (flat-earth error is nil over a region
+  of tens of km); current filters still apply; the result is capped at 40 by significance,
+  so lassoing all of England yields a day's worth, not ten thousand railings.
+
+**Verification, stated honestly:** the region query, point-in-polygon, cluster build and
+sheet were confirmed end-to-end in the running app with a synthesised loop around Split's
+old town — 80 sites, 3.4 km across, correctly topped by the Palace of Diocletian. The
+physical pen-stroke and the `proxy.convert` call were *not* automated-tested — a freehand
+gesture is the archetypal thing to check with a finger on a real device, which the
+TestFlight build now allows.
 
 ## Open question: institutional sites
 

@@ -35,6 +35,66 @@ final class MapViewModel: ObservableObject {
     /// no preference expressed, which shows everything; see `Site.matches(themes:)`.
     @Published var activeThemes: Theme = []
 
+    // MARK: - Lasso (draw-a-region)
+    /// True while the user is drawing a region on the map. Suppresses the map's own pan
+    /// and zoom so the drag becomes a lasso instead.
+    @Published var isLassoActive = false
+
+    /// Every site inside a drawn polygon that also passes the current filters, most
+    /// significant first and capped — a lasso around all of England should not try to
+    /// build a route through ten thousand listed buildings.
+    ///
+    /// Point-in-polygon runs in lat/lon by ray casting. Over a drawn region (tens of km at
+    /// most) the flat-earth error is negligible, and a bounding-box reject up front means
+    /// the expensive test only runs on the handful of sites near the loop.
+    func sites(within polygon: [CLLocationCoordinate2D], limit: Int = 40) -> [Site] {
+        guard polygon.count >= 3 else { return [] }
+
+        let lats = polygon.map(\.latitude)
+        let lons = polygon.map(\.longitude)
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return [] }
+
+        let enclosed = visibleSites.filter { site in
+            site.latitude >= minLat && site.latitude <= maxLat &&
+            site.longitude >= minLon && site.longitude <= maxLon &&
+            Self.polygon(polygon, contains: site.coordinate)
+        }
+
+        return Array(enclosed.sorted { $0.significance > $1.significance }.prefix(limit))
+    }
+
+    /// Ray-casting point-in-polygon, on the raw lat/lon. The polygon is a screen loop
+    /// converted to coordinates, so it is already closed enough for the crossing count.
+    private static func polygon(_ vertices: [CLLocationCoordinate2D],
+                                contains point: CLLocationCoordinate2D) -> Bool {
+        var inside = false
+        var j = vertices.count - 1
+        for i in 0..<vertices.count {
+            let a = vertices[i], b = vertices[j]
+            if (a.latitude > point.latitude) != (b.latitude > point.latitude) {
+                let slope = (point.latitude - a.latitude) / (b.latitude - a.latitude)
+                let crossLon = a.longitude + slope * (b.longitude - a.longitude)
+                if point.longitude < crossLon { inside.toggle() }
+            }
+            j = i
+        }
+        return inside
+    }
+
+    /// Wrap the enclosed sites as a cluster so the existing overlay — spread, nearest,
+    /// suggested route, "plan a route" — presents them unchanged.
+    func lassoCluster(from polygon: [CLLocationCoordinate2D]) -> SiteCluster? {
+        let sites = sites(within: polygon)
+        guard !sites.isEmpty else { return nil }
+        let centreLat = sites.map(\.latitude).reduce(0, +) / Double(sites.count)
+        let centreLon = sites.map(\.longitude).reduce(0, +) / Double(sites.count)
+        return SiteCluster(
+            id: "lasso",
+            coordinate: CLLocationCoordinate2D(latitude: centreLat, longitude: centreLon),
+            sites: sites)
+    }
+
     // MARK: - Conquest timeline
     @Published var timelineState: TimelineState = TimelineState()
 

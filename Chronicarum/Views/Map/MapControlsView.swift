@@ -48,6 +48,17 @@ struct MapControlsView: View {
 
             Divider().frame(width: 32)
 
+            // Draw a region — lasso the map to see everything inside it and route through it
+            MapControlButton(icon: mapVM.isLassoActive ? "lasso.and.sparkles" : "lasso",
+                             tint: mapVM.isLassoActive ? Color(hex: "#C9A84C") : .primary) {
+                withAnimation { mapVM.isLassoActive.toggle() }
+            }
+            .accessibilityLabel(mapVM.isLassoActive
+                                ? "Cancel drawing a region"
+                                : "Draw a region to explore")
+
+            Divider().frame(width: 32)
+
             // Conquest Toggle
             MapControlButton(icon: "shield.lefthalf.filled",
                              tint: mapVM.timelineState.isVisible ? Color(hex: "#C9A84C") : .primary) {
