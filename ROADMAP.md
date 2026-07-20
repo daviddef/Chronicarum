@@ -875,12 +875,17 @@ screen↔coordinate conversion, which `MapReader`'s `MapProxy` provides on iOS 1
   of tens of km); current filters still apply; the result is capped at 40 by significance,
   so lassoing all of England yields a day's worth, not ten thousand railings.
 
-**Verification, stated honestly:** the region query, point-in-polygon, cluster build and
-sheet were confirmed end-to-end in the running app with a synthesised loop around Split's
-old town — 80 sites, 3.4 km across, correctly topped by the Palace of Diocletian. The
-physical pen-stroke and the `proxy.convert` call were *not* automated-tested — a freehand
-gesture is the archetypal thing to check with a finger on a real device, which the
-TestFlight build now allows.
+**The coordinate bug, and the fix.** The first version (build 8) was wrong on device: a
+loop drawn over a cluster returned a single site 210 km away. Cause was the classic
+`MapReader` trap — the drag gesture and `proxy.convert` resolved `.local` against different
+frames, because the map ignores the safe area and the reader does not, so the drawn loop
+was converted to coordinates hundreds of km from where it was drawn. Fixed by never
+converting the loop to coordinates at all: both the loop and every candidate site are
+projected into **one shared named coordinate space**, and point-in-polygon runs in screen
+space, so any frame offset cancels. Verified in the simulator by running the real
+conversion path — a small loop at the map centre now encloses only sites within ~80 km of
+that centre (matching the loop's actual coverage), where the bug placed them 210 km
+outside the visible region.
 
 ## Open question: institutional sites
 

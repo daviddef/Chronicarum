@@ -40,59 +40,44 @@ final class MapViewModel: ObservableObject {
     /// and zoom so the drag becomes a lasso instead.
     @Published var isLassoActive = false
 
-    /// Every site inside a drawn polygon that also passes the current filters, most
-    /// significant first and capped — a lasso around all of England should not try to
-    /// build a route through ten thousand listed buildings.
+    /// Filtered sites lying within the region the map is currently showing.
     ///
-    /// Point-in-polygon runs in lat/lon by ray casting. Over a drawn region (tens of km at
-    /// most) the flat-earth error is negligible, and a bounding-box reject up front means
-    /// the expensive test only runs on the handful of sites near the loop.
-    func sites(within polygon: [CLLocationCoordinate2D], limit: Int = 40) -> [Site] {
-        guard polygon.count >= 3 else { return [] }
+    /// The lasso projects each of these to a screen point and tests it against the drawn
+    /// loop, so this is the candidate set — bounded by the *known* visible region rather
+    /// than by anything derived from the loop, which is what kept the earlier version's
+    /// coordinate bug from mattering. A generous margin catches sites just off the visible
+    /// edge whose marker still overlaps the loop; the cap bounds the projection cost.
+    func candidateSites(in region: MKCoordinateRegion, limit: Int = 4000) -> [Site] {
+        let latPad = region.span.latitudeDelta  * 0.15
+        let lonPad = region.span.longitudeDelta * 0.15
+        let minLat = region.center.latitude  - region.span.latitudeDelta  / 2 - latPad
+        let maxLat = region.center.latitude  + region.span.latitudeDelta  / 2 + latPad
+        let minLon = region.center.longitude - region.span.longitudeDelta / 2 - lonPad
+        let maxLon = region.center.longitude + region.span.longitudeDelta / 2 + lonPad
 
-        let lats = polygon.map(\.latitude)
-        let lons = polygon.map(\.longitude)
-        guard let minLat = lats.min(), let maxLat = lats.max(),
-              let minLon = lons.min(), let maxLon = lons.max() else { return [] }
-
-        let enclosed = visibleSites.filter { site in
-            site.latitude >= minLat && site.latitude <= maxLat &&
-            site.longitude >= minLon && site.longitude <= maxLon &&
-            Self.polygon(polygon, contains: site.coordinate)
+        let inRegion = visibleSites.filter {
+            $0.latitude >= minLat && $0.latitude <= maxLat &&
+            $0.longitude >= minLon && $0.longitude <= maxLon
         }
-
-        return Array(enclosed.sorted { $0.significance > $1.significance }.prefix(limit))
+        // If the region holds more than the cap, keep the most significant — those are the
+        // ones a lasso is for, and a route through 4,000 stops is meaningless anyway.
+        guard inRegion.count > limit else { return inRegion }
+        return Array(inRegion.sorted { $0.significance > $1.significance }.prefix(limit))
     }
 
-    /// Ray-casting point-in-polygon, on the raw lat/lon. The polygon is a screen loop
-    /// converted to coordinates, so it is already closed enough for the crossing count.
-    private static func polygon(_ vertices: [CLLocationCoordinate2D],
-                                contains point: CLLocationCoordinate2D) -> Bool {
-        var inside = false
-        var j = vertices.count - 1
-        for i in 0..<vertices.count {
-            let a = vertices[i], b = vertices[j]
-            if (a.latitude > point.latitude) != (b.latitude > point.latitude) {
-                let slope = (point.latitude - a.latitude) / (b.latitude - a.latitude)
-                let crossLon = a.longitude + slope * (b.longitude - a.longitude)
-                if point.longitude < crossLon { inside.toggle() }
-            }
-            j = i
-        }
-        return inside
-    }
-
-    /// Wrap the enclosed sites as a cluster so the existing overlay — spread, nearest,
-    /// suggested route, "plan a route" — presents them unchanged.
-    func lassoCluster(from polygon: [CLLocationCoordinate2D]) -> SiteCluster? {
-        let sites = sites(within: polygon)
+    /// Wrap the sites a lasso enclosed as a cluster, so the existing overlay — spread,
+    /// nearest, suggested route, "plan a route" — presents them unchanged. Capped and
+    /// significance-ordered: a loop around a dense city should offer the best of it, not a
+    /// route through every listed doorway.
+    func lassoCluster(fromEnclosed sites: [Site], limit: Int = 40) -> SiteCluster? {
         guard !sites.isEmpty else { return nil }
-        let centreLat = sites.map(\.latitude).reduce(0, +) / Double(sites.count)
-        let centreLon = sites.map(\.longitude).reduce(0, +) / Double(sites.count)
+        let ranked = Array(sites.sorted { $0.significance > $1.significance }.prefix(limit))
+        let centreLat = ranked.map(\.latitude).reduce(0, +) / Double(ranked.count)
+        let centreLon = ranked.map(\.longitude).reduce(0, +) / Double(ranked.count)
         return SiteCluster(
             id: "lasso",
             coordinate: CLLocationCoordinate2D(latitude: centreLat, longitude: centreLon),
-            sites: sites)
+            sites: ranked)
     }
 
     // MARK: - Conquest timeline

@@ -93,7 +93,7 @@ struct MapRootView: View {
             // ── Draw-a-region layer ──────────────────────────────────────
             // Only present while lassoing, so it never steals the map's pan/zoom the
             // rest of the time. It sits on top and captures the drag itself, tracing a
-            // loop; on release the loop becomes coordinates and then a cluster.
+            // loop; on release the loop becomes a set of enclosed sites.
             .overlay {
                 if mapVM.isLassoActive {
                     LassoDrawingLayer(points: $lassoPoints) {
@@ -101,6 +101,14 @@ struct MapRootView: View {
                     }
                 }
             }
+            // One named coordinate space shared by the drag gesture *and* the
+            // proxy conversions below, applied last so it wraps the overlay too.
+            // The first version converted the drawn loop from screen space *to*
+            // coordinates using `.local`, but the drag and the proxy resolved
+            // `.local` against different frames — the map ignores the safe area,
+            // the reader does not — so the loop landed hundreds of km away. Testing
+            // in this shared space instead means any such offset cancels out.
+            .coordinateSpace(.named(Self.lassoSpace))
             } // MapReader
 
             // ── HUD ──────────────────────────────────────────────────────────
@@ -174,21 +182,52 @@ struct MapRootView: View {
         .animation(.easeInOut(duration: 0.2), value: mapVM.isLassoActive)
     }
 
+    /// The one coordinate space the lasso gesture and every proxy conversion share.
+    static let lassoSpace = "chronicarum.lasso"
+
     /// Turn the drawn screen loop into a cluster of the sites inside it.
+    ///
+    /// Point-in-polygon runs in **screen space**, not geographic. Each candidate site is
+    /// projected to a screen point in the same named space the loop was drawn in, then
+    /// tested against the loop. Because both are in that one space, whatever frame offset
+    /// broke the first version cancels — there is no screen→coordinate step left to get
+    /// wrong.
     private func finishLasso(using proxy: MapProxy) {
         defer {
             lassoPoints = []
             mapVM.isLassoActive = false
         }
-        // A stray tap is not a region. Three points is the minimum for an area, and a few
-        // more avoids treating an accidental flick as a loop.
+        // A stray tap is not a region.
         guard lassoPoints.count >= 5 else { return }
+        let loop = lassoPoints
 
-        // Screen points → coordinates. Points that fall off the projected map (past the
-        // poles, off the edge of an imagery tile) simply drop out.
-        let coords = lassoPoints.compactMap { proxy.convert($0, from: .local) }
-        guard coords.count >= 3, let cluster = mapVM.lassoCluster(from: coords) else { return }
+        // Candidates are the filtered sites within the region the map is currently
+        // showing — a known-correct bound, so it never depends on converting the loop.
+        // Projecting a few thousand of them to screen points is a one-shot cost on
+        // release, not per frame.
+        let enclosed = mapVM.candidateSites(in: mapVM.visibleRegion).filter { site in
+            guard let point = proxy.convert(site.coordinate, to: .named(Self.lassoSpace))
+            else { return false }
+            return Self.polygon(loop, contains: point)
+        }
+
+        guard let cluster = mapVM.lassoCluster(fromEnclosed: enclosed) else { return }
         tappedCluster = cluster
+    }
+
+    /// Ray-casting point-in-polygon on screen points.
+    private static func polygon(_ vertices: [CGPoint], contains point: CGPoint) -> Bool {
+        var inside = false
+        var j = vertices.count - 1
+        for i in vertices.indices {
+            let a = vertices[i], b = vertices[j]
+            if (a.y > point.y) != (b.y > point.y) {
+                let t = (point.y - a.y) / (b.y - a.y)
+                if point.x < a.x + t * (b.x - a.x) { inside.toggle() }
+            }
+            j = i
+        }
+        return inside
     }
 }
 
@@ -213,7 +252,9 @@ private struct LassoDrawingLayer: View {
         }
         .contentShape(Rectangle())
         .gesture(
-            DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            // Same named space the proxy converts into, so the loop and the projected
+            // sites are measured identically.
+            DragGesture(minimumDistance: 0, coordinateSpace: .named(MapRootView.lassoSpace))
                 .onChanged { value in points.append(value.location) }
                 .onEnded { _ in onEnd() }
         )
