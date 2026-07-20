@@ -143,6 +143,18 @@ final class SiteViewModel: ObservableObject {
         }
     }
 
+    /// The site this one sits inside, when the catalogue records it.
+    func parentSite(of site: Site) -> Site? {
+        guard let parentID = site.parentID else { return nil }
+        return Self.byID[parentID]
+    }
+
+    /// Built once — `allSites` is 260k, and a linear scan per detail sheet is wasteful for
+    /// a lookup that never changes.
+    private static let byID: [String: Site] = {
+        Dictionary(SiteData.all.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    }()
+
     var bookmarkedSites: [Site] {
         allSites.filter { bookmarkedIDs.contains($0.id) }
     }

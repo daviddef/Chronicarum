@@ -196,6 +196,13 @@ VETOES = {
     # after castles, ships and coats of arms, and a castle-themed itinerary that routes
     # someone to a Wetherspoons is worse than one that misses a real castle.
     "castles": [r"\b(?:hotel|inn|public house|\bpub\b|tavern|arms|hostel|motel)\b"],
+    # "11324 Pearlstone Lane" is an address, not a quarter. `\bterrace\b` and friends were
+    # tagging 2,826 individual street addresses as townscape, which then inherited the
+    # 90-minute "wander an old town" duration — 4,100 hours of imaginary sightseeing.
+    # A leading house number means a single building, unless the name says otherwise:
+    # "2900 Block Grove Avenue Historic District" really is a district.
+    "townscape": [r"^\d+[a-z]?\s+(?!.*\b(?:district|conservation|quarter|centre|center"
+                  r"|old town|historic area)\b)"],
 }
 
 THEME_NAMES = [name for name, _ in THEMES]

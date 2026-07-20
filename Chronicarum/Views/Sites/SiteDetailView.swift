@@ -51,6 +51,13 @@ struct SiteDetailView: View {
                             .padding(.horizontal, 16)
                     }
 
+                    // ── Part of a larger site ─────────────────────────────
+                    if let parent = siteVM.parentSite(of: site) {
+                        PartOfView(parent: parent)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                    }
+
                     // ── Register history (French monuments) ───────────────
                     if let history = site.monumentHistory {
                         MonumentHistoryView(text: history)
@@ -191,6 +198,27 @@ struct SiteHeroView: View {
             }
         }
         .frame(height: 200)
+    }
+}
+
+/// "Part of Historical Complex of Split" — so a reader understands why a nearby record
+/// covers the same stones, and a planner knows not to schedule both.
+struct PartOfView: View {
+    let parent: Site
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "square.stack.3d.up")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Part of").font(.caption2).foregroundColor(.secondary)
+                Text(parent.name).font(.subheadline.weight(.medium)).lineLimit(2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 }
 

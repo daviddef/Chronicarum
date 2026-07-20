@@ -79,9 +79,11 @@ struct ClusterSheetView: View {
         }
     }
 
-    /// Total visiting time across the cluster, banded like the per-site estimates.
+    /// Total visiting time across the cluster, with sites contained by another site in
+    /// the same cluster folded into their container — otherwise the four records covering
+    /// Diocletian's Palace would be counted as four visits.
     private var visitingLabel: String {
-        let minutes = cluster.sites.totalVisitMinutes
+        let minutes = cluster.sites.visitMinutesFoldingContained
         if minutes < 60 { return "\(minutes)m" }
         let hours = Double(minutes) / 60
         return hours < 10 ? String(format: "%.1fh", hours) : "\(Int(hours))h"
@@ -103,6 +105,16 @@ struct ClusterSheetView: View {
                         .map { $0.approxDistanceKm(from: origin) }.min() ?? 0
                     SummaryCell(value: distanceLabel(nearest), label: "Nearest")
                 }
+            }
+
+            let contained = cluster.sites.containedWithin
+            if !contained.isEmpty {
+                Text("\(contained.count) of these "
+                     + (contained.count == 1 ? "is part of" : "are parts of")
+                     + " something else here, so the time above counts "
+                     + (contained.count == 1 ? "it" : "them") + " once.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             if isCapped {

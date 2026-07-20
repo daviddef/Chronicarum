@@ -39,7 +39,8 @@ enum BulkSite {
               let images    = columns["img"]     as? [String],
               let sources   = columns["src"]     as? [String],
               let masks     = columns["th"]      as? [Int],
-              let durations = columns["dur"]     as? [Int]
+              let durations = columns["dur"]     as? [Int],
+              let parents   = columns["par"]     as? [String]
         else { return [] }
 
         // A short column would mean a truncated write; better an empty layer than rows
@@ -47,7 +48,7 @@ enum BulkSite {
         let count = ids.count
         let columnLengths = [names.count, lats.count, lons.count, types.count, eras.count,
                              countries.count, descs.count, images.count, sources.count,
-                             masks.count, durations.count]
+                             masks.count, durations.count, parents.count]
         guard columnLengths.allSatisfy({ $0 == count }) else {
             assertionFailure("bulk_columnar.json has ragged columns — rebuild it")
             return []
@@ -79,7 +80,8 @@ enum BulkSite {
                 imageFile: images[i].isEmpty ? nil : images[i],
                 dataSource: sources[i].isEmpty ? nil : DataSource(rawValue: sources[i]),
                 themeMask: masks[i],
-                visitMinutes: durations[i]
+                visitMinutes: durations[i],
+                parentID: parents[i].isEmpty ? nil : parents[i]
             ))
         }
         return sites

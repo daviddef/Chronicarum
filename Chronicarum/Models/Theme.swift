@@ -124,3 +124,36 @@ extension Collection where Element == Site {
     /// Total visiting time for a set of sites, excluding travel between them.
     var totalVisitMinutes: Int { reduce(0) { $0 + $1.visitMinutes } }
 }
+
+// MARK: - Containment
+
+extension Collection where Element == Site {
+    /// Visiting time with contained sites folded into their container.
+    ///
+    /// Registers describe the same place at several scales. Within 400 m of Split's centre
+    /// the catalogue holds the UNESCO complex, Diocletian's Palace inside it, and the gates
+    /// inside that — all correct, all separate records. Summing them claims ten hours for
+    /// one afternoon.
+    ///
+    /// So a site whose parent is *also in this collection* contributes nothing: you are
+    /// already spending the container's time, and the parts are what you see while you are
+    /// there. A site whose parent is elsewhere still counts in full — visiting one gate of
+    /// a city wall on the far side of town is a real, separate stop.
+    var visitMinutesFoldingContained: Int {
+        let present = Set(map(\.id))
+        return reduce(0) { total, site in
+            if let parent = site.parentID, present.contains(parent) { return total }
+            return total + site.visitMinutes
+        }
+    }
+
+    /// Sites that are contained by something else in this collection — the ones folded
+    /// away above, worth listing as "you'll see these while you're there".
+    var containedWithin: [Site] {
+        let present = Set(map(\.id))
+        return filter { site in
+            guard let parent = site.parentID else { return false }
+            return present.contains(parent)
+        }
+    }
+}

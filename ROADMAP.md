@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**34 of 37 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**35 of 38 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -572,36 +572,56 @@ Each of these shipped in an intermediate run and was found by printing real rows
 | **A churchyard cross — 30 minutes** | The theme model correctly saw "churchyard" and gave it a parish church's time. But the site *is* the cross. The head noun settles what a site is. |
 | **"Dover Castle Hotel" — a castle** | A pub. British and Australian pubs are named after castles constantly, and a castle-themed itinerary that routes someone to a Wetherspoons is worse than one that misses a castle. Vetoed in the theme model. |
 
-## The containment problem
+## Containment — and the bigger problem behind it
 
-The durations made a structural flaw visible that pins alone had hidden. Asking for castles
-and Roman history within 400 m of Split's centre returns, among others:
+Registers describe the same place at several scales. A gate, the palace it pierces and the
+world heritage complex containing both are three correct records, and summing their
+durations claims ten hours for one afternoon. This is **not** the duplicate problem the
+merge scripts solve — a duplicate is one place recorded twice; these are genuinely
+different records.
 
-    Historical Complex of Split with the Palace of Diocletian   180 min
-    Diocletian's Palace                                         120 min
-    Golden Gate                                                  60 min
-    Silver Gate                                                  20 min
+[`fetch_containment.py`](scripts/fetch_containment.py) takes Wikidata `P361` (part of),
+which is explicit and free. Two filters make it usable:
 
-Summed: **10.8 hours of "visiting" for one afternoon.** These are not separate visits. The
-gates are *in* the palace, which *is* the UNESCO complex — three registers describing the
-same stones at three scales, plus every Venetian palace on the same square.
+- **Both ends must be in our catalogue.** "Part of Europe" is true and useless.
+- **The parts must be near each other.** `P361` also encodes class membership — a generic
+  *stećak* is "part of" necropolises 20, 55 and 67 km apart. Real containment is metres;
+  2 km is generous and removed every false pair observed.
 
-Nothing in the catalogue records that one site contains another. Registers list what they
-protect, not how their entries nest, and the app's dedup rules were built to catch
-*duplicates* — same place, twice — which these are not.
+154,681 candidate relations → **2,324 contained sites** across 1,017 containers. A site
+whose parent is also present contributes no time: you are already spending the container's
+hour, and the parts are what you see while you are there.
 
-**This now blocks day-shaping**, and it cannot be solved by better durations. Options, none
-yet taken:
+### Where it works
 
-- **Wikidata `P361` (part of) / `P527` (has part)** — free and correct where present, absent
-  for most register-derived rows.
-- **Geometric containment** — the polygon layers exist in several registers (UK, SA, Croatia)
-  even though only points were imported. A site inside another's footprint is contained.
-- **Pick a scale at plan time** — schedule the largest containing site and list the parts as
-  what you will see inside it, which is what a person would actually write.
+Glasgow's Park Terrace area, 187 records within 350 m — Georgian terraces listed both as a
+terrace *and* as every individual house:
 
-The third is probably right and the cheapest, but it needs the first or second to know what
-contains what.
+| | |
+|---|---|
+| naive sum | 144.9 h |
+| with containment | **50.8 h** — 97 records folded away |
+
+`1–21 Park Terrace` alone holds 39 listed houses. Chester city walls holds 31 sections.
+
+### Where it doesn't, and why that matters more
+
+The case that motivated the work barely moved. Split's centre went 50.1 h → **48.1 h**,
+because Wikidata records Diocletian's Palace as part of the UNESCO complex but says nothing
+about the Golden or Silver Gates. Coverage is **0.9% of the catalogue** — precise where it
+exists, absent almost everywhere.
+
+That is worth stating plainly rather than presenting containment as the fix: **it is not
+what makes Split take 48 hours.** Central Split genuinely holds 52 heritage records, and a
+person visits six of them. The remaining problem is **selection**, not double-counting —
+deciding which six are worth a day — and no containment data solves it.
+
+Still open for containment itself:
+
+- **Geometric containment.** Several registers (UK, SA, Croatia) publish polygon layers;
+  only points were imported. A point inside another site's footprint is contained. This is
+  the route to real coverage and it means re-importing geometry.
+- **Wikidata `P527` (has part)**, the inverse — some items record only one direction.
 
 ## Open question: institutional sites
 
@@ -640,8 +660,12 @@ in any heritage register, and Wikidata has `P3025` on a rounding error of items.
 that sends someone to a closed site is worse than no plan, and this is the item that
 decides whether the planner is genuinely useful or merely plausible.
 
-**2b. Containment — which sites are *inside* other sites.** Surfaced immediately by the
-durations and it now blocks day-shaping. See *The containment problem* below.
+**2b. ~~Containment~~ — partly done.** 2,324 sites now know their container. It fixes the
+double-counting it can see and leaves a bigger problem behind it: **selection**. See below.
+
+**2c. Selection — choosing which sites are worth a day.** The real reason central Split
+"needs" 48 hours is that it holds 52 heritage records and a person visits six of them.
+Nothing yet decides which six.
 
 **3. Real travel time.** `SiteCluster.route(from:)` already does nearest-neighbour ordering
 on straight-line distance, which is fine for "these five are near each other" and useless

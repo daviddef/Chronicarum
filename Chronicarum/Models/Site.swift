@@ -181,6 +181,12 @@ struct Site: Codable, Identifiable {
     /// does not support a figure like "37 minutes". Zero means not estimated.
     var visitMinutes: Int = 0
 
+    /// The id of the site this one is physically inside, where that is known. Registers
+    /// describe the same place at several scales — a gate, the palace it pierces, and the
+    /// world heritage complex containing both — and without this a day plan adds all
+    /// three up. Derived by `scripts/merge_containment.py` from Wikidata P361.
+    var parentID: String? = nil
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -317,7 +323,7 @@ struct Site: Codable, Identifiable {
         case civilisation = "civ"
         case tagline, chapters
         case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile, dataSource
-        case themeMask, visitMinutes
+        case themeMask, visitMinutes, parentID
     }
 }
 
