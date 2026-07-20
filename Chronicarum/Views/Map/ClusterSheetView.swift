@@ -25,7 +25,9 @@ struct ClusterSheetView: View {
     private var orderedSites: [Site] {
         let sites = cluster.sites
         guard let origin = userLocation else {
-            return Array(sites.sorted { $0.tier > $1.tier }.prefix(listCap))
+            // `tier` is 2 for every bulk site, so "most significant" used to be an
+            // arbitrary 40. `significance` is what actually ranks them.
+            return Array(sites.sorted { $0.significance > $1.significance }.prefix(listCap))
         }
         return Array(sites
             .sorted { $0.approxDistanceKm(from: origin) < $1.approxDistanceKm(from: origin) }

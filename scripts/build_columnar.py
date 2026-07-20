@@ -26,8 +26,8 @@ SRC = f"{RESOURCES}/bulk_sites.json"
 OUT = f"{RESOURCES}/bulk_columnar.json"
 
 # Order matters only for readability; the loader reads by key.
-FIELDS = ("id", "name", "lat", "lon", "type", "era", "country", "desc", "img", "src", "th", "dur", "par")
-NUMERIC = {"lat", "lon", "th", "dur"}   # theme bitmask + estimated visit minutes
+FIELDS = ("id", "name", "lat", "lon", "type", "era", "country", "desc", "img", "src", "th", "dur", "par", "sig")
+NUMERIC = {"lat", "lon", "th", "dur", "sig"}   # theme bitmask + estimated visit minutes
 # The only fields genuinely absent from source records. Everything else is always written
 # by the import scripts, so dropping an empty one on expand would not round-trip.
 OPTIONAL = {"img", "src", "par"}
@@ -43,7 +43,7 @@ def build():
             if value is None:
                 # Empty string rather than null keeps every column a homogeneous [String],
                 # so the Swift side casts each column once instead of unwrapping per element.
-                value = (0 if field in ("th", "dur", "par") else 0.0) if field in NUMERIC else ""
+                value = (0 if field in ("th", "dur", "par", "sig") else 0.0) if field in NUMERIC else ""
             columns[field].append(value)
 
     json.dump(columns, open(OUT, "w"), ensure_ascii=False, separators=(",", ":"))

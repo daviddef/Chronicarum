@@ -23,7 +23,7 @@ when Dubrovnik had exactly one site in it.
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
-| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Durations done; hours, travel and containment open |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Durations, containment and selection done; **hours and travel time open** |
 | **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**35 of 38 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**36 of 39 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -623,6 +623,74 @@ Still open for containment itself:
   the route to real coverage and it means re-importing geometry.
 - **Wikidata `P527` (has part)**, the inverse — some items record only one direction.
 
+## Selection — which six of the fifty-two
+
+Containment was supposed to fix "central Split needs 48 hours for one afternoon". It
+removed two. The catalogue genuinely holds 52 heritage records within 400 m of Split's
+centre and a person visits about six; the problem was never double counting, it was that
+**nothing decided which six**.
+
+[`derive_significance.py`](scripts/derive_significance.py) scores every site 0–100. It is
+a **ranking device, not a judgement** — a 12 is not "unimportant", it is "if you only have
+a day, not this one".
+
+| weight | signal | |
+|---|---|---|
+| 40 | renown | Wikipedia sitelinks, log-scaled, capped at 50 |
+| 25 | designation | World Heritage, Grade I, Category A, National Historic Landmark |
+| 20 | substance | has a photo, has real prose, takes an hour or more |
+| 10 | wholeness | a container scores up, a part scores down |
+| 5 | name | a proper name rather than "House" |
+
+### The reversal at the centre of it
+
+The strongest signal is **Wikipedia sitelink count** — the thing this project began by
+getting wrong. The first import required ≥5 language editions and left Brisbane with 7
+sites and Dubrovnik with 1. Replacing it with heritage designation is what made the
+catalogue real.
+
+It was the wrong **filter** and it is the right **ranker**. Nothing about how many
+Wikipedias describe a place says whether it belongs in a heritage catalogue — that is what
+a government register is for. But once every designated place is *in*, sitelinks measure
+very well which of them a visitor has heard of. Croatia by sitelinks: Plitvice 70,
+Diocletian's Palace 52, Bakarski Castle 0. Exactly right for choosing six places to see;
+exactly wrong for choosing which 260,008 to hold.
+
+Same number, opposite job. Sitelinks exist for only ~140k rows, so a missing count is never
+treated as evidence of *un*importance — it is a bonus or nothing, and register grades carry
+the rest.
+
+### "Best" is significance discounted by distance
+
+Sorting by raw significance while standing in Split returns **Gorée, Senegal — 4,593 km
+away**. Correct as a global ranking, useless as an answer to "where should I go today".
+Distance alone is no better: it offers six listed townhouses on this street while the
+cathedral sits 300 m on.
+
+`detourScore` divides significance by distance with a **25 km half-life** — a site 25 km
+out needs twice the significance to rank alongside one at your feet. Standing in Split it
+now returns the Palace complex, Diocletian's Palace, the Cathedral of St Domnius, the
+Temple of Jupiter, and **Salona 4.9 km out**, which is exactly the trade a person makes.
+
+### Two things measuring caught
+
+**Stadion Poljud ranked fourth in Split.** A football stadium, on 40 sitelinks and nothing
+else. Renown measures what Wikipedia covers, which includes stadiums, airports and
+universities. Renown now requires corroboration — a theme, a grade or a real description —
+and is discounted to a quarter without it. World Heritage sites with no theme keep their
+score because the designation corroborates them.
+
+**The Croatian *language* was in the catalogue as a place.** Intangible heritage carries
+`P1435` exactly like a building, and Wikidata gives it the country centroid for
+coordinates, so it sat at 45°N 15°E scoring 53 on 200 sitelinks. Eleven such rows were
+removed. A designation is not evidence of somewhere you can stand.
+
+### A latent bug this exposed
+
+Explore's "Significance" sort has never worked. It sorted by `tier`, which is **2 for all
+260,008 bulk sites** — so the control has been inert since the bulk layer shipped. Same for
+the cluster overlay's "most significant 40", which was an arbitrary 40.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
@@ -663,9 +731,10 @@ decides whether the planner is genuinely useful or merely plausible.
 **2b. ~~Containment~~ — partly done.** 2,324 sites now know their container. It fixes the
 double-counting it can see and leaves a bigger problem behind it: **selection**. See below.
 
-**2c. Selection — choosing which sites are worth a day.** The real reason central Split
-"needs" 48 hours is that it holds 52 heritage records and a person visits six of them.
-Nothing yet decides which six.
+**2c. ~~Selection~~ — done, see *Selection* below.** Every site scores 0–100 on whether it
+is worth a detour, and Explore's "Best" sort combines that with distance. Standing in
+Split it now answers: the Palace complex, the Cathedral, the Temple of Jupiter, and Salona
+4.9 km out.
 
 **3. Real travel time.** `SiteCluster.route(from:)` already does nearest-neighbour ordering
 on straight-line distance, which is fine for "these five are near each other" and useless

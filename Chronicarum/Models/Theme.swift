@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 /// What a site is *about*, as a traveller would say it.
 ///
@@ -155,5 +156,24 @@ extension Collection where Element == Site {
             guard let parent = site.parentID else { return false }
             return present.contains(parent)
         }
+    }
+}
+
+// MARK: - Worth a detour
+
+extension Site {
+    /// Significance discounted by how far away it is — "what is worth my time from here".
+    ///
+    /// Raw significance answers a different question. Sorting 260k sites by it while
+    /// standing in Split offers Gorée in Senegal, 4,593 km away: correct as a global
+    /// ranking and useless as an answer to "where should I go today". Distance alone is
+    /// no better — it offers the six listed townhouses on this street while the cathedral
+    /// sits 300 m further on.
+    ///
+    /// The half-life is 25 km: a site 25 km away needs twice the significance of one at
+    /// your feet to rank alongside it, which is roughly how people actually trade off a
+    /// detour against a better destination.
+    func detourScore(from origin: CLLocationCoordinate2D) -> Double {
+        Double(significance) / (1 + approxDistanceKm(from: origin) / 25)
     }
 }

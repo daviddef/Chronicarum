@@ -187,6 +187,15 @@ struct Site: Codable, Identifiable {
     /// three up. Derived by `scripts/merge_containment.py` from Wikidata P361.
     var parentID: String? = nil
 
+    /// 0–100: how much this site is worth a detour, relative to everything else. Derived
+    /// by `scripts/derive_significance.py` from renown, designation grade, how much the
+    /// catalogue holds about it, and whether it is a whole place or a part of one.
+    ///
+    /// A **ranking device, not a judgement**. A 12 is not "unimportant" — it is "if you
+    /// only have a day, not this one". `tier` cannot do this job: it is 2 for every one
+    /// of the 260,008 bulk sites.
+    var significance: Int = 0
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -323,7 +332,7 @@ struct Site: Codable, Identifiable {
         case civilisation = "civ"
         case tagline, chapters
         case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile, dataSource
-        case themeMask, visitMinutes, parentID
+        case themeMask, visitMinutes, parentID, significance
     }
 }
 

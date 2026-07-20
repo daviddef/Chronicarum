@@ -99,7 +99,7 @@ final class SiteViewModel: ObservableObject {
         var label: String {
             switch self {
             case .nearest:      return "Nearest"
-            case .significance: return "Significance"
+            case .significance: return "Best"
             case .name:         return "Name"
             }
         }
@@ -116,9 +116,22 @@ final class SiteViewModel: ObservableObject {
         case .name:
             return matches.sorted { $0.name < $1.name }
         case .significance:
-            return matches.sorted { $0.tier > $1.tier }
+            // Was `tier`, which is 2 for all 260,008 bulk sites — so this sort did
+            // nothing at all until `significance` existed.
+            //
+            // Distance-aware when we know where the user is: raw significance sorted
+            // globally answers "what is the most important place on earth", which while
+            // standing in Split returns Senegal. `detourScore` asks the question a
+            // traveller is actually asking.
+            guard let origin else {
+                return matches.sorted { ($0.significance, $0.tier) > ($1.significance, $1.tier) }
+            }
+            return matches
+                .map { ($0, $0.detourScore(from: origin)) }
+                .sorted { $0.1 > $1.1 }
+                .map(\.0)
         case .nearest:
-            guard let origin else { return matches.sorted { $0.tier > $1.tier } }
+            guard let origin else { return matches.sorted { $0.significance > $1.significance } }
             return matches
                 .map { ($0, $0.approxDistanceKm(from: origin)) }
                 .sorted { $0.1 < $1.1 }

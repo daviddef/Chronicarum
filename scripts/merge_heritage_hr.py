@@ -64,6 +64,18 @@ CLASS_TYPES = {
 }
 CLASS_TO_TYPE = {name: t for t, names in CLASS_TYPES.items() for name in names}
 
+# Intangible heritage carries P1435 exactly like a building does, and Wikidata gives it
+# the country's centroid for coordinates. That put the Croatian *language* in the
+# catalogue as a place at 45°N 15°E, scoring 53 on renown because 200 Wikipedias describe
+# it. A designation is not evidence of somewhere you can stand.
+NOT_A_PLACE = {
+    "language", "modern language", "standard variety", "pluricentric language variant",
+    "dialect", "dance", "folk dance", "tradition", "custom", "festival", "carnival",
+    "cuisine", "dish", "craft", "handicraft", "music genre", "song", "oral tradition",
+    "ritual", "ceremony", "intangible cultural heritage", "cultural practice",
+    "singing style", "textile technique", "sport", "ethnic group", "human",
+}
+
 def era_from_inception(iso):
     if not iso:
         return "unknown"
@@ -132,6 +144,10 @@ def duplicate_of(name, lat, lon):
 rows, skipped = [], Counter()
 
 for qid, e in items.items():
+    if e["kinds"] & NOT_A_PLACE:
+        skipped["intangible heritage, not a place"] += 1
+        continue
+
     matched = [CLASS_TO_TYPE[k] for k in e["kinds"] if k in CLASS_TO_TYPE]
     # A heritage designation alone earns a place even if the class is unrecognised —
     # P1435 is the signal this whole approach is built on.
