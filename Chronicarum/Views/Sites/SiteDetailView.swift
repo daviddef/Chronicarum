@@ -65,6 +65,11 @@ struct SiteDetailView: View {
                             .padding(.top, 16)
                     }
 
+                    // ── When is it open ───────────────────────────────────
+                    OpeningHoursView(site: site)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
                     // ── Travel Layer ──────────────────────────────────────
                     TravelLayerView(site: site)
                         .padding(.horizontal, 16)
@@ -198,6 +203,61 @@ struct SiteHeroView: View {
             }
         }
         .frame(height: 200)
+    }
+}
+
+/// What is *typically* true about opening, plus a way to check the truth.
+///
+/// Never states hours. There is no source for them — see `OpeningPattern` — and inventing
+/// them would send someone across a city to a locked door.
+struct OpeningHoursView: View {
+    let site: Site
+
+    var body: some View {
+        if site.openingPattern != nil || site.officialWebsite != nil {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Visiting").font(.headline)
+
+                if let pattern = site.openingPattern {
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "clock").font(.system(size: 11))
+                        Text(pattern.note)
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+
+                    if pattern.isSeasonal {
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "leaf").font(.system(size: 11))
+                            Text("Hours usually vary by season.")
+                        }
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    }
+                }
+
+                if let website = site.officialWebsite {
+                    Link(destination: website) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "safari")
+                            Text("Check the official site")
+                            Spacer(minLength: 0)
+                            Image(systemName: "arrow.up.right").font(.system(size: 10))
+                        }
+                        .font(.footnote.weight(.medium))
+                    }
+                    .padding(.top, 2)
+                }
+
+                Text("We don't know this site's actual hours — no heritage register "
+                     + "records them. The above is what's typical for this kind of place.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary.opacity(0.8))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        }
     }
 }
 

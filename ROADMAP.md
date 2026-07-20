@@ -23,7 +23,7 @@ when Dubrovnik had exactly one site in it.
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
-| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ **Itineraries build and render.** Opening hours and real routing still missing |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Itineraries build, render, and avoid typical closures. **Real routing still missing** |
 | **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**37 of 40 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**38 of 41 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -739,6 +739,53 @@ nearest-neighbour.
   it.
 - **Anything about you beyond themes.** No pace, no mobility, no "we have children", no
   "we don't drive".
+
+## Opening hours — the honest answer is that nobody has them
+
+The largest remaining gap turned out not to be a build problem but a sourcing one, and the
+sourcing has no answer. Measured before designing anything:
+
+| source | coverage | cost |
+|---|---|---|
+| Wikidata `P3025` (opening hours) | **703 designated sites worldwide** (0.27%) | free |
+| OpenStreetMap `opening_hours` | **5%** of heritage objects, in both Bath and Split | ODbL — must publish our derived database |
+| Any heritage register | **nothing** | — |
+| Wikidata `P856` (official website) | ~9% UK, ~6% Croatia, 2.6% of our catalogue | free |
+
+**This settles the ODbL question that had been open since the Brisbane research.** OSM is
+the only candidate with real hours data, and accepting the obligation to publish our
+derived database would buy hours for **one site in twenty**. That is not a trade worth
+making.
+
+### So the app does not claim to know
+
+Three things shipped instead, none of which invents a fact:
+
+**Typical patterns by kind of place.** Museums are commonly closed Mondays; historic houses
+close Mondays and over winter; castles keep short winter hours; churches are usually open
+but may close for services; ruins and monuments are open ground. Ordinary travel knowledge,
+applied by theme, and always hedged —
+[`OpeningPattern.swift`](Chronicarum/Models/OpeningPattern.swift).
+
+**The planner acts on it.** Trips take a start date, so days map to weekdays, and a place
+commonly shut that day is demoted rather than excluded — the patterns are typical, not
+known, and refusing to show the only museum in town because it is Monday would trust a
+guess further than it deserves. Starting a Bath trip on **Monday 27 July** now produces:
+
+    Day 1 · Monday   Great Spa Towns, Bath Abbey, Pulteney Bridge,
+                     Queen Square, Royal Crescent, Farleigh Hungerford Castle
+    Day 2 · Tuesday  Roman Baths, ...
+
+The Roman Baths moved itself to Tuesday. Nothing told it to; the closure factor did it.
+
+**A way to check.** 6,871 sites carry an official website (CC0, from `P856`), shown as
+"Check the official site". Thin at 2.6%, and shipped anyway — for those sites the
+alternative is "go and find out somehow".
+
+Every surface says the same thing in plain words: *we don't know this site's actual hours,
+no heritage register records them, this is what's typical.* A plan that quietly invents an
+opening time is worse than one that admits ignorance, because the first sends someone
+across a city to a locked door.
 
 ## Open question: institutional sites
 

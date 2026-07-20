@@ -19,8 +19,22 @@ struct PlannedStop: Identifiable {
 struct PlannedDay: Identifiable {
     let index: Int
     let stops: [PlannedStop]
+    /// The actual date this day falls on, so closures can be reasoned about at all.
+    let date: Date
 
     var id: Int { index }
+
+    var weekdayName: String {
+        date.formatted(.dateTime.weekday(.wide))
+    }
+
+    /// Stops that this kind of place is *commonly* closed on, for this day of the week.
+    /// Advisory — see `OpeningPattern`; the app never claims to know a site's real hours.
+    func commonlyClosedStops(calendar: Calendar = .current) -> [Site] {
+        stops.map(\.site).filter {
+            $0.openingPattern?.isCommonlyClosed(on: date, calendar: calendar) ?? false
+        }
+    }
     var visitMinutes: Int { stops.reduce(0) { $0 + $1.site.visitMinutes } }
     var travelMinutes: Int { stops.reduce(0) { $0 + $1.travelMinutes } }
     var totalMinutes: Int { visitMinutes + travelMinutes }
@@ -35,6 +49,7 @@ struct TripPlan {
     let days: [PlannedDay]
     let origin: CLLocationCoordinate2D
     let themes: Theme
+    let startDate: Date
 
     var isEmpty: Bool { days.allSatisfy(\.stops.isEmpty) }
     var totalStops: Int { days.reduce(0) { $0 + $1.stops.count } }
@@ -102,6 +117,7 @@ enum TripPlanner {
     static func plan(from origin: CLLocationCoordinate2D,
                      themes: Theme,
                      days: Int,
+                     startDate: Date = Date(),
                      hoursPerDay: Double = 8,
                      radiusKm: Double = 80,
                      catalogue: [Site] = SiteData.all) -> TripPlan {
@@ -129,7 +145,21 @@ enum TripPlanner {
         var used = Set<String>()
         var built: [PlannedDay] = []
 
+        let calendar = Calendar.current
+
         for dayIndex in 0..<max(days, 1) {
+            let dayDate = calendar.date(byAdding: .day, value: dayIndex, to: startDate) ?? startDate
+
+            // Weekday-aware. Nothing is excluded outright — the patterns are typical, not
+            // known, and refusing to show the one museum in town because it is Monday
+            // would be trusting a guess further than it deserves. Instead a commonly-shut
+            // place is heavily demoted, so it lands on another day when there is one, and
+            // still appears (flagged) when there is not.
+            func closureFactor(_ site: Site) -> Double {
+                (site.openingPattern?.isCommonlyClosed(on: dayDate, calendar: calendar) ?? false)
+                    ? 0.35 : 1.0
+            }
+
             var budget = hoursPerDay * 60
             var here = origin
             var stops: [PlannedStop] = []
@@ -138,9 +168,12 @@ enum TripPlanner {
             // Anchor first. Choosing purely by value-per-minute defers the expensive
             // flagship indefinitely — it put the Historical Complex of Split, the best
             // thing in the city, on day 3 while spending day 1 on its own gates.
-            guard let anchor = pool.first(where: {
-                !used.contains($0.id) && Double($0.visitMinutes) <= budget
-            }) else { break }
+            guard let anchor = pool
+                .filter({ !used.contains($0.id) && Double($0.visitMinutes) <= budget })
+                .max(by: { a, b in
+                    a.detourScore(from: origin) * closureFactor(a)
+                        < b.detourScore(from: origin) * closureFactor(b)
+                }) else { break }
 
             let anchorTravel = travelMinutes(overKm: anchor.approxDistanceKm(from: here))
             used.insert(anchor.id)
@@ -167,7 +200,8 @@ enum TripPlanner {
                     // of two comparable ones.
                     let variety = lastTheme.isEmpty || site.themes.intersection(lastTheme).isEmpty
                         ? 1.0 : 0.75
-                    let value = Double(site.significance) * variety - 0.5 * Double(travel)
+                    let value = Double(site.significance) * variety * closureFactor(site)
+                        - 0.5 * Double(travel)
 
                     if best == nil || value > best!.value {
                         best = (site, travel, value)
@@ -184,9 +218,10 @@ enum TripPlanner {
             }
 
             built.append(PlannedDay(index: dayIndex,
-                                    stops: ordered(stops.map(\.site), from: origin)))
+                                    stops: ordered(stops.map(\.site), from: origin),
+                                    date: dayDate))
         }
 
-        return TripPlan(days: built, origin: origin, themes: themes)
+        return TripPlan(days: built, origin: origin, themes: themes, startDate: startDate)
     }
 }

@@ -12,6 +12,7 @@ struct TripPlanView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var days = 3
+    @State private var startDate = Date()
     @State private var plan: TripPlan?
     @State private var isBuilding = false
     @State private var selectedSite: Site?
@@ -21,6 +22,7 @@ struct TripPlanView: View {
             List {
                 Section {
                     Stepper("\(days) \(days == 1 ? "day" : "days")", value: $days, in: 1...14)
+                    DatePicker("Starting", selection: $startDate, displayedComponents: .date)
                     if !themes.isEmpty {
                         HStack {
                             Text("Interests").foregroundColor(.secondary)
@@ -48,9 +50,21 @@ struct TripPlanView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                            let closed = day.commonlyClosedStops()
+                            if !closed.isEmpty {
+                                // Advisory, never a claim. See `OpeningPattern`: there is
+                                // no source for real hours, so the app says what is
+                                // typical and tells you to check.
+                                Label(closed.count == 1
+                                      ? "\(closed[0].name) may be closed on a \(day.weekdayName) — worth checking."
+                                      : "\(closed.count) of these are commonly closed on a \(day.weekdayName) — worth checking.",
+                                      systemImage: "exclamationmark.triangle")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
                         } header: {
                             HStack {
-                                Text("Day \(day.index + 1)")
+                                Text("Day \(day.index + 1) · \(day.weekdayName)")
                                 Spacer()
                                 Text(day.summary).foregroundColor(.secondary)
                             }
@@ -59,8 +73,10 @@ struct TripPlanView: View {
 
                     Section {
                         Text("Travel times are estimated from straight-line distance, not "
-                             + "routed, and opening hours aren't known yet — check before "
-                             + "you set out.")
+                             + "routed. Opening hours are not known for any site — no "
+                             + "heritage register records them — so closures here are "
+                             + "what's typical for that kind of place, not fact. Check "
+                             + "before you set out.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -80,6 +96,7 @@ struct TripPlanView: View {
                 }
             }
             .task(id: days) { rebuild() }
+            .task(id: startDate) { rebuild() }
             .sheet(item: $selectedSite) { SiteDetailView(site: $0) }
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
@@ -92,8 +109,10 @@ struct TripPlanView: View {
         // 260k sites and a greedy inner loop — off the main thread so the stepper stays
         // responsive while a longer trip is built.
         let requestedDays = days
+        let requestedStart = startDate
         DispatchQueue.global(qos: .userInitiated).async {
-            let built = TripPlanner.plan(from: origin, themes: themes, days: requestedDays)
+            let built = TripPlanner.plan(from: origin, themes: themes,
+                                         days: requestedDays, startDate: requestedStart)
             DispatchQueue.main.async {
                 plan = built
                 isBuilding = false
