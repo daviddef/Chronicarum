@@ -57,7 +57,7 @@ was a prerequisite rather than a substitute.
 ## How far along are we?
 
 **42 of 44 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
-on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
+on a real iPhone (TestFlight build 8 — PDF, Wikipedia summaries, Italy, trip planning, draw-a-region). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
