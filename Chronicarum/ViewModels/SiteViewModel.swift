@@ -168,6 +168,17 @@ final class SiteViewModel: ObservableObject {
         Dictionary(SiteData.all.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }()
 
+    /// A human name for where the user is — taken from the nearest notable site's location
+    /// line ("Bath and North East Somerset, United Kingdom" -> "Bath and North East
+    /// Somerset"). Only used to title an exported itinerary, so a miss costs nothing.
+    func nearestPlaceName(to origin: CLLocationCoordinate2D) -> String? {
+        allSites
+            .filter { $0.significance >= 40 }
+            .min { $0.approxDistanceKm(from: origin) < $1.approxDistanceKm(from: origin) }
+            .map { $0.location.components(separatedBy: ",").first ?? $0.location }
+            .flatMap { $0.isEmpty ? nil : $0 }
+    }
+
     var bookmarkedSites: [Site] {
         allSites.filter { bookmarkedIDs.contains($0.id) }
     }

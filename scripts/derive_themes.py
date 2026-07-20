@@ -192,6 +192,12 @@ VETOES = {
         r"|concert|dance|meeting|dining|banqueting|assembly|drill|temperance)\s*hall\b",
     ],
     "maritime": [r"\bgate\s+pier"],
+    # "Bristol Temple Meads railway station" is not a temple. Station and street names
+    # swallow religious words wholesale — Temple Meads, Temple Quay, Whitechapel,
+    # Chapel Street — and a rail terminus filed under "Churches & abbeys" is visibly wrong
+    # the moment it reaches a printed itinerary.
+    "sacred": [r"\b(?:railway|rail|train|bus|coach|underground|tube|metro)\s+station\b"
+               r"|\btemple meads\b|\btemple quay\b|\bstation road\b"],
     # "Dover Castle Hotel" is a pub. British and Australian pubs are overwhelmingly named
     # after castles, ships and coats of arms, and a castle-themed itinerary that routes
     # someone to a Wetherspoons is worse than one that misses a real castle.

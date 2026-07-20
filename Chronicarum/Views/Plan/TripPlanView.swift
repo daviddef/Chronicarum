@@ -9,6 +9,9 @@ import CoreLocation
 struct TripPlanView: View {
     let origin: CLLocationCoordinate2D
     let themes: Theme
+    /// Where the trip starts, in words — used to title the PDF. Best effort: the location
+    /// line of the nearest notable site, which is a place name far more often than not.
+    var placeName: String? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var days = 3
@@ -16,6 +19,7 @@ struct TripPlanView: View {
     @State private var plan: TripPlan?
     @State private var isBuilding = false
     @State private var selectedSite: Site?
+    @State private var pdfURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -94,6 +98,20 @@ struct TripPlanView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    if let plan, !plan.isEmpty {
+                        // ShareLink rather than a bespoke export screen: the system sheet
+                        // already offers print, Files, Mail and everything else, and
+                        // sending on someone's behalf should be their gesture, not ours.
+                        ShareLink(item: pdfURL ?? URL(fileURLWithPath: "/dev/null"),
+                                  preview: SharePreview("Itinerary")) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(pdfURL == nil)
+                        .onAppear { regeneratePDF(plan) }
+                        .onChange(of: plan.days.count) { _, _ in regeneratePDF(plan) }
+                    }
+                }
             }
             .task(id: days) { rebuild() }
             .task(id: startDate) { rebuild() }
@@ -101,6 +119,15 @@ struct TripPlanView: View {
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
             }
+        }
+    }
+
+    /// The PDF is rendered up front rather than on tap, so `ShareLink` has a real file to
+    /// offer — it captures its item when the sheet is built, not when it is opened.
+    private func regeneratePDF(_ plan: TripPlan) {
+        DispatchQueue.global(qos: .utility).async {
+            let url = ItineraryPDF.writeTemporaryFile(plan, placeName: placeName)
+            DispatchQueue.main.async { pdfURL = url }
         }
     }
 
@@ -116,6 +143,7 @@ struct TripPlanView: View {
             DispatchQueue.main.async {
                 plan = built
                 isBuilding = false
+                regeneratePDF(built)
             }
         }
     }

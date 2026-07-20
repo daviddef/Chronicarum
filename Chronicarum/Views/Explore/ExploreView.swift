@@ -96,7 +96,9 @@ struct ExploreView: View {
                 }
                 .sheet(isPresented: $showPlanner) {
                     if let origin = mapVM.userLocation {
-                        TripPlanView(origin: origin, themes: siteVM.selectedThemes)
+                        TripPlanView(origin: origin,
+                                     themes: siteVM.selectedThemes,
+                                     placeName: siteVM.nearestPlaceName(to: origin))
                     }
                 }
             }

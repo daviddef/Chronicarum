@@ -36,6 +36,7 @@
 		C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111ECDBF6E6398A93E34711C /* MapRootView.swift */; };
 		CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1389CCD88C933F622515A48F /* SiteDetailView.swift */; };
 		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
+		D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */; };
 		DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73170330E1865B973F1BE67 /* Empire.swift */; };
 		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
 		EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF03E268E066215CE65549FC /* ChapterMarkup.swift */; };
@@ -66,6 +67,7 @@
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
 		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
+		B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryPDF.swift; sourceTree = "<group>"; };
 		BAA2C1E3FA04D4125019FD3C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		BF26399E32C64942E33F712C /* OfficialWebsite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialWebsite.swift; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				8A9F74C0BE405A0D5C654CDE /* BulkData.swift */,
 				EF03E268E066215CE65549FC /* ChapterMarkup.swift */,
 				D73170330E1865B973F1BE67 /* Empire.swift */,
+				B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */,
 				FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */,
 				BF26399E32C64942E33F712C /* OfficialWebsite.swift */,
 				490E6A73385E51BC23C07148 /* OpeningPattern.swift */,
@@ -306,6 +309,7 @@
 				916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */,
 				DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */,
 				B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */,
+				D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */,
 				EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */,
 				1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */,
 				544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */,
@@ -391,7 +395,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -481,7 +485,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_NS_ASSERTIONS = NO;
