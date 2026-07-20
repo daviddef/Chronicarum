@@ -5,21 +5,21 @@ of each done-list. Commits referenced by short SHA.
 
 ## How far along are we?
 
-**26 of 29 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**27 of 30 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 6/6 — 24,281 sites |
+| 2 · Content: handful → thousands | ✅ Done | 7/7 — 34,715 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
-- **24,281 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and 24,158
-  bulk-imported from Wikidata
-- **22,449 photos** — 93% of bulk sites, 80% of featured
+- **34,715 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and 34,592
+  bulk-imported from Wikidata, of which **10,569 are Australian heritage-register places**
+- **28,654 photos** — 83% of bulk sites, 80% of featured
 - Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
   search; bookmarks and dated visits that survive a restart
 - Location-aware: opens where you are, Explore sorted nearest-first with distances,
@@ -28,14 +28,14 @@ Where it stands today:
 
 What's genuinely left:
 
-- **Thin bulk entries** (open) — 24k sites carry a one-line description. Enriching them
+- **Thin bulk entries** (open) — 34k sites carry a one-line description. Enriching them
   with a Wikipedia paragraph is additive; nothing is broken without it.
 - **Travel staleness** (partial) — the fields now say when they were researched and that
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
 
-Photo attribution, which was the other release blocker, is now handled: 22,260 photos
-carry their author and licence.
+Photo attribution, which was the other release blocker, is now handled: 28,412 photos
+carry their author and licence (99% of those that have one).
 
 ---
 
@@ -69,13 +69,16 @@ The starting point: a SwiftUI project that modelled the app but could not build.
 - [x] Widen the bulk import to ~24k (added monuments + archaeological sites). Two
       sitelink bands lost to Wikidata 502s were recovered on retry, so nothing was
       silently dropped. 24,281 sites total, verified rendering smoothly.
+- [x] **Import by heritage designation, not Wikipedia popularity** — the notability filter
+      was the whole problem. Australia-wide pass added 9,728 places (34,592 bulk total).
+      See *Why the catalogue was thin* below.
 
 ## Phase 3 — Depth and durability (in progress)
 
 Ordered by my sense of value.
 
 - [x] **Site photos** — Wikimedia Commons images via Wikidata P18, rendered with
-      `AsyncImage` and falling back to the era-tinted glyph. 22,351/24,158 bulk (93%)
+      `AsyncImage` and falling back to the era-tinted glyph. 28,556/34,592 bulk (83%)
       and 98/123 featured (80%) have a photo. Each links to its Commons file page,
       where the licence and author live.
 - [x] **Persistence** — `PersistenceService` wired into `SiteViewModel`: saved state
@@ -121,8 +124,113 @@ Ordered by my sense of value.
       separate bugs defeated the auto-centre before instrumenting found them:
       `onMapCameraChange` fires twice on first layout, and the location fix usually lands
       before the map appears.
-- [ ] **◀ YOU ARE HERE** — see *What's next* below. Next: bounded collections, then a
-      Year in Review.
+- [ ] **◀ YOU ARE HERE** — Australia is now covered by heritage designation rather than
+      Wikipedia fame (see *Why the catalogue was thin*). Next: roll the same query to the
+      other markets, then bounded collections and a Year in Review.
+
+---
+
+# Why the catalogue was thin — and the fix
+
+Researched July 2026, prompted by a screenshot: Brisbane, a city of 2.6 million, showed
+**7 places**. No Anzac Square, no CBD heritage buildings, nothing anyone would walk to.
+
+## The cause
+
+The bulk import gated on **Wikipedia sitelink count ≥ 5 language editions**. That is a
+proxy for global fame, and it works exactly as designed for the Colosseum. For anything
+local it is destructive:
+
+| Within 20 km of Brisbane CBD | Count |
+|---|---|
+| Places with a heritage designation | **546** |
+| …of those, clearing the ≥5-sitelink bar | **11** |
+
+An independent research pass reached the same conclusion unprompted: *the notability
+filter is the entire problem.* Sitelink count measures how many Wikipedias happened to
+write an article, which for a suburban post office is zero regardless of merit.
+
+## The fix
+
+**Wikidata `P1435` (heritage designation)** as the inclusion signal. If a government
+register lists a place, that is a stronger statement about it being worth visiting than
+how many language editions describe it. It also happens to be free of licence obligations:
+Wikidata statements are **CC0**, so nothing is owed and nothing is share-alike.
+
+Measured supply at the time of writing:
+
+| Scope | `P1435` + coordinates | …also with a photo |
+|---|---|---|
+| Worldwide | ~2,100,000 | 962,256 |
+| Australia (`P17 = Q408`) | 10,576 | 59.5% |
+
+Per-city, to show the shape: Brisbane 546 · Sydney 937 · Bristol 8,364 · Amsterdam 11,577.
+The global photo rate misleads badly (AU 59.5% vs GB 29.2%) — measure per market, never
+once.
+
+## What shipped
+
+Australia-wide, partitioned by register rather than by geographic ring — each register is
+a naturally bounded slice (largest: Victorian Heritage Register, 2,381) so every query
+finishes inside the 60 s SPARQL timeout without paging. 22 registers, 10,493 places
+fetched, **9,728 new, 760 existing rows enriched with a locality, 3 genuine duplicates
+skipped**. Photo attribution followed: 28,315 of 28,316 credited.
+
+Scripts: [`fetch_heritage_pilot.py`](scripts/fetch_heritage_pilot.py) (Brisbane proof) →
+[`fetch_heritage_au.py`](scripts/fetch_heritage_au.py) +
+[`merge_heritage_au.py`](scripts/merge_heritage_au.py).
+
+**The dedup bug worth remembering.** The first merge reported "176 curated duplicates
+skipped" and it looked plausible. It was not: a 0.01° (~1.1 km) collision radius had
+deleted 173 real heritage places — Customs House, Cadmans Cottage, the Garrison Church —
+purely for standing near the Sydney Opera House. Only **3** were actual duplicates.
+Tightened to 0.0005° (~55 m), with name matching doing the real work. A dedup rule that
+silently deletes content is worse than no dedup, because the loss is invisible.
+
+## Caveats on this data
+
+- **Brisbane is atypically good.** ~1,823 of its en.wikipedia articles were bulk-generated
+  from the Queensland Heritage Register under CC BY 3.0 AU. Most cities will look thinner
+  than the Brisbane result suggests. Don't generalise from it.
+- **Templated descriptions are not prose.** `"historic commonwealth heritage site in
+  Crace ACT"` restates the name and the pin. 87% of Australian records have a description;
+  almost none of it is worth reading. 34.6% have neither a Wikipedia article nor an image.
+- **Never title-match to Wikipedia.** `/page/summary/Maryborough_Post_Office` returns a
+  disambiguation page. Resolve via the Wikidata sitelink only.
+
+## Where to go next, ranked
+
+1. **Other markets, same query.** One line changes (`P17`). UK, France, US, Netherlands
+   all have deep `P1435` coverage.
+2. **Official registers where the local layer is thin.** Historic England (OGL), France's
+   Mérimée (46,714 monuments, Licence Ouverte), US NRHP (public domain, 72,668 points),
+   Netherlands RCE (~63,000), Ireland NIAH (CC BY 4.0, *includes image links*). Cost is
+   an attribution string. Note NRHP deliberately withholds archaeological sites, and
+   Australia generalises sensitive sites to a 250 km mapsheet — don't render those as
+   confident pins.
+3. **Commons geosearch to close the photo gap.** We have coordinates for 99.4% of items;
+   `generator=geosearch` at 500 m finds images the item itself lacks. Needs a relevance
+   heuristic — a photo 400 m away may be the wrong building.
+4. **Trails: generate, don't import.** Structured heritage-trail geodata barely exists —
+   worldwide only Melbourne and Washington DC publish it cleanly licensed. Zero councils
+   found publishing GPX; Sydney ships 14 MB PDFs. OSM has no `route=heritage` schema
+   (Australia: 719 foot/hiking relations, **12** heritage-named). The path is heritage
+   registers for POIs + OSM footways for the network + self-hosted **Valhalla** (MIT)
+   `optimized_route` to order the stops.
+
+## Decisions still open
+
+- **OpenStreetMap** would add a genuinely complementary plaque/memorial/public-art layer
+  (254 named Brisbane objects Wikidata lacks) — but ODbL §4.6 forces publishing the derived
+  database, and §4.7(b) makes that necessary for App Store distribution anyway. Ship OSM
+  *and* publish, or don't ship OSM. There is no third option. **Not taken.**
+- **CC BY-SA 4.0 §2(a)(5)(B)** has a parallel anti-DRM clause, and Creative Commons' own
+  wiki flags App Store distribution as a possible violation while rejecting parallel
+  distribution as a cure. Mitigation if we ever enrich with Wikipedia prose: **fetch at
+  runtime, don't bake it into the binary** — which is how the official Wikipedia iOS app
+  works. Wikidata (CC0) and NRHP (public domain) are unaffected and bundle freely.
+- **Don't LLM-rewrite Wikipedia extracts.** That creates an adaptation and CC BY-SA
+  attaches to the generated text. Verbatim extract plus a link is the clean path.
 
 ---
 

@@ -37,7 +37,7 @@ Two layers (see [`scripts/`](scripts/)):
 
 - **~123 featured sites** — hand-authored in `Chronicarum/Models/SiteData.swift`, each with
   a tagline, four facts, and a multi-chapter storyboard.
-- **~24k bulk sites** — `Chronicarum/Resources/bulk_sites.json`, imported from Wikidata
+- **~35k bulk sites** — `Chronicarum/Resources/bulk_sites.json`, imported from Wikidata
   (UNESCO + castles + museums + monuments + archaeological sites) and decoded at runtime
   by `BulkData.swift`. These carry a name, place, type, best-effort era, and a one-line
   description. They are `tier: 2`, so raising the significance filter shows the featured
@@ -53,7 +53,7 @@ and links to its Commons file page — most of these licences require naming the
 
 ## Status
 
-Working: clustered map of ~24k sites with photos, era/type/tier filters, empire polygon overlay across
+Working: clustered map of ~35k sites with photos, era/type/tier filters, empire polygon overlay across
 all seven timeline periods, "locate me", site detail sheets, search, bookmarks.
 
 Known gaps:
