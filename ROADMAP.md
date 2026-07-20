@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**39 of 42 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**40 of 42 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -83,8 +83,6 @@ Where it stands today:
 
 What's genuinely left:
 
-- **Thin bulk entries** (open) — most bulk sites carry a one-line description or none at
-  all. Enriching them with a Wikipedia paragraph is additive; nothing is broken without it.
 - **Travel staleness** (partial) — the fields now say when they were researched and that
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
@@ -173,8 +171,13 @@ Ordered by my sense of value.
       a random notable site, and `emphasis: .muted` so Apple's POIs stop competing with our
       markers. Elevation is flat by necessity: `.realistic` occludes annotations in imagery
       mode, verified on device.
-- [ ] **Bulk sites are thin** — a name plus a one-line description. Optionally enrich the
-      notable ones with a Wikipedia paragraph. Purely additive.
+- [x] **Bulk sites are thin** — *closed.* 21,581 sites now fetch a real Wikipedia summary
+      at runtime, giving prose to 17,466 that had none. **Fetched, never bundled**: CC BY-SA
+      §2(a)(5)(B)'s anti-TPM clause makes App Store distribution of the text questionable,
+      and Creative Commons rejects parallel distribution as a cure — so the app does what
+      the official Wikipedia app does. Only the article *title* ships, which is CC0.
+      Resolved by Wikidata sitelink, never by name: `/page/summary/Maryborough_Post_Office`
+      returns a disambiguation page.
 - [x] **Sensitive-site flag** — `Site.isSensitive` excludes death camps, massacre sites,
       slave forts, war graves and political prisons from playful surfaces (currently the
       "surprise me" dice; the guard is in place before any collection mechanic). Keyword

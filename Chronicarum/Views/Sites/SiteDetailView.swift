@@ -58,6 +58,11 @@ struct SiteDetailView: View {
                             .padding(.top, 16)
                     }
 
+                    // ── Wikipedia summary (fetched, never bundled) ────────
+                    WikipediaSummaryView(site: site)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
                     // ── Register history (French monuments) ───────────────
                     if let history = site.monumentHistory {
                         MonumentHistoryView(text: history)
@@ -203,6 +208,44 @@ struct SiteHeroView: View {
             }
         }
         .frame(height: 200)
+    }
+}
+
+/// A Wikipedia summary, fetched on demand.
+///
+/// Renders nothing at all until the text arrives — no spinner, no empty box. Most sites
+/// have no article, and a placeholder on every one of them would be worse than silence.
+struct WikipediaSummaryView: View {
+    let site: Site
+    @State private var summary: WikipediaExtract.Summary?
+
+    var body: some View {
+        // A VStack rather than a Group: a Group whose body resolves to EmptyView is not
+        // guaranteed to be instantiated, so `.task` never ran and the summary never
+        // loaded. An always-present container with conditional content does run it, and
+        // collapses to nothing when there is no article.
+        VStack(alignment: .leading, spacing: 8) {
+            if let summary {
+                    Text("About").font(.headline)
+                    Text(summary.text)
+                        .font(.callout)
+                        .foregroundColor(.primary.opacity(0.85))
+                        .lineSpacing(3)
+                        .textSelection(.enabled)
+                    if let url = summary.articleURL {
+                        // CC BY-SA is satisfied by a link to the page reused, which is
+                        // also the thing a reader wants next.
+                        Link(destination: url) {
+                            Text("From Wikipedia · CC BY-SA 4.0")
+                                .font(.caption2)
+                        }
+                    }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .task(id: site.id) {
+            summary = await WikipediaExtract.summary(for: site)
+        }
     }
 }
 
