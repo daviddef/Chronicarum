@@ -38,8 +38,9 @@ What's genuinely left:
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
 
-Photo attribution, which was the other release blocker, is now handled: 69,103 of 69,107
-distinct photos carry their licence (99.99%), 98% of them with a named author.
+Photo attribution, which was the other release blocker, is now handled: 105,419 of
+105,421 distinct photos carry their licence, 98.9% of them with a named author. The two
+missing are files that no longer resolve on Commons.
 
 ---
 
@@ -90,7 +91,7 @@ The starting point: a SwiftUI project that modelled the app but could not build.
 Ordered by my sense of value.
 
 - [x] **Site photos** — Wikimedia Commons images via Wikidata P18, rendered with
-      `AsyncImage` and falling back to the era-tinted glyph. 69,864/143,325 bulk (49%)
+      `AsyncImage` and falling back to the era-tinted glyph. 105,421/187,507 bulk (56%)
       and 98/123 featured (80%) have a photo. Each links to its Commons file page,
       where the licence and author live.
 - [x] **Persistence** — `PersistenceService` wired into `SiteViewModel`: saved state
@@ -98,7 +99,7 @@ Ordered by my sense of value.
       app being killed. Also added the missing "visited" control — the Saved tab had a
       Visited section that nothing could ever fill.
 - [x] **Photo attribution** — author and licence fetched from the Commons API for
-      69,103 of 69,107 distinct photos and shown on the image itself (e.g. "FeaturedPics ·
+      105,419 of 105,421 distinct photos and shown on the image itself (e.g. "FeaturedPics ·
       CC BY-SA 4.0"), linking to the file page. Most of these licences require naming
       the author, so this is compliance rather than polish. The fetcher used to drop a
       whole 50-photo batch whenever a request failed — which is how a run of Cyrillic
