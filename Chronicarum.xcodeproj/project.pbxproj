@@ -12,12 +12,14 @@
 		02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */; };
 		027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */; };
 		02B4817F6DD3407982657B74 /* featured_images.json in Resources */ = {isa = PBXBuildFile; fileRef = A85F2D259BED16C5C1BD66E3 /* featured_images.json */; };
+		0819FA201F8177352E2EB503 /* TripPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB186FC00439FF284794EAF /* TripPlanView.swift */; };
 		1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */; };
 		14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */; };
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
 		5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */ = {isa = PBXBuildFile; fileRef = B43CE8B5F5585283B332BAAD /* merimee_history.json */; };
+		5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */; };
 		5F049BF57A23BE3BB3C693B9 /* ClusterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */; };
 		6739FBE03FB60A650BB28BA9 /* MonumentHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */; };
 		835DEAA8877E78EC9B5751EE /* Site.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D077ED9B01BBFC0966CC7DB /* Site.swift */; };
@@ -44,12 +46,14 @@
 		1389CCD88C933F622515A48F /* SiteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteDetailView.swift; sourceTree = "<group>"; };
 		1C8EB07A51868342759E1E2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlsView.swift; sourceTree = "<group>"; };
+		1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlan.swift; sourceTree = "<group>"; };
 		230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConquestTimelineBar.swift; sourceTree = "<group>"; };
 		26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bulk_columnar.json; sourceTree = "<group>"; };
 		33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineData.swift; sourceTree = "<group>"; };
 		37C381E3019A64B55DD81919 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
 		39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
 		4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterSheetView.swift; sourceTree = "<group>"; };
+		5AB186FC00439FF284794EAF /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
 		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
 		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
 		7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMarkerView.swift; sourceTree = "<group>"; };
@@ -91,6 +95,14 @@
 				B43CE8B5F5585283B332BAAD /* merimee_history.json */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		28A495B32397EAEC08951C1D /* Plan */ = {
+			isa = PBXGroup;
+			children = (
+				5AB186FC00439FF284794EAF /* TripPlanView.swift */,
+			);
+			path = Plan;
 			sourceTree = "<group>";
 		};
 		3631DA8D80B9F796CEA6B907 /* Settings */ = {
@@ -135,6 +147,7 @@
 				C5253630662A704FABEE643A /* ContentView.swift */,
 				E3DA4422D438494A7AD06520 /* Explore */,
 				54BDAC5EEB7D93EB7FF1862D /* Map */,
+				28A495B32397EAEC08951C1D /* Plan */,
 				3631DA8D80B9F796CEA6B907 /* Settings */,
 				0437AB89BEF9EA7D4A59BF1C /* Sites */,
 			);
@@ -178,6 +191,7 @@
 				DB2656A9226831B85426DAF9 /* SiteData.swift */,
 				BAA2C1E3FA04D4125019FD3C /* Theme.swift */,
 				33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */,
+				1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -299,6 +313,8 @@
 				02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */,
 				01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */,
 				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
+				5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */,
+				0819FA201F8177352E2EB503 /* TripPlanView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

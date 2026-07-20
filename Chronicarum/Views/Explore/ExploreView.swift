@@ -6,6 +6,8 @@ struct ExploreView: View {
     @EnvironmentObject private var mapVM: MapViewModel
     @State private var selectedSite: Site? = nil
 
+    @State private var showPlanner = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -82,6 +84,21 @@ struct ExploreView: View {
                 }
                 .listStyle(.plain)
                 .searchable(text: $siteVM.searchText, prompt: "Search sites, civilisations…")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showPlanner = true
+                        } label: {
+                            Label("Plan a trip", systemImage: "calendar.badge.plus")
+                        }
+                        .disabled(mapVM.userLocation == nil)
+                    }
+                }
+                .sheet(isPresented: $showPlanner) {
+                    if let origin = mapVM.userLocation {
+                        TripPlanView(origin: origin, themes: siteVM.selectedThemes)
+                    }
+                }
             }
             .navigationTitle("Explore")
             .sheet(item: $selectedSite) { site in

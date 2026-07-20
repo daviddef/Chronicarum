@@ -23,7 +23,7 @@ when Dubrovnik had exactly one site in it.
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
-| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Durations, containment and selection done; **hours and travel time open** |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ **Itineraries build and render.** Opening hours and real routing still missing |
 | **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**36 of 39 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**37 of 40 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -690,6 +690,55 @@ removed. A designation is not evidence of somewhere you can stand.
 Explore's "Significance" sort has never worked. It sorted by `tier`, which is **2 for all
 260,008 bulk sites** — so the control has been inert since the bulk layer shipped. Same for
 the cluster overlay's "most significant 40", which was an arbitrary 40.
+
+## Day shaping — the thing everything else was for
+
+*"I'm going to Croatia for 7 days. I like castles and Roman history — where should I go?"*
+[`TripPlan.swift`](Chronicarum/Models/TripPlan.swift) answers it. Standing in Split with
+castles and Roman history selected, three days:
+
+    Day 1 — 5 stops, 7.3h
+       1m  walk   Temple of Jupiter, Split                 about 45 min
+       1m  walk   Historical Complex of Split / Diocletian about 3 hr
+      13m  drive  Salona                                   about 45 min
+      12m  drive  Klis Fortress                            about 1 hr
+      24m  drive  Cambi Castle                             about 1 hr
+
+Every earlier stage feeds this: registers gave the places, **themes** made "castles and
+Roman history" expressible, **durations** made a day addable, **containment** stopped the
+palace being counted three times, **significance** chose five from ninety-seven.
+
+### Three things the first version got wrong
+
+**It buried the best thing.** Choosing greedily by value-per-minute puts off anything
+expensive, so the Historical Complex of Split — the single best thing in the city — landed
+on *day 3* while day 1 was spent on its gates. Each day now **anchors** on the best unused
+site and fills around it.
+
+**It filled a Bath day with 26 stops.** Ranking by `significance / cost` rewards cheap
+filler: a 10-minute Georgian railing at 33 beats the Roman Baths at 86. The value function
+is now `significance − 0.5 × travel`, with a cap of 7 stops and a floor at 40% of the day's
+anchor. Bath Day 1 became: Great Spa Towns, Roman Baths, Pulteney Bridge, Royal Crescent,
+Farleigh Hungerford Castle.
+
+**It scheduled a two-minute walk last.** The Temple of Jupiter sits beside the palace and
+was visited *after* driving to Klis Fortress and back, because selection was also doing
+sequencing. Those are different problems: stops are now chosen for value, then reordered
+nearest-neighbour.
+
+### What it still cannot do
+
+- **Opening hours.** Not modelled at all. The plan will happily send you to a monastery on
+  a Monday. This is the largest remaining gap in the product and has no data source yet.
+- **Real routing.** Straight-line × 1.25, walked under 1.5 km and driven above.
+  Self-hosted Valhalla over OSM is the known fix; the plan's *shape* will not change, only
+  its numbers.
+- **Containment it cannot see.** Day 2 still opens with the Silver and Golden Gates, which
+  are inside the complex visited on day 1 — Wikidata records the palace as part of the
+  complex but says nothing about its gates. Geometric containment is the route to fixing
+  it.
+- **Anything about you beyond themes.** No pace, no mobility, no "we have children", no
+  "we don't drive".
 
 ## Open question: institutional sites
 
