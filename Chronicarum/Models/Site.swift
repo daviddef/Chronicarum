@@ -274,6 +274,14 @@ struct Site: Codable, Identifiable {
         "war grave",
         "crematorium", "slave", "slavery", "atomic bomb", "hypocenter", "ground zero",
         "political prison", "gulag", "internment camp", "prison camp", "memorial", "victims",
+        // Added with the US National Register, which surfaced whole categories the
+        // earlier list never had to reach. 696 plantations were sitting unflagged —
+        // "slave" does not appear in "Albania Plantation House", but a plantation is a
+        // site of chattel slavery whatever the register calls it. "internment" is
+        // broader than "internment camp" and catches the Japanese American sites;
+        // "battlefield" covers war dead the way "war grave" already did.
+        "plantation", "battlefield", "internment", "trail of tears", "lynching",
+        "slave quarters",
     ]
 
     /// Whether this site's visa note carries a government travel warning.
@@ -315,12 +323,16 @@ struct Site: Codable, Identifiable {
 enum DataSource: String, Codable, CaseIterable {
     case saHeritageRegister = "sahr"
     case merimee            = "merimee"
+    case nrhp               = "nrhp"
 
     /// Shown under the description, e.g. "South Australian Heritage Places · CC BY 3.0 AU".
     var credit: String {
         switch self {
         case .saHeritageRegister: "South Australian Heritage Places · CC BY 3.0 AU"
         case .merimee:            "Base Mérimée, Ministère de la Culture · Licence Ouverte 2.0"
+        // Public domain under 17 U.S.C. §105, so this credit is owed to nobody. It is
+        // here because the register did the work and the line costs nothing.
+        case .nrhp:               "National Register of Historic Places · National Park Service"
         }
     }
 
@@ -331,6 +343,8 @@ enum DataSource: String, Codable, CaseIterable {
             URL(string: "https://data.sa.gov.au/data/dataset/sa-heritage-places")
         case .merimee:
             URL(string: "https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/")
+        case .nrhp:
+            URL(string: "https://www.nps.gov/subjects/nationalregister/index.htm")
         }
     }
 }

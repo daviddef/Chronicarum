@@ -6,11 +6,16 @@ import Foundation
 /// — not the curated storyboards the featured sites have.
 ///
 /// The on-disk shape is **columnar**: one array per field, rather than an array of
-/// records. That is a performance decision, measured on a Release build at 187,507 rows:
+/// records. That is a performance decision, measured on a Release build at 187,507 rows.
+/// These were single samples and run-to-run variance is roughly ±30%, so treat them as
+/// orders of magnitude rather than precise figures — the gaps are wide enough to act on,
+/// the third decimal place is not real:
 ///
-///     JSONDecoder over [BulkSite]          1,457 ms      40 MB
-///     JSONSerialization, row dictionaries  1,918 ms      40 MB
-///     JSONSerialization, columnar            967 ms      29 MB
+///     JSONDecoder over [BulkSite]          ~1,450 ms      40 MB
+///     JSONSerialization, row dictionaries  ~1,900 ms      40 MB
+///     JSONSerialization, columnar            ~970 ms      29 MB
+///
+/// At 258,620 rows the columnar path measures 564–862 ms across four runs.
 ///
 /// Reaching for `JSONSerialization` to escape `Codable` made it *worse*: it returns
 /// `NSDictionary`, so every `row["name"] as? String` crosses the Objective-C bridge, and

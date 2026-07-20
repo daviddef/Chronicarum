@@ -5,25 +5,25 @@ of each done-list. Commits referenced by short SHA.
 
 ## How far along are we?
 
-**30 of 33 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**31 of 34 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 10/10 — 187,630 sites |
+| 2 · Content: handful → thousands | ✅ Done | 11/11 — 258,743 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
-- **187,630 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
-  187,507 imported by heritage designation: ~104k UK, ~44k French, ~14.5k Australian,
-  the rest global
-- **105,517 photos** — 56% of bulk sites, 80% of featured. Varies hugely by source:
-  France 84%, UK Grade I 99%, Scotland's Category B far less.
-- **23,811 sites carry real descriptive prose** (French, from Mérimée) — the first dent
-  in the "bulk entries are thin" problem rather than more bare pins
+- **258,743 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
+  258,620 imported by heritage designation: ~104k UK, ~71k US, ~44k French,
+  ~14.5k Australian, the rest global
+- **163,386 photos** — 63% of bulk sites, 80% of featured. Varies hugely by source:
+  UK Grade I 99%, France 84%, US 81%, Scotland's Category B far less.
+- **~95k sites carry a real description** — 23,811 in French prose from Mérimée, ~71k
+  one-liners from the Wikidata join on the US register
 - Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
   search; bookmarks and dated visits that survive a restart
 - Location-aware: opens where you are, Explore sorted nearest-first with distances,
@@ -83,8 +83,10 @@ The starting point: a SwiftUI project that modelled the app but could not build.
       Categories A/B: 104,292 places. Grade II (378,336) excluded as the ordinary tier.
 - [x] **France from Mérimée** — 44,182 monuments historiques, 84% with a photo (joined via
       Wikidata P380) and 23,811 with the register's own prose. Wikidata held 12.
-- [x] **Columnar bundle format** — the load regressed to 1,457 ms at 187k rows, so the
-      storage question came due. Measured, not guessed: see *Making 187k rows load* below.
+- [x] **Columnar bundle format** — the load regressed at 187k rows, so the storage
+      question came due. Measured, not guessed: see *Making 187k rows load* below.
+- [x] **United States from the NRHP** — 71,113 National Register listings, 81% with a
+      photo and 99% with a description, both from the Wikidata P649 join. Public domain.
 
 ## Phase 3 — Depth and durability (in progress)
 
@@ -132,6 +134,11 @@ Ordered by my sense of value.
       prisoners". The two errors are asymmetric and this leans toward over-including.
       Prehistoric barrows and cairns are deliberately *not* flagged: a Neolithic long
       barrow is an ordinary archaeological attraction, not a distressing site.
+      Re-checked again after the US import, which brought whole categories the list had
+      never had to reach: **696 plantations were sitting unflagged**, because "slave"
+      does not appear in "Albania Plantation House" — but a plantation is a site of
+      chattel slavery whatever the register calls it. Added plantation, battlefield,
+      internment, trail of tears, lynching. Now 7,168 of 258,620 flagged.
 - [x] **Visited becomes an archive** — visits now carry a date, and the Saved tab shows a
       record: sites, countries, oldest site, furthest from you, last visited. The first
       piece of the archive loop the research identified.
@@ -369,6 +376,25 @@ all ten key names 187,507 times.
 **excluded from the app target**; [`build_columnar.py`](scripts/build_columnar.py)
 produces what ships. Getting below ~300 ms would need a binary format or SQLite — worth
 doing if the catalogue roughly doubles again, not before.
+
+## Open question: institutional sites
+
+The US register carries categories that are arguably distressing and are currently **not**
+flagged, because the call is a judgement rather than an omission:
+
+| | unflagged |
+|---|---|
+| almshouse | 134 |
+| asylum | 54 |
+| sanatorium | 18 |
+| penitentiary | 10 |
+| poor farm | 8 |
+| reformatory | 2 |
+
+These are sites of institutional confinement, poverty and, in many cases, documented
+abuse — but several are also ordinary museums today (Eastern State Penitentiary runs
+tours). The plantation case was clear-cut and was acted on; this one is not, and it is
+left visible here rather than decided quietly. ~226 sites either way.
 
 ## Where to go next, ranked
 
