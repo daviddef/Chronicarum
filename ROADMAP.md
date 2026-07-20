@@ -56,14 +56,14 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**40 of 42 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
+**41 of 43 tracked items done**, 2 partly, 0 open, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 12/12 — 260,131 sites |
+| 2 · Content: handful → thousands | ✅ Done | 13/13 — 294,943 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
@@ -820,6 +820,42 @@ There is a pattern here worth keeping: **each new output surface has exposed def
 previous ones could not.** The map hid thin data that Explore made obvious; Explore hid
 double-counting that durations made obvious; durations hid theme errors that print made
 obvious.
+
+## Italy, and the curated sites the planner could not see
+
+The trip planner is the newest output surface, and — following the pattern that each new
+surface exposes what the last one hid — auditing it across cities I had not tried surfaced
+two bugs, one of them serious.
+
+**Italy was 2.7% imported.** A one-day Rome plan returned the Aurelian Walls and a modern-
+art gallery but not the Colosseum. The catalogue held **1,628 Italian sites against 61,192
+designated in Wikidata** — Italy had never had a dedicated import, only the original global
+sweep. [`fetch_heritage_it.py`](scripts/fetch_heritage_it.py) added **34,813** by
+designation grade (`Q26971668`, Italian national heritage — the Colosseum's own),
+excluding the natural-conservation designations that dominate the tail. Rome is now a real
+city in the app.
+
+**The 123 flagships were invisible to the planner.** Chasing the Colosseum found something
+worse than a missing import. The Colosseum was never missing — it is a *curated* site,
+hand-authored in Swift. But every derivation script (`derive_themes`, `derive_durations`,
+`derive_significance`) only ever reads `bulk_sites.json`, so the curated sites — the
+Colosseum, the Mona Lisa, Machu Picchu, Uluru, the exact wonders the app was founded to
+show — arrived with **significance 0, visit duration 0, no themes**. The planner filters on
+`significance >= 25` and `visitMinutes >= 10`, so *the best 123 places in the whole app
+were the only ones a plan could never include.* Fixed at load in
+[`BulkData.swift`](Chronicarum/Models/BulkData.swift): a curated site's significance comes
+from its author-assigned tier (above anything the bulk scorer produces), its duration from
+its type, its themes from name and type. A Rome plan now opens Colosseum → Pantheon →
+Museo Nazionale Romano → Aurelian Walls → Sistine Chapel.
+
+That bug had been latent since the planner shipped, and it is the sharpest example yet of
+the surface pattern: the map, Explore and the detail sheet all showed the curated sites
+perfectly — only planning, which reads the derived fields, exposed that they were empty.
+
+**A self-inflicted one too, worth recording:** adapting the UK merge script for Italy by
+find-replacing "United Kingdom" → "Italy" missed the f-string that builds the location
+line, so 1,350 Italian sites briefly read "San Giuliano Milanese, United Kingdom". Caught
+by sampling the merged output, not by the merge succeeding.
 
 ## Open question: institutional sites
 

@@ -98,15 +98,77 @@ extension SiteData {
     /// The hand-authored sites are written in Swift and carry no Wikidata id, so they
     /// have no photo of their own. The import records the Commons image of each bulk
     /// entry it dropped as a duplicate of a curated site — that mapping is applied here.
+    ///
+    /// The offline derivation scripts only ever touch `bulk_sites.json`, so the curated
+    /// sites — the Colosseum, the Mona Lisa, Machu Picchu, Uluru, the exact flagships the
+    /// app was built around — arrived with `significance`, `visitMinutes` and `themeMask`
+    /// all zero. That made them **invisible to the trip planner**, which filters on
+    /// `significance >= 25` and `visitMinutes >= 10`: the best 123 places in the catalogue
+    /// were the only ones a plan could never include. Fixed here at load, since these are
+    /// Swift structs the Python never sees.
     private static let featuredWithPhotos: [Site] = {
         let photos = loadJSON([String: String].self, named: "featured_images") ?? [:]
         return featured.map { site in
-            guard site.imageFile == nil, let file = photos[site.id] else { return site }
             var copy = site
-            copy.imageFile = file
+            if copy.imageFile == nil, let file = photos[site.id] {
+                copy.imageFile = file
+            }
+            enrichCurated(&copy)
             return copy
         }
     }()
+
+    /// Fill the planner-facing fields a curated site was authored without.
+    ///
+    /// These are hand-picked flagships, so by construction they sit at the very top: a
+    /// curated site outranks anything the bulk scorer produces. Significance comes from
+    /// the author's own `tier` (3–5), duration from the type, themes from name and type by
+    /// the same vocabulary the Python uses — kept deliberately small here because it only
+    /// runs over ~123 rows, not 290k.
+    private static func enrichCurated(_ site: inout Site) {
+        if site.significance == 0 {
+            // tier 5 → 95, 4 → 85, 3 → 75. Above the bulk layer's top-1%-at-54, which is
+            // correct: a hand-chosen wonder should beat a well-documented parish church.
+            site.significance = min(98, 45 + site.tier * 10)
+        }
+        if site.visitMinutes == 0 {
+            switch site.type {
+            case .museum:                 site.visitMinutes = 120
+            case .wonder, .lostCity, .ruin, .castle: site.visitMinutes = 120
+            case .natural:                site.visitMinutes = 90
+            case .artefact, .treasure:    site.visitMinutes = 45
+            default:                      site.visitMinutes = 60
+            }
+        }
+        if site.themeMask == 0 {
+            site.themeMask = Self.curatedThemeMask(for: site)
+        }
+    }
+
+    /// A compact echo of `derive_themes.py` for the curated layer. Type carries most of the
+    /// signal for these because they are cleanly categorised by hand; a few name keywords
+    /// catch the Roman and prehistoric flagships that type alone would miss.
+    private static func curatedThemeMask(for site: Site) -> Int {
+        var themes: Theme = []
+        switch site.type {
+        case .castle:      themes.insert(.castles)
+        case .sacred:      themes.insert(.sacred)
+        case .museum:      themes.insert(.museums)
+        case .monument, .artefact: themes.insert(.monuments)
+        case .ruin, .lostCity:     themes.insert(.archaeology)
+        case .natural:     themes.insert(.gardens)
+        default:           break
+        }
+        let text = (site.name + " " + site.tagline + " " + site.civilisation).lowercased()
+        if text.contains("roman") || text.contains("pompei") || text.contains("colosseum") {
+            themes.insert(.roman)
+        }
+        if text.contains("neolithic") || text.contains("stone") || text.contains("megalith")
+            || text.contains("henge") || text.contains("prehistor") {
+            themes.insert(.prehistoric)
+        }
+        return themes.rawValue
+    }
 
     private static func loadJSON<T: Decodable>(_ type: T.Type, named name: String) -> T? {
         guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
