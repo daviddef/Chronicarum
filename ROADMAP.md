@@ -24,7 +24,7 @@ when Dubrovnik had exactly one site in it.
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
 | **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Itineraries build, render, and avoid typical closures. **Real routing still missing** |
-| **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
+| **6. Taking it with you** | PDF, email, calendar, offline | ◐ **PDF export shipping.** Email/calendar via the share sheet; offline not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
 Stages 1–3 are infrastructure and are largely done. **Stages 4–6 are the actual product**
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**38 of 41 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**39 of 42 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -786,6 +786,37 @@ Every surface says the same thing in plain words: *we don't know this site's act
 no heritage register records them, this is what's typical.* A plan that quietly invents an
 opening time is worse than one that admits ignorance, because the first sends someone
 across a city to a locked door.
+
+## Taking it with you — PDF
+
+[`ItineraryPDF.swift`](Chronicarum/Models/ItineraryPDF.swift) renders a plan as a printable
+A4 document, shared through the system sheet — so print, Files, Mail and Messages all come
+free, and **sending it to someone stays the user's gesture rather than the app's**.
+
+Drawn with `UIGraphicsPDFRenderer` and `NSAttributedString` rather than by rasterising
+SwiftUI views: a fourteen-day trip needs real pagination, and printed text should be
+selectable and searchable at print resolution. Rendering views to images gives neither.
+
+**Both caveats print on every page.** A printed itinerary is the artefact most likely to be
+trusted without question and least likely to be re-checked, because it leaves the app
+behind. Travel times are estimates; opening hours are unknown for every site; the page says
+so.
+
+### Printing it found two bugs the screen had hidden
+
+**Bristol Temple Meads railway station was filed under "Churches & abbeys."** `\btemple\b`
+matches "Temple Meads". Station and street names swallow religious words wholesale —
+Temple Quay, Whitechapel, Chapel Street — and it took seeing a rail terminus in a printed
+list of abbeys to notice. Sacred is now vetoed for railway, bus and underground stations.
+
+**"The Great Spa Towns of Europe · Belgium"**, printed on a Bath itinerary. A transnational
+UNESCO site takes the first country Wikidata lists. Not fixed — it needs the locality
+preferred over the country for multi-country sites, which is wider than one veto.
+
+There is a pattern here worth keeping: **each new output surface has exposed defects the
+previous ones could not.** The map hid thin data that Explore made obvious; Explore hid
+double-counting that durations made obvious; durations hid theme errors that print made
+obvious.
 
 ## Open question: institutional sites
 
