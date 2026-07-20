@@ -286,6 +286,10 @@ struct SiteQuickFactsView: View {
             QuickFactCell(label: "Civilisation", value: site.civilisation)
             Divider().frame(height: 32)
             QuickFactCell(label: "Significance", value: String(repeating: "★", count: site.tier))
+            if let duration = site.visitDurationLabel {
+                Divider().frame(height: 32)
+                QuickFactCell(label: "Visit", value: duration)
+            }
         }
     }
 }

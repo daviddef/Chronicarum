@@ -23,7 +23,7 @@ when Dubrovnik had exactly one site in it.
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
-| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ○ Not started |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Durations done; hours, travel and containment open |
 | **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**33 of 36 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**34 of 37 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -535,6 +535,74 @@ actually walks past — so `monuments` and `townscape` were appended.
 **Bit order is load-bearing.** The catalogue is labelled against bit positions, so a theme
 inserted in the middle would silently re-label 260k rows. Append only, then re-run.
 
+## Visit duration
+
+A day plan needs to know that Diocletian's Palace is a morning and a wayside cross is five
+minutes. **No heritage register records this** — registers describe what a place *is*,
+never how long you would stand in front of it. [`derive_durations.py`](scripts/derive_durations.py)
+estimates it from themes plus scale words in the name.
+
+Shipped in **bands** — 5, 10, 15, 20, 30, 45, 60, 90, 120, 180 minutes — never as a
+computed figure. The signal is a theme and a few words; it does not support "37 minutes",
+and printing that would imply a confidence the data cannot carry. The UI says *"about
+2 hr"* for the same reason.
+
+| | share | |
+|---|---|---|
+| 10 min | 36% | ordinary listed buildings — a look from the pavement |
+| 30 min | 22% | parish churches, barrows |
+| 90 min | 12% | museums, old-town quarters, grand houses |
+| 60 min | 8% | castles, cathedrals, gardens |
+| 5 min | 2% | crosses, milestones, telephone boxes |
+
+Mean 32 minutes per site.
+
+`tier` turned out to be useless here — it is **2 for all 260,008 bulk sites**, so
+significance could not drive it. Measuring that first is what sent the design to themes and
+names instead.
+
+### Four things a sample caught
+
+Each of these shipped in an intermediate run and was found by printing real rows:
+
+| | |
+|---|---|
+| **"Buckingham Palace boundary walls" — 2 hours** | It is a wall. The component rule only fired on head nouns, and this one begins with "Buckingham". |
+| **Every Venetian townhouse in Split — 2 hours** | "Palace" covers Diocletian's *and* a merchant's street facade. 685 rows, ~100 actually royal. The blanket promotion is gone; only royal and imperial residences earn it. |
+| **A churchyard cross — 30 minutes** | The theme model correctly saw "churchyard" and gave it a parish church's time. But the site *is* the cross. The head noun settles what a site is. |
+| **"Dover Castle Hotel" — a castle** | A pub. British and Australian pubs are named after castles constantly, and a castle-themed itinerary that routes someone to a Wetherspoons is worse than one that misses a castle. Vetoed in the theme model. |
+
+## The containment problem
+
+The durations made a structural flaw visible that pins alone had hidden. Asking for castles
+and Roman history within 400 m of Split's centre returns, among others:
+
+    Historical Complex of Split with the Palace of Diocletian   180 min
+    Diocletian's Palace                                         120 min
+    Golden Gate                                                  60 min
+    Silver Gate                                                  20 min
+
+Summed: **10.8 hours of "visiting" for one afternoon.** These are not separate visits. The
+gates are *in* the palace, which *is* the UNESCO complex — three registers describing the
+same stones at three scales, plus every Venetian palace on the same square.
+
+Nothing in the catalogue records that one site contains another. Registers list what they
+protect, not how their entries nest, and the app's dedup rules were built to catch
+*duplicates* — same place, twice — which these are not.
+
+**This now blocks day-shaping**, and it cannot be solved by better durations. Options, none
+yet taken:
+
+- **Wikidata `P361` (part of) / `P527` (has part)** — free and correct where present, absent
+  for most register-derived rows.
+- **Geometric containment** — the polygon layers exist in several registers (UK, SA, Croatia)
+  even though only points were imported. A site inside another's footprint is contained.
+- **Pick a scale at plan time** — schedule the largest containing site and list the parts as
+  what you will see inside it, which is what a person would actually write.
+
+The third is probably right and the cheapest, but it needs the first or second to know what
+contains what.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
@@ -566,12 +634,14 @@ Ranked by what actually moves the app toward a printable itinerary:
 **1. ~~A theme model~~ — done, see *Themes* below.** 16 themes, 65% of the catalogue
 tagged, filtering live in both Explore and the map. Stage 4 is unblocked.
 
-**2. Visit duration and opening hours.** A day plan needs to know that Diocletian's Palace
-is a morning and a roadside chapel is ten minutes, and that the monastery is shut on
-Mondays. **Neither is in any heritage register.** Wikidata has `P3025` (opening hours) on
-a rounding error of items. This is the hardest missing piece and probably the one that
-decides whether the planner is genuinely useful or merely plausible — a plan that sends
-someone to a closed site is worse than no plan.
+**2. ~~Visit duration~~ — done, see *Visit duration* below.** Every site now carries a
+banded estimate. **Opening hours remain open and are now the hardest missing piece**: not
+in any heritage register, and Wikidata has `P3025` on a rounding error of items. A plan
+that sends someone to a closed site is worse than no plan, and this is the item that
+decides whether the planner is genuinely useful or merely plausible.
+
+**2b. Containment — which sites are *inside* other sites.** Surfaced immediately by the
+durations and it now blocks day-shaping. See *The containment problem* below.
 
 **3. Real travel time.** `SiteCluster.route(from:)` already does nearest-neighbour ordering
 on straight-line distance, which is fine for "these five are near each other" and useless

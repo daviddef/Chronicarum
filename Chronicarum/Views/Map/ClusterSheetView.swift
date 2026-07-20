@@ -79,12 +79,24 @@ struct ClusterSheetView: View {
         }
     }
 
+    /// Total visiting time across the cluster, banded like the per-site estimates.
+    private var visitingLabel: String {
+        let minutes = cluster.sites.totalVisitMinutes
+        if minutes < 60 { return "\(minutes)m" }
+        let hours = Double(minutes) / 60
+        return hours < 10 ? String(format: "%.1fh", hours) : "\(Int(hours))h"
+    }
+
     private var summary: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 0) {
                 SummaryCell(value: cluster.count.formatted(), label: "Places")
                 Divider().frame(height: 30)
                 SummaryCell(value: distanceLabel(cluster.spanKm), label: "Across")
+                Divider().frame(height: 30)
+                // Visiting time only — travel between the stops is not modelled yet, so
+                // labelling this "Time here" rather than anything that sounds like a plan.
+                SummaryCell(value: visitingLabel, label: "Time here")
                 if let origin = userLocation {
                     Divider().frame(height: 30)
                     let nearest = cluster.sites

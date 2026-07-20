@@ -175,6 +175,12 @@ struct Site: Codable, Identifiable {
     /// raw rather than as `Theme` so the bundle stays a plain integer column.
     var themeMask: Int = 0
 
+    /// Roughly how long a visit takes, in minutes. Derived offline by
+    /// `scripts/derive_durations.py` and deliberately banded (5, 10, 15, 20, 30, 45, 60,
+    /// 90, 120, 180) — the underlying signal is a theme and a few words in a name, which
+    /// does not support a figure like "37 minutes". Zero means not estimated.
+    var visitMinutes: Int = 0
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -311,7 +317,7 @@ struct Site: Codable, Identifiable {
         case civilisation = "civ"
         case tagline, chapters
         case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile, dataSource
-        case themeMask
+        case themeMask, visitMinutes
     }
 }
 

@@ -106,3 +106,21 @@ extension Site {
         wanted.isEmpty || !themes.intersection(wanted).isEmpty
     }
 }
+
+extension Site {
+    /// "about 45 min" — phrased as an estimate because it is one. Never renders a precise
+    /// figure: the bands exist so the app cannot imply a confidence the data lacks.
+    var visitDurationLabel: String? {
+        guard visitMinutes > 0 else { return nil }
+        if visitMinutes < 60 { return "about \(visitMinutes) min" }
+        let hours = Double(visitMinutes) / 60
+        return hours == hours.rounded()
+            ? "about \(Int(hours)) hr"
+            : "about \(String(format: "%.1f", hours)) hr"
+    }
+}
+
+extension Collection where Element == Site {
+    /// Total visiting time for a set of sites, excluding travel between them.
+    var totalVisitMinutes: Int { reduce(0) { $0 + $1.visitMinutes } }
+}

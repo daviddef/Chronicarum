@@ -192,6 +192,10 @@ VETOES = {
         r"|concert|dance|meeting|dining|banqueting|assembly|drill|temperance)\s*hall\b",
     ],
     "maritime": [r"\bgate\s+pier"],
+    # "Dover Castle Hotel" is a pub. British and Australian pubs are overwhelmingly named
+    # after castles, ships and coats of arms, and a castle-themed itinerary that routes
+    # someone to a Wetherspoons is worse than one that misses a real castle.
+    "castles": [r"\b(?:hotel|inn|public house|\bpub\b|tavern|arms|hostel|motel)\b"],
 }
 
 THEME_NAMES = [name for name, _ in THEMES]
