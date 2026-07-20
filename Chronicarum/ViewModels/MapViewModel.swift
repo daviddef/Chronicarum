@@ -31,6 +31,10 @@ final class MapViewModel: ObservableObject {
     @Published var activeTypes: Set<SiteType> = Set(SiteType.allCases)
     @Published var minimumTier: Int = 1
 
+    /// What the user is actually interested in — "castles and Roman history". Empty means
+    /// no preference expressed, which shows everything; see `Site.matches(themes:)`.
+    @Published var activeThemes: Theme = []
+
     // MARK: - Conquest timeline
     @Published var timelineState: TimelineState = TimelineState()
 
@@ -88,10 +92,13 @@ final class MapViewModel: ObservableObject {
     /// properties still hold their *previous* values — reading them here would leave the
     /// map one update behind every pan.
     private func bindClusterInputs() {
-        Publishers.CombineLatest4($visibleRegion, $activeEras, $activeTypes, $minimumTier)
-            .sink { [weak self] region, eras, types, minTier in
-                self?.recomputeClusters(region: region, eras: eras,
-                                        types: types, minTier: minTier)
+        // CombineLatest4 is at its arity limit, so the two scalar filters travel together
+        // as a pair rather than reaching for CombineLatest5 (which does not exist).
+        let filters = Publishers.CombineLatest($minimumTier, $activeThemes)
+        Publishers.CombineLatest4($visibleRegion, $activeEras, $activeTypes, filters)
+            .sink { [weak self] region, eras, types, filters in
+                self?.recomputeClusters(region: region, eras: eras, types: types,
+                                        minTier: filters.0, themes: filters.1)
             }
             .store(in: &cancellables)
     }
@@ -134,7 +141,8 @@ final class MapViewModel: ObservableObject {
         SiteData.all.filter { site in
             activeEras.contains(site.era) &&
             activeTypes.contains(site.type) &&
-            site.tier >= minimumTier
+            site.tier >= minimumTier &&
+            site.matches(themes: activeThemes)
         }
     }
 
@@ -157,7 +165,8 @@ final class MapViewModel: ObservableObject {
     private func recomputeClusters(region: MKCoordinateRegion,
                                    eras: Set<Era>,
                                    types: Set<SiteType>,
-                                   minTier: Int) {
+                                   minTier: Int,
+                                   themes: Theme) {
         let latPad = region.span.latitudeDelta  * 0.6
         let lonPad = region.span.longitudeDelta * 0.6
         let latMin = region.center.latitude  - latPad, latMax = region.center.latitude  + latPad
@@ -168,7 +177,11 @@ final class MapViewModel: ObservableObject {
         let inView = SiteData.all.filter { site in
             site.latitude  >= latMin && site.latitude  <= latMax &&
             site.longitude >= lonMin && site.longitude <= lonMax &&
-            eras.contains(site.era) && types.contains(site.type) && site.tier >= minTier
+            eras.contains(site.era) && types.contains(site.type) && site.tier >= minTier &&
+            // Cheapest of the four — an integer AND — but it goes last because bounds
+            // already rejected most of the catalogue and this is the least selective
+            // when no preference is set.
+            site.matches(themes: themes)
         }
         clusteredItems = Self.cluster(inView, in: region)
     }

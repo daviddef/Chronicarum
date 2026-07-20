@@ -12,6 +12,10 @@ final class SiteViewModel: ObservableObject {
     @Published var selectedEra: Era? = nil
     @Published var selectedType: SiteType? = nil
 
+    /// Interests, shared conceptually with the map's filter — "castles and Roman history".
+    /// Empty means no preference, which matches everything.
+    @Published var selectedThemes: Theme = []
+
     private let persistence: PersistenceService
 
     /// Saved state is read once at construction; every mutation below writes straight
@@ -128,6 +132,9 @@ final class SiteViewModel: ObservableObject {
         allSites.filter { site in
             guard selectedEra == nil  || site.era == selectedEra   else { return false }
             guard selectedType == nil || site.type == selectedType else { return false }
+            // Integer AND — cheaper than the enum compares above, and far cheaper than
+            // the locale-aware text search below.
+            guard site.matches(themes: selectedThemes) else { return false }
             guard !searchText.isEmpty else { return true }
 
             return site.name.localizedCaseInsensitiveContains(searchText)

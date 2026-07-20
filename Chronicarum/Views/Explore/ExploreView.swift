@@ -30,6 +30,28 @@ struct ExploreView: View {
                 }
                 .background(Color(.systemGroupedBackground))
 
+                // Interest chips, above the era row because this is the question people
+                // actually arrive with. Multi-select and additive, unlike the single-choice
+                // era row below it.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Theme.all, id: \.rawValue) { theme in
+                            let isOn = siteVM.selectedThemes.contains(theme)
+                            EraFilterChip(
+                                label: "\(theme.glyph) \(theme.label)",
+                                color: .accentColor,
+                                isSelected: isOn
+                            ) {
+                                if isOn { siteVM.selectedThemes.remove(theme) }
+                                else    { siteVM.selectedThemes.insert(theme) }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+                }
+                .background(Color(.systemGroupedBackground))
+
                 Divider()
 
                 // Sort control — nearest by default, which is why the map asks for

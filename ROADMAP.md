@@ -22,7 +22,7 @@ when Dubrovnik had exactly one site in it.
 | **1. A map** | Points on a map you can look at | ✅ Done |
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
-| **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ○ Not started |
+| **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
 | **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ○ Not started |
 | **6. Taking it with you** | PDF, email, calendar, offline | ○ Not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
@@ -56,7 +56,7 @@ was a prerequisite rather than a substitute.
 
 ## How far along are we?
 
-**32 of 35 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**33 of 36 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
@@ -468,6 +468,73 @@ Split 21 → 180, Zagreb 23 → 405. Better, and honestly ours. But it is worth 
 that Croatia is now the best example in the catalogue of the gap between *what exists* and
 *what we are allowed to ship*: 1,388 against a register of 7,302.
 
+## Themes — teaching the catalogue what a place is *about*
+
+`Era` and `SiteType` describe a site the way a catalogue does: a period name and a building
+category. Neither can express the sentence the product exists to answer — *"I like castles
+and Roman history."* [`derive_themes.py`](scripts/derive_themes.py) adds 16 themes, derived
+offline and shipped as a bitmask per site, so matching is an integer AND rather than a
+string search over 260k rows.
+
+Themes are **not a partition**. A Norman castle with a chapel is `castles` *and* `sacred`;
+a Roman aqueduct is `roman` *and* `grand-engineering`. That is what makes a two-interest
+question answerable as a union rather than forcing a single box.
+
+| | tagged | | | tagged |
+|---|---|---|---|---|
+| Churches & abbeys | 43,614 | | Farms & countryside | 14,563 |
+| Civic & public life | 19,390 | | Prehistoric | 14,439 |
+| Castles & forts | 18,694 | | Monuments & memorials | 11,567 |
+| Grand houses | 18,088 | | Archaeology | 11,100 |
+| Industrial | 9,497 | | Museums & galleries | 8,356 |
+| Bridges & engineering | 8,131 | | Old towns & streets | 7,930 |
+| Gardens & parks | 7,268 | | Military & wartime | 4,111 |
+| Roman & classical | 3,641 | | Coast & maritime | 3,291 |
+
+**65% of the catalogue carries at least one theme.** The other 35% is ordinary buildings —
+"Becker, Christine, House", "299 West George Street" — and they are left untagged
+deliberately. A listed terraced house is not *about* anything in this sense, and inventing
+a theme for it would make every other theme mean less.
+
+### Rules, not a model
+
+260k rows. Hand-labelling is impossible and LLM-labelling at that scale is expensive,
+irreproducible and — the real objection — **unverifiable**: a wrong label is
+indistinguishable from a right one without reading all 260k. Keyword rules are inspectable,
+deterministic, free to re-run as the catalogue grows, and wrong in ways that can be *found*
+by sampling. Every fix below was a visible one-line change.
+
+The rules run mostly over **names**, because that is the only universal signal:
+
+    era known                   30%   <- cannot anchor "Roman" on era
+    type == "heritage"          60%   <- the generic bucket
+    description present         51%   <- absent for 106k UK sites entirely
+    name present               100%
+
+Names are multilingual, so each theme carries vocabulary in English, French and Croatian
+rather than an English list plus hope.
+
+### What the first pass got wrong
+
+Measuring beat reasoning three times, and every one of these would have shipped silently:
+
+| | |
+|---|---|
+| **410 Roman Catholic churches tagged as Roman history** | `\broman\b` matches "Roman Catholic". A user asking for Roman history would have got Iowa parish churches. |
+| **590 town halls tagged as grand houses** | `\bhall\b` is an English country-house word *and* a civic one. |
+| **"Gate piers" tagged as maritime** | An architectural gatepost is not a harbour pier. |
+| **Diocletian's Palace not tagged Roman** | It contains no generic Roman keyword at all. Nor did Verulamium or Hadrian's Wall — the three sites a person would name *first*. |
+
+The fixes: per-theme **veto patterns** for words that mean one thing in heritage vocabulary
+and another in ordinary English; named Roman sites added explicitly; and `era` promoted
+from a fallback to an additive signal, so a classically-dated site is Roman whatever its
+name says. A second pass then found 7,637 sites typed `monument` carrying no theme at all —
+the vocabulary had aqueducts and bridges but nothing for the statue or war memorial someone
+actually walks past — so `monuments` and `townscape` were appended.
+
+**Bit order is load-bearing.** The catalogue is labelled against bit positions, so a theme
+inserted in the middle would silently re-label 260k rows. Append only, then re-run.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
@@ -496,13 +563,8 @@ your Tuesday".
 
 Ranked by what actually moves the app toward a printable itinerary:
 
-**1. A theme model — so "Roman history" means something.** Today the only axes are `era`
-(seven European period names) and `type` (eleven categories). Neither expresses "Roman",
-"maritime", "industrial", "religious architecture", "wartime". This is the single blocker
-on stage 4: without it the planner cannot take a preference, only a checkbox. Cheapest
-credible route is deriving themes from the text and classes already held — Mérimée's
-`historique`, Wikidata's P31 chain, NRHP's descriptions — rather than hand-labelling 260k
-rows.
+**1. ~~A theme model~~ — done, see *Themes* below.** 16 themes, 65% of the catalogue
+tagged, filtering live in both Explore and the map. Stage 4 is unblocked.
 
 **2. Visit duration and opening hours.** A day plan needs to know that Diocletian's Palace
 is a morning and a roadside chapel is ten minutes, and that the monastery is shut on

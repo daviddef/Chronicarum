@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00CD6B2254FA535ADBA03234 /* attribution.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BFD4858D1B74EF7BCA13446 /* attribution.json */; };
+		01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA2C1E3FA04D4125019FD3C /* Theme.swift */; };
 		02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */; };
 		027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */; };
 		02B4817F6DD3407982657B74 /* featured_images.json in Resources */ = {isa = PBXBuildFile; fileRef = A85F2D259BED16C5C1BD66E3 /* featured_images.json */; };
@@ -57,6 +58,7 @@
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
 		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
+		BAA2C1E3FA04D4125019FD3C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 				E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */,
 				5D077ED9B01BBFC0966CC7DB /* Site.swift */,
 				DB2656A9226831B85426DAF9 /* SiteData.swift */,
+				BAA2C1E3FA04D4125019FD3C /* Theme.swift */,
 				33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */,
 			);
 			path = Models;
@@ -294,6 +297,7 @@
 				CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */,
 				F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */,
 				02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */,
+				01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */,
 				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

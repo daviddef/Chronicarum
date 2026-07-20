@@ -171,6 +171,10 @@ struct Site: Codable, Identifiable {
     /// `nil` for Wikidata (CC0) and the hand-authored sites, which owe no attribution.
     var dataSource: DataSource? = nil
 
+    /// Theme bitmask — see `Theme`. Derived offline by `scripts/derive_themes.py`; stored
+    /// raw rather than as `Theme` so the bundle stays a plain integer column.
+    var themeMask: Int = 0
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -307,6 +311,7 @@ struct Site: Codable, Identifiable {
         case civilisation = "civ"
         case tagline, chapters
         case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile, dataSource
+        case themeMask
     }
 }
 
