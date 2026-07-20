@@ -38,8 +38,14 @@ except Exception:
 todo = [f for f in files if f not in out]
 print(f"{len(files)} photos, {len(todo)} still to fetch", flush=True)
 
-for i in range(0, len(todo), BATCH):
-    chunk = todo[i:i + BATCH]
+def fetch(chunk, depth=0):
+    """Request one batch, splitting on failure rather than dropping it.
+
+    A whole batch used to be skipped when the request failed, which silently lost every
+    photo in it — that is how a run of Cyrillic filenames went uncredited before: long
+    titles pushed the URL over a length limit and 50 photos vanished per failure with
+    nothing but a stderr line. Halving on failure isolates the awkward title instead, and
+    a single file that genuinely cannot be fetched costs one photo, not fifty."""
     titles = "|".join("File:" + f for f in chunk)
     params = ["action=query", "format=json", "prop=imageinfo",
               "iiprop=extmetadata", "iiextmetadatafilter=Artist|LicenseShortName"]
@@ -51,10 +57,14 @@ for i in range(0, len(todo), BATCH):
     try:
         pages = json.loads(proc.stdout)["query"]["pages"]
     except Exception:
-        sys.stderr.write(f"  ! batch {i//BATCH} failed\n")
-        time.sleep(3)
-        continue
+        if len(chunk) == 1 or depth > 6:
+            sys.stderr.write(f"  ! giving up on {chunk[0][:60]}\n")
+            return 0
+        time.sleep(2)
+        mid = len(chunk) // 2
+        return fetch(chunk[:mid], depth + 1) + fetch(chunk[mid:], depth + 1)
 
+    found = 0
     for page in pages.values():
         title = page.get("title", "")
         if not title.startswith("File:"):
@@ -68,6 +78,12 @@ for i in range(0, len(todo), BATCH):
             if artist:  entry["a"] = artist
             if licence: entry["l"] = licence
             out[name] = entry
+            found += 1
+    return found
+
+for i in range(0, len(todo), BATCH):
+    fetch(todo[i:i + BATCH])
+    chunk = todo[i:i + BATCH]
 
     if (i // BATCH) % 25 == 0:
         json.dump(out, open(f"{SP}/attribution.json", "w"), ensure_ascii=False)

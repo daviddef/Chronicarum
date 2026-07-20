@@ -35,8 +35,8 @@ What's genuinely left:
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
 
-Photo attribution, which was the other release blocker, is now handled: 28,412 photos
-carry their author and licence (99% of those that have one).
+Photo attribution, which was the other release blocker, is now handled: 69,103 of 69,107
+distinct photos carry their licence (99.99%), 98% of them with a named author.
 
 ---
 
@@ -92,9 +92,12 @@ Ordered by my sense of value.
       app being killed. Also added the missing "visited" control — the Saved tab had a
       Visited section that nothing could ever fill.
 - [x] **Photo attribution** — author and licence fetched from the Commons API for
-      22,260 of 22,261 photos and shown on the image itself (e.g. "FeaturedPics ·
+      69,103 of 69,107 distinct photos and shown on the image itself (e.g. "FeaturedPics ·
       CC BY-SA 4.0"), linking to the file page. Most of these licences require naming
-      the author, so this is compliance rather than polish.
+      the author, so this is compliance rather than polish. The fetcher used to drop a
+      whole 50-photo batch whenever a request failed — which is how a run of Cyrillic
+      filenames went uncredited — and now halves and retries, so an awkward title costs
+      one photo rather than fifty.
 - [x] **"Do Not Travel" sites** — kept, not hidden: deleting honest content wasn't the
       fix, being unmissable was. A warning banner sits above the travel rows, driven by
       the visa note's own wording rather than a hardcoded list.
@@ -112,8 +115,16 @@ Ordered by my sense of value.
 - [x] **Sensitive-site flag** — `Site.isSensitive` excludes death camps, massacre sites,
       slave forts, war graves and political prisons from playful surfaces (currently the
       "surprise me" dice; the guard is in place before any collection mechanic). Keyword
-      scan over name and tagline for the 24k bulk, plus an explicit list for curated sites
-      whose names give nothing away. 130 of the 1,333-site surprise pool excluded.
+      scan over name and tagline for the bulk layer, plus an explicit list for curated
+      sites whose names give nothing away. 4,803 of 143k sites flagged. Re-checked after
+      the UK import, which added 31k scheduled monuments: "churchyard" had been missing
+      alongside "graveyard" and "cemetery", leaving 1,176 active burial grounds eligible
+      for playful surfaces. Matching is now anchored to a leading word boundary so
+      "Pereyaslavets" stops reading as a slavery site — but only the leading one, because
+      requiring a trailing boundary silently unflagged "Izium mass graves" and "political
+      prisoners". The two errors are asymmetric and this leans toward over-including.
+      Prehistoric barrows and cairns are deliberately *not* flagged: a Neolithic long
+      barrow is an ordinary archaeological attraction, not a distressing site.
 - [x] **Visited becomes an archive** — visits now carry a date, and the Saved tab shows a
       record: sites, countries, oldest site, furthest from you, last visited. The first
       piece of the archive loop the research identified.

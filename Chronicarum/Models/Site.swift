@@ -232,7 +232,31 @@ struct Site: Codable, Identifiable {
     var isSensitive: Bool {
         if Self.explicitlySensitiveIDs.contains(id) { return true }
         let haystack = (name + " " + tagline).lowercased()
-        return Self.sensitiveKeywords.contains { haystack.contains($0) }
+        return Self.sensitiveKeywords.contains { keyword in
+            // Cheap substring test first: only ~2.5% of the catalogue matches at all, so
+            // the costlier word-boundary check below is paid rarely.
+            guard haystack.contains(keyword) else { return false }
+            return Self.matchesAsWord(keyword, in: haystack)
+        }
+    }
+
+    /// Substring matching alone flags "Pereyaslavets" — a medieval town — as a slavery
+    /// site, the same way it once flagged the Pyramids. At 143k sites these coincidences
+    /// stop being hypothetical, so a keyword has to start on a word boundary.
+    ///
+    /// Only the LEADING boundary is required, deliberately. Two tidier-looking versions
+    /// were tried and both silently unflagged real sites: a trailing `\b` dropped "Izium
+    /// mass graves" and every "burial grounds", and adding `(s|es)?` still dropped "Hỏa
+    /// Lò Prison", whose description says "political prison**ers**". Guessing the set of
+    /// suffixes is a losing game; letting the keyword run to the end of the word covers
+    /// plurals, "slavery" and "prisoners" alike.
+    ///
+    /// The two errors here are not symmetric. Over-including costs an Independence
+    /// Monument its place in the "surprise me" dice; under-including offers up a mass
+    /// grave as a fun day out. So this leans, on purpose, toward over-including.
+    private static func matchesAsWord(_ keyword: String, in haystack: String) -> Bool {
+        let pattern = "\\b" + NSRegularExpression.escapedPattern(for: keyword)
+        return haystack.range(of: pattern, options: .regularExpression) != nil
     }
 
     private static let explicitlySensitiveIDs: Set<String> = [
@@ -243,7 +267,11 @@ struct Site: Codable, Identifiable {
     private static let sensitiveKeywords: [String] = [
         "holocaust", "auschwitz", "concentration camp", "extermination camp", "genocide",
         "shoah", "massacre", "atrocity", "killing field", "mass grave", "war crime",
-        "cemetery", "burial ground", "graveyard", "necropolis", "ossuary", "war grave",
+        // "churchyard" belongs with "graveyard" and "cemetery": it is an active burial
+        // ground with living relatives, not archaeology. Omitting it was an oversight
+        // that left 1,176 of them eligible for playful surfaces.
+        "cemetery", "burial ground", "graveyard", "churchyard", "necropolis", "ossuary",
+        "war grave",
         "crematorium", "slave", "slavery", "atomic bomb", "hypocenter", "ground zero",
         "political prison", "gulag", "internment camp", "prison camp", "memorial", "victims",
     ]
