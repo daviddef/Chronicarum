@@ -71,7 +71,7 @@ Where it stands today:
 - **260,131 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
   260,008 imported by heritage designation: ~104k UK, ~71k US, ~44k French,
   ~14.5k Australian, ~1.4k Croatian, the rest global
-- **163,386 photos** — 63% of bulk sites, 80% of featured. Varies hugely by source:
+- **164,473 photos** — 63% of bulk sites, 80% of featured. Varies hugely by source:
   UK Grade I 99%, France 84%, US 81%, Scotland's Category B far less.
 - **~95k sites carry a real description** — 23,811 in French prose from Mérimée, ~71k
   one-liners from the Wikidata join on the US register
@@ -89,8 +89,8 @@ What's genuinely left:
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
 
-Photo attribution, which was the other release blocker, is now handled: 105,419 of
-105,421 distinct photos carry their licence, 98.9% of them with a named author. The two
+Photo attribution, which was the other release blocker, is now handled: 164,471 of
+164,473 distinct photos carry their licence, 98.3% of them with a named author. The two
 missing are files that no longer resolve on Commons.
 
 ---
@@ -147,7 +147,7 @@ The starting point: a SwiftUI project that modelled the app but could not build.
 Ordered by my sense of value.
 
 - [x] **Site photos** — Wikimedia Commons images via Wikidata P18, rendered with
-      `AsyncImage` and falling back to the era-tinted glyph. 105,421/187,507 bulk (56%)
+      `AsyncImage` and falling back to the era-tinted glyph. 164,473/260,008 bulk (63%)
       and 98/123 featured (80%) have a photo. Each links to its Commons file page,
       where the licence and author live.
 - [x] **Persistence** — `PersistenceService` wired into `SiteViewModel`: saved state
@@ -155,7 +155,7 @@ Ordered by my sense of value.
       app being killed. Also added the missing "visited" control — the Saved tab had a
       Visited section that nothing could ever fill.
 - [x] **Photo attribution** — author and licence fetched from the Commons API for
-      105,419 of 105,421 distinct photos and shown on the image itself (e.g. "FeaturedPics ·
+      164,471 of 164,473 distinct photos and shown on the image itself (e.g. "FeaturedPics ·
       CC BY-SA 4.0"), linking to the file page. Most of these licences require naming
       the author, so this is compliance rather than polish. The fetcher used to drop a
       whole 50-photo batch whenever a request failed — which is how a run of Cyrillic
