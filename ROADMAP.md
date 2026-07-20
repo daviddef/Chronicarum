@@ -5,21 +5,22 @@ of each done-list. Commits referenced by short SHA.
 
 ## How far along are we?
 
-**27 of 30 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**28 of 31 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 7/7 — 34,715 sites |
+| 2 · Content: handful → thousands | ✅ Done | 8/8 — 143,448 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
-- **34,715 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and 34,592
-  bulk-imported from Wikidata, of which **10,569 are Australian heritage-register places**
-- **28,654 photos** — 83% of bulk sites, 80% of featured
+- **143,448 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
+  143,325 imported by heritage designation: ~104k UK, ~14.5k Australian, the rest global
+- **69,962 photos** — 49% of bulk sites, 80% of featured. The rate fell as coverage grew:
+  Grade I is 99% photographed, Scotland's Category B far less.
 - Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
   search; bookmarks and dated visits that survive a restart
 - Location-aware: opens where you are, Explore sorted nearest-first with distances,
@@ -28,8 +29,8 @@ Where it stands today:
 
 What's genuinely left:
 
-- **Thin bulk entries** (open) — 34k sites carry a one-line description. Enriching them
-  with a Wikipedia paragraph is additive; nothing is broken without it.
+- **Thin bulk entries** (open) — most bulk sites carry a one-line description or none at
+  all. Enriching them with a Wikipedia paragraph is additive; nothing is broken without it.
 - **Travel staleness** (partial) — the fields now say when they were researched and that
   they're indicative, but they're still frozen text. Before any public release, they want
   a live source or removal. This is the one item I'd not ship as-is to strangers.
@@ -70,15 +71,20 @@ The starting point: a SwiftUI project that modelled the app but could not build.
       sitelink bands lost to Wikidata 502s were recovered on retry, so nothing was
       silently dropped. 24,281 sites total, verified rendering smoothly.
 - [x] **Import by heritage designation, not Wikipedia popularity** — the notability filter
-      was the whole problem. Australia-wide pass added 9,728 places (34,592 bulk total).
-      See *Why the catalogue was thin* below.
+      was the whole problem. Australia-wide pass added 9,728 places. See *Why the
+      catalogue was thin* below.
+- [x] **South Australia from the state register** — Wikidata had 113 of a few thousand.
+      Adelaide went from 75 places to 1,502. First CC BY source, so first attribution.
+- [x] **UK by designation grade** — Grade I, II*, scheduled monuments and Scottish
+      Categories A/B: 104,292 places. Grade II (378,336) excluded as the ordinary tier.
+      Bundle 8.2 MB → 29 MB, bulk decode 140 ms → 459 ms (Debug, lazy).
 
 ## Phase 3 — Depth and durability (in progress)
 
 Ordered by my sense of value.
 
 - [x] **Site photos** — Wikimedia Commons images via Wikidata P18, rendered with
-      `AsyncImage` and falling back to the era-tinted glyph. 28,556/34,592 bulk (83%)
+      `AsyncImage` and falling back to the era-tinted glyph. 69,864/143,325 bulk (49%)
       and 98/123 featured (80%) have a photo. Each links to its Commons file page,
       where the licence and author live.
 - [x] **Persistence** — `PersistenceService` wired into `SiteViewModel`: saved state
@@ -198,10 +204,96 @@ silently deletes content is worse than no dedup, because the loss is invisible.
 - **Never title-match to Wikipedia.** `/page/summary/Maryborough_Post_Office` returns a
   disambiguation page. Resolve via the Wikidata sitelink only.
 
+## Filling the gaps the registers left
+
+Measured coverage after the Australia-wide pass, per city, within 20 km:
+
+| Melbourne | Sydney | Perth | Hobart | Brisbane | Canberra | Adelaide | Darwin |
+|---|---|---|---|---|---|---|---|
+| 1,109 | 949 | 921 | 583 | 551 | 167 | **75** | **15** |
+
+The approach generalises — Brisbane's *photo* rate is exceptional, but its raw count is
+unremarkable. Adelaide and Darwin were the outliers, and the cause was not the query: a
+census of every Australian designation showed the 22 registers imported had missed only
+24 items nationwide. **Wikidata itself is thin there.** The South Australian Heritage
+Register held 113 entries against a real register of several thousand; the Northern
+Territory 32 against ~180. Coverage is a record of where volunteers have worked.
+
+**South Australia was therefore taken from the state register directly**
+([`merge_heritage_sa.py`](scripts/merge_heritage_sa.py)) — data.sa.gov.au publishes it as
+GeoJSON under CC BY 3.0 AU. Adelaide went from 75 places to 1,502.
+
+Two things that generalise to every register import after this one:
+
+- **A government register is not a list of destinations.** SA's 24,479 points are three
+  different things: State (3,280, the register proper), Local (8,650, mostly bare
+  "House"), and Contributory (12,549, streetscape filler with no description). Importing
+  all of it would have pinned ~21,000 private homes and invited people to look at them.
+  Only State plus a public-facing subset of Local was taken. Expect this split in every
+  register; the labels differ, the shape does not.
+- **Dedup broke three times, each time differently.** It is worth stating the rule that
+  survived, because two plausible ones did not:
+
+  | Attempt | What it did | Cost |
+  |---|---|---|
+  | Position alone, 0.01° (~1.1 km) | deleted anything near a curated site | 173 places — Customs House, Cadmans Cottage, the Garrison Church, for standing near the Opera House |
+  | Name alone, globally | deleted anything sharing a name | 2,599 places — *St John's Anglican Church* because Fremantle has one; 1,300-odd *Dwelling*s by each other |
+  | Position alone, 0.0005° (~55 m) | fine in sparse Australia, wrong in Britain | 25,658 places — **Dover Castle** by the Roman fort beneath it, **Canterbury Cathedral** by St Augustine's Abbey, **Bath Assembly Rooms** by the museum inside it |
+
+  The surviving rule is **name match within ~250 m, and nothing on position alone.**
+  Identity by QID is already exact, which is what dedup is actually for; proximity is not
+  evidence of sameness, because clustering is exactly what a historic precinct *is*.
+
+  The structural lesson underneath all three: **a dedup rule that silently deletes is
+  worse than no dedup, because the loss is invisible.** A surviving duplicate is visible
+  and fixable; a deleted place is neither. Every import now prints its skip reasons, and
+  any skip count above a few percent gets sampled by hand before the merge is kept — which
+  is the only reason the Dover Castle case was caught at all.
+
+**Attribution now has somewhere to live.** Wikidata is CC0 and owes nothing, which is why
+34k sites carry no source line. CC BY registers do owe it, so `DataSource` in
+[`Site.swift`](Chronicarum/Models/Site.swift) renders the credit on each affected site
+with a link to the register. Adding a register means adding a case.
+
+## The UK, and the scope question every large market will raise
+
+Australia fit in a bundle without anyone having to decide anything. The UK does not:
+there are ~480,000 listed buildings, and **Grade II alone is 378,336 — roughly 81 MB of
+JSON against a whole bundle of 8.2 MB.**
+
+Grade II is also the *ordinary* tier: terraced houses, garden walls, milestones, telephone
+boxes. It is South Australia's Contributory class again at a hundred times the scale, with
+the same problem — most of it is where people live. So the line is drawn at the grades
+that mean "worth going to see":
+
+| Designation | Count | |
+|---|---|---|
+| Grade I (England & Wales) | 10,101 | exceptional interest — **99% have a photo** |
+| Grade II* (England & Wales) | 24,515 | more than special interest |
+| Scheduled monuments | 33,709 | nationally important archaeology |
+| Category A (Scotland) | 6,515 | national importance (≈ Grade I) |
+| Category B (Scotland) | 34,621 | regional importance (≈ Grade II*) |
+| *Grade II — excluded* | *378,336* | *ordinary listings, mostly private homes* |
+| *Category C — excluded* | *26,512* | *Scotland's local tier* |
+
+Scotland gets A **and** B so it sits at the same bar as England; taking only Category A
+would under-represent Scotland the exact way sitelink-count under-represented Brisbane.
+
+**Query shape turned out to matter more than query scope.** The obvious single query with
+`OPTIONAL` `P31`/`P131`/`P571` label lookups times out at 60 s on every one of these
+designations, and `LIMIT`/`OFFSET` paging over an `ORDER BY` is worse. Splitting into a
+cheap core query (label, coordinates, image) plus a separate enrichment query joined
+locally by QID takes a 10k-row designation from *timeout* to *5 seconds*.
+
+Storage stays JSON for now, with cold-launch parse time measured rather than assumed. If
+it regresses, SQLite with a spatial index is the move — and that is also what Grade II
+would require if it is ever wanted.
+
 ## Where to go next, ranked
 
-1. **Other markets, same query.** One line changes (`P17`). UK, France, US, Netherlands
-   all have deep `P1435` coverage.
+1. **Other markets, same query.** One line changes (`P17`). France, US and the Netherlands
+   all have deep `P1435` coverage. Expect each large market to raise the same
+   which-tier question the UK did.
 2. **Official registers where the local layer is thin.** Historic England (OGL), France's
    Mérimée (46,714 monuments, Licence Ouverte), US NRHP (public domain, 72,668 points),
    Netherlands RCE (~63,000), Ireland NIAH (CC BY 4.0, *includes image links*). Cost is

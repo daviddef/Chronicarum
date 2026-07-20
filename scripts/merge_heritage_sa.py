@@ -83,13 +83,21 @@ bundle = json.load(open(BUNDLE))
 # Dedup against what Wikidata already gave us. SA rows there are sparse but real, and a
 # duplicate Adelaide Town Hall is more visible than a missing one.
 #
-# A name match ONLY counts when the two places are also near each other. Matching names
-# globally looks reasonable and is badly wrong: heritage names are formulaic, so a first
-# pass killed 2,599 genuine SA places — St John's Anglican Church deleted because
-# Fremantle has one, and 1,300-odd "Dwelling"s deleted by each other. Names are a weak
-# signal made strong only by proximity.
-NEAR_DEG = 0.02        # ~2 km — same-name-and-same-suburb is a real duplicate
-SAME_DEG = 0.0005      # ~55 m — same spot, whatever it is called
+# Two rules were tried here and both were wrong before this one.
+#
+# A GLOBAL name match killed 2,599 genuine places — St John's Anglican Church deleted
+# because Fremantle has one, 1,300-odd "Dwelling"s deleted by each other. Heritage names
+# are formulaic; a name means nothing without proximity.
+#
+# Adding proximity fixed that but introduced the opposite error: treating *closeness
+# alone* as proof of duplication killed another 683, including the South Australian War
+# Memorial (deleted by the State Library next door) and the Kelvin Building (by Scots
+# Church). Heritage places cluster — that is what a historic precinct is.
+#
+# So: a name match, within a radius tight enough that sharing a name means being the same
+# building. Nothing is deleted on position alone. Some genuine duplicates will survive,
+# which is the right way round — a duplicate is visible and fixable, a deletion is not.
+NEAR_DEG = 0.0025      # ~250 m
 
 def cell(lat, lon):
     return (int(lat / NEAR_DEG), int(lon / NEAR_DEG))
@@ -98,20 +106,15 @@ grid = {}
 for s in bundle:
     grid.setdefault(cell(s["lat"], s["lon"]), []).append(s)
 
-def neighbours(lat, lon):
+def duplicate_of(name, lat, lon):
+    n = norm(name)
     cy, cx = cell(lat, lon)
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):
-            yield from grid.get((cy + dy, cx + dx), ())
-
-def duplicate_of(name, lat, lon):
-    n = norm(name)
-    for s in neighbours(lat, lon):
-        dlat, dlon = abs(s["lat"] - lat), abs(s["lon"] - lon)
-        if dlat < SAME_DEG and dlon < SAME_DEG:
-            return s
-        if dlat < NEAR_DEG and dlon < NEAR_DEG and norm(s["name"]) == n:
-            return s
+            for s in grid.get((cy + dy, cx + dx), ()):
+                if (abs(s["lat"] - lat) < NEAR_DEG and abs(s["lon"] - lon) < NEAR_DEG
+                        and norm(s["name"]) == n):
+                    return s
     return None
 
 existing_ids = {s["id"] for s in bundle}
