@@ -167,6 +167,10 @@ struct Site: Codable, Identifiable {
     /// bare filename, not a URL, so thumbnail width stays a display decision.
     var imageFile: String? = nil
 
+    /// Which dataset this site came from, when that dataset's licence requires saying so.
+    /// `nil` for Wikidata (CC0) and the hand-authored sites, which owe no attribution.
+    var dataSource: DataSource? = nil
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -266,7 +270,36 @@ struct Site: Codable, Identifiable {
         case builtDescription = "built"
         case civilisation = "civ"
         case tagline, chapters
-        case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile
+        case nearestAirport, bestTimeToVisit, visaNote, glyph, imageFile, dataSource
+    }
+}
+
+// MARK: - Data Sources
+
+/// A bulk dataset whose licence obliges us to name it.
+///
+/// Wikidata is CC0 and owes nothing, which is why the first 34k sites carry no source of
+/// their own. Government heritage registers are typically CC BY: free to use, including
+/// commercially, provided the register is credited. That credit has to reach the user, so
+/// it lives on the site itself rather than buried in a licences screen — the obligation
+/// attaches to the record, and a reader looking at an SA place should see where it came
+/// from without hunting for it.
+enum DataSource: String, Codable, CaseIterable {
+    case saHeritageRegister = "sahr"
+
+    /// Shown under the description, e.g. "South Australian Heritage Places · CC BY 3.0 AU".
+    var credit: String {
+        switch self {
+        case .saHeritageRegister: "South Australian Heritage Places · CC BY 3.0 AU"
+        }
+    }
+
+    /// Where the licence and the original record live.
+    var url: URL? {
+        switch self {
+        case .saHeritageRegister:
+            URL(string: "https://data.sa.gov.au/data/dataset/sa-heritage-places")
+        }
     }
 }
 

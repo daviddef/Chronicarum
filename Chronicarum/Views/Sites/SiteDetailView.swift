@@ -63,6 +63,15 @@ struct SiteDetailView: View {
                             .padding(.top, 16)
                     }
 
+                    // ── Data source ───────────────────────────────────────
+                    // Only for datasets whose licence requires the credit; Wikidata is
+                    // CC0 and shows nothing.
+                    if let source = site.dataSource {
+                        SiteDataSourceView(source: source)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 20)
+                    }
+
                     Spacer(minLength: 40)
                 }
             }
@@ -175,6 +184,44 @@ struct SiteHeroView: View {
             }
         }
         .frame(height: 200)
+    }
+}
+
+/// Credits the register a site came from, as its licence requires.
+struct SiteDataSourceView: View {
+    let source: DataSource
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "building.columns")
+                .font(.system(size: 10))
+            Text(source.credit)
+                .font(.system(size: 11))
+            Spacer(minLength: 0)
+            if source.url != nil {
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 9))
+            }
+        }
+        .foregroundColor(.secondary)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        .modifier(OptionalLink(url: source.url))
+    }
+}
+
+/// Wraps the credit in a `Link` when there's somewhere to send the reader, and leaves it
+/// as plain text when there isn't — so a future source without a public URL still renders.
+private struct OptionalLink: ViewModifier {
+    let url: URL?
+
+    func body(content: Content) -> some View {
+        if let url {
+            Link(destination: url) { content }
+        } else {
+            content
+        }
     }
 }
 

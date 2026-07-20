@@ -15,8 +15,10 @@ struct BulkSite: Decodable {
     let era: String
     let country: String
     let desc: String
-    /// Wikimedia Commons filename; absent for the ~7% of sites with no P18 image.
+    /// Wikimedia Commons filename; absent for sites with no P18 image.
     let img: String?
+    /// Dataset tag, present only where the licence requires attribution. See `DataSource`.
+    let src: String?
 
     var asSite: Site {
         Site(
@@ -37,7 +39,8 @@ struct BulkSite: Decodable {
             nearestAirport: nil,
             bestTimeToVisit: nil,
             visaNote: nil,
-            imageFile: img
+            imageFile: img,
+            dataSource: src.flatMap(DataSource.init(rawValue:))
         )
     }
 }
