@@ -21,6 +21,11 @@ targets:
       - path: Chronicarum
         excludes:
           - "**/.DS_Store"
+          # Row-wise source of truth for the import scripts, deliberately NOT shipped:
+          # the app reads the columnar build produced by scripts/build_columnar.py, which
+          # loads in 967ms against 1,457ms and is 10 MB smaller. Bundling both would add
+          # 40 MB of dead weight to the download.
+          - "Resources/bulk_sites.json"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chronicarum.app

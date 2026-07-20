@@ -314,11 +314,13 @@ struct Site: Codable, Identifiable {
 /// from without hunting for it.
 enum DataSource: String, Codable, CaseIterable {
     case saHeritageRegister = "sahr"
+    case merimee            = "merimee"
 
     /// Shown under the description, e.g. "South Australian Heritage Places · CC BY 3.0 AU".
     var credit: String {
         switch self {
         case .saHeritageRegister: "South Australian Heritage Places · CC BY 3.0 AU"
+        case .merimee:            "Base Mérimée, Ministère de la Culture · Licence Ouverte 2.0"
         }
     }
 
@@ -327,6 +329,8 @@ enum DataSource: String, Codable, CaseIterable {
         switch self {
         case .saHeritageRegister:
             URL(string: "https://data.sa.gov.au/data/dataset/sa-heritage-places")
+        case .merimee:
+            URL(string: "https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/")
         }
     }
 }

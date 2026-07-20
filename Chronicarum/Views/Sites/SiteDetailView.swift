@@ -51,6 +51,13 @@ struct SiteDetailView: View {
                             .padding(.horizontal, 16)
                     }
 
+                    // ── Register history (French monuments) ───────────────
+                    if let history = site.monumentHistory {
+                        MonumentHistoryView(text: history)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                    }
+
                     // ── Travel Layer ──────────────────────────────────────
                     TravelLayerView(site: site)
                         .padding(.horizontal, 16)
@@ -184,6 +191,50 @@ struct SiteHeroView: View {
             }
         }
         .frame(height: 200)
+    }
+}
+
+/// The Mérimée register's own account of a French monument.
+///
+/// Labelled "En français" because it is not translated, and saying so is better than
+/// letting a reader hit a wall of French with no warning. `.textSelection` lets anyone
+/// who wants a translation lift it into one.
+struct MonumentHistoryView: View {
+    let text: String
+    @State private var expanded = false
+
+    /// These run to ~525 characters at the median and well past 2,000 at the tail, which
+    /// would push the travel and nearby sections off the bottom of the sheet.
+    private var isLong: Bool { text.count > 400 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text("History")
+                    .font(.headline)
+                Text("En français")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.12), in: Capsule())
+            }
+
+            Text(text)
+                .font(.callout)
+                .foregroundColor(.primary.opacity(0.85))
+                .lineSpacing(3)
+                .lineLimit(expanded || !isLong ? nil : 6)
+                .textSelection(.enabled)
+
+            if isLong {
+                Button(expanded ? "Show less" : "Read more") {
+                    withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                }
+                .font(.caption.bold())
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

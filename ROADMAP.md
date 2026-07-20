@@ -5,22 +5,25 @@ of each done-list. Commits referenced by short SHA.
 
 ## How far along are we?
 
-**28 of 31 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
+**30 of 33 tracked items done**, 2 partly, 1 open. The app is feature-complete and runs
 on a real iPhone (TestFlight build 3). The one open item is additive, not a gap.
 
 | Phase | Status | |
 |---|---|---|
 | 0 · Skeleton (inherited) | ✅ Done | Didn't compile when handed over |
 | 1 · Make it build, run, work | ✅ Done | 10/10 — builds, runs on device |
-| 2 · Content: handful → thousands | ✅ Done | 8/8 — 143,448 sites |
+| 2 · Content: handful → thousands | ✅ Done | 10/10 — 187,630 sites |
 | 3 · Depth and durability | ◐ 8 of 11 | 2 partial (travel staleness, Look Around), 1 open (thin bulk) |
 
 Where it stands today:
 
-- **143,448 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
-  143,325 imported by heritage designation: ~104k UK, ~14.5k Australian, the rest global
-- **69,962 photos** — 49% of bulk sites, 80% of featured. The rate fell as coverage grew:
-  Grade I is 99% photographed, Scotland's Category B far less.
+- **187,630 sites** — 123 hand-authored (134 chapters, curated facts, sourced) and
+  187,507 imported by heritage designation: ~104k UK, ~44k French, ~14.5k Australian,
+  the rest global
+- **105,517 photos** — 56% of bulk sites, 80% of featured. Varies hugely by source:
+  France 84%, UK Grade I 99%, Scotland's Category B far less.
+- **23,811 sites carry real descriptive prose** (French, from Mérimée) — the first dent
+  in the "bulk entries are thin" problem rather than more bare pins
 - Clustered map that stays responsive at any zoom; conquest timeline across 7 periods;
   search; bookmarks and dated visits that survive a restart
 - Location-aware: opens where you are, Explore sorted nearest-first with distances,
@@ -77,7 +80,10 @@ The starting point: a SwiftUI project that modelled the app but could not build.
       Adelaide went from 75 places to 1,502. First CC BY source, so first attribution.
 - [x] **UK by designation grade** — Grade I, II*, scheduled monuments and Scottish
       Categories A/B: 104,292 places. Grade II (378,336) excluded as the ordinary tier.
-      Bundle 8.2 MB → 29 MB, bulk decode 140 ms → 459 ms (Debug, lazy).
+- [x] **France from Mérimée** — 44,182 monuments historiques, 84% with a photo (joined via
+      Wikidata P380) and 23,811 with the register's own prose. Wikidata held 12.
+- [x] **Columnar bundle format** — the load regressed to 1,457 ms at 187k rows, so the
+      storage question came due. Measured, not guessed: see *Making 187k rows load* below.
 
 ## Phase 3 — Depth and durability (in progress)
 
@@ -299,6 +305,69 @@ locally by QID takes a 10k-row designation from *timeout* to *5 seconds*.
 Storage stays JSON for now, with cold-launch parse time measured rather than assumed. If
 it regresses, SQLite with a spatial index is the move — and that is also what Grade II
 would require if it is ever wanted.
+
+## France, and the first source that ships actual writing
+
+Wikidata was not the route: it holds **12** French monuments with coordinates against a
+register of 46,714. Mérimée, the culture ministry's own register, is published under
+**Licence Ouverte 2.0** and is far richer than Wikidata would ever have been.
+
+44,182 imported, and two things set it apart from every earlier source:
+
+- **84% have a photo** — against 49% for the UK. Mérimée ships no images at all; they come
+  from a join to Wikidata on `P380` (Mérimée ID), which turns out to be the cheapest photo
+  coverage available anywhere so far.
+- **23,811 carry `historique`** — real descriptive prose, ~525 characters at the median.
+  This is the first source that answers *"bulk entries are thin"* instead of adding more
+  bare pins.
+
+**The prose stays in French.** It is the French state's own account of a French monument;
+machine-translating it would create an adaptation of an official record, and a
+mistranslated protection notice is worse than an untranslated one. The UI labels it
+*En français* rather than pretending otherwise, and the text is selectable so anyone who
+wants a translation can lift it. It loads from its own 14 MB file, lazily, so it never
+touches the catalogue parse — the same split already used for photo credits.
+
+**Generic names needed two passes.** The register titles a building by what it *is* when
+it has no name: 2,717 "Maison", 2,448 "Eglise", 2,124 "Immeuble". Qualifying by commune
+was the obvious fix and produced four consecutive Explore rows reading *"Immeuble, Paris
+4e Arrondissement"* — useless to someone standing on the street, since an arrondissement
+holds hundreds. Qualifying by street address instead gives *"Immeuble, 63 rue de la
+Verrerie"*, which is a place you can walk to.
+
+Dedup also had to be narrowed again, for a new reason: Mérimée must not be deduped
+**against itself**. Its `reference` is already a unique key, so a name check within the
+source can only produce false positives — and produced 3,943, since neighbouring
+protected buildings genuinely share the title "Immeuble".
+
+## Making 187k rows load
+
+The bundle format question, deferred earlier with "ship JSON and measure", came due: at
+187,507 rows the catalogue took **1,457 ms** on a Release build. Profiling put 1,419 ms of
+that in `JSONDecoder` — file read was 17 ms and mapping to `Site` was 70 ms.
+
+Three formats, all measured on device-class Release builds rather than reasoned about:
+
+| Approach | Load | Size |
+|---|---|---|
+| `JSONDecoder` over `[BulkSite]` | 1,457 ms | 40 MB |
+| `JSONSerialization`, row dictionaries | **1,918 ms** | 40 MB |
+| `JSONSerialization`, **columnar** | **967 ms** | **29 MB** |
+
+The middle row is the useful lesson. Dropping `Codable` for `JSONSerialization` looked
+like an obvious win and made things **32% worse**: it returns `NSDictionary`, so every
+`row["name"] as? String` crosses the Objective-C bridge — ~1.9M bridged casts, costing
+more than the reflection they replaced. The first optimisation attempt was a regression,
+and only measuring caught it.
+
+Columnar wins because it pays that cost once per *field* rather than once per *row*: ten
+array casts, then indexed access. It is also 26% smaller, because a row-wise file repeats
+all ten key names 187,507 times.
+
+`bulk_sites.json` stays row-wise as the source of truth for the import scripts and is
+**excluded from the app target**; [`build_columnar.py`](scripts/build_columnar.py)
+produces what ships. Getting below ~300 ms would need a binary format or SQLite — worth
+doing if the catalogue roughly doubles again, not before.
 
 ## Where to go next, ranked
 

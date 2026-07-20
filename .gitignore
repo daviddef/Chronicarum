@@ -26,3 +26,8 @@ Carthage/Build/
 # Fastlane
 fastlane/report.xml
 fastlane/screenshots/**/*.png
+
+# Row-wise catalogue: 39 MB, and fully derivable from the columnar file that ships.
+# Committing both would add ~68 MB per import commit to store the same data twice.
+# Rebuild it before running an import:  python3 scripts/build_columnar.py --expand
+Chronicarum/Resources/bulk_sites.json

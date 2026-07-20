@@ -16,11 +16,14 @@
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
+		5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */ = {isa = PBXBuildFile; fileRef = B43CE8B5F5585283B332BAAD /* merimee_history.json */; };
 		5F049BF57A23BE3BB3C693B9 /* ClusterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */; };
+		6739FBE03FB60A650BB28BA9 /* MonumentHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */; };
 		835DEAA8877E78EC9B5751EE /* Site.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D077ED9B01BBFC0966CC7DB /* Site.swift */; };
 		863E6279E1558654BF5B95CE /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C381E3019A64B55DD81919 /* SavedView.swift */; };
 		916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5253630662A704FABEE643A /* ContentView.swift */; };
 		9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2656A9226831B85426DAF9 /* SiteData.swift */; };
+		A9AF29C8A3E1AAE53C6F4110 /* bulk_columnar.json in Resources */ = {isa = PBXBuildFile; fileRef = 26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */; };
 		B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */; };
 		BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */; };
 		C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1288A7864863444DEA3835A /* ChronicArumApp.swift */; };
@@ -29,7 +32,6 @@
 		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
 		DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73170330E1865B973F1BE67 /* Empire.swift */; };
 		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
-		E34D2B51D554844E68AA68EA /* bulk_sites.json in Resources */ = {isa = PBXBuildFile; fileRef = 2D9E036B6177AFED11EC148E /* bulk_sites.json */; };
 		EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF03E268E066215CE65549FC /* ChapterMarkup.swift */; };
 		EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85E35BAD09F94104E31D296 /* LocationService.swift */; };
 		F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1C8EB07A51868342759E1E2F /* Assets.xcassets */; };
@@ -42,7 +44,7 @@
 		1C8EB07A51868342759E1E2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlsView.swift; sourceTree = "<group>"; };
 		230F9B78CFEAF02E8520558B /* ConquestTimelineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConquestTimelineBar.swift; sourceTree = "<group>"; };
-		2D9E036B6177AFED11EC148E /* bulk_sites.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bulk_sites.json; sourceTree = "<group>"; };
+		26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bulk_columnar.json; sourceTree = "<group>"; };
 		33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineData.swift; sourceTree = "<group>"; };
 		37C381E3019A64B55DD81919 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
 		39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 		9BFD4858D1B74EF7BCA13446 /* attribution.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = attribution.json; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
+		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
@@ -65,6 +68,7 @@
 		EF03E268E066215CE65549FC /* ChapterMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMarkup.swift; sourceTree = "<group>"; };
 		F1288A7864863444DEA3835A /* ChronicArumApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChronicArumApp.swift; sourceTree = "<group>"; };
 		F85E35BAD09F94104E31D296 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonumentHistory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -80,8 +84,9 @@
 			isa = PBXGroup;
 			children = (
 				9BFD4858D1B74EF7BCA13446 /* attribution.json */,
-				2D9E036B6177AFED11EC148E /* bulk_sites.json */,
+				26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */,
 				A85F2D259BED16C5C1BD66E3 /* featured_images.json */,
+				B43CE8B5F5585283B332BAAD /* merimee_history.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -165,6 +170,7 @@
 				8A9F74C0BE405A0D5C654CDE /* BulkData.swift */,
 				EF03E268E066215CE65549FC /* ChapterMarkup.swift */,
 				D73170330E1865B973F1BE67 /* Empire.swift */,
+				FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */,
 				E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */,
 				5D077ED9B01BBFC0966CC7DB /* Site.swift */,
 				DB2656A9226831B85426DAF9 /* SiteData.swift */,
@@ -252,8 +258,9 @@
 			files = (
 				F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */,
 				00CD6B2254FA535ADBA03234 /* attribution.json in Resources */,
-				E34D2B51D554844E68AA68EA /* bulk_sites.json in Resources */,
+				A9AF29C8A3E1AAE53C6F4110 /* bulk_columnar.json in Resources */,
 				02B4817F6DD3407982657B74 /* featured_images.json in Resources */,
+				5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,6 +285,7 @@
 				C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */,
 				2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */,
 				14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */,
+				6739FBE03FB60A650BB28BA9 /* MonumentHistory.swift in Sources */,
 				DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */,
 				BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */,
 				863E6279E1558654BF5B95CE /* SavedView.swift in Sources */,
