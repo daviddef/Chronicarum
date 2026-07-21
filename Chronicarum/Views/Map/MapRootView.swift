@@ -3,6 +3,8 @@ import MapKit
 
 /// Primary map view — hosts the world map, site markers, conquest overlay, and map controls.
 struct MapRootView: View {
+    /// Lets the top-bar "?" re-open the first-run walkthrough.
+    @Binding var showOnboarding: Bool
     @EnvironmentObject private var mapVM: MapViewModel
     @EnvironmentObject private var siteVM: SiteViewModel
     @State private var showSiteSheet = false
@@ -116,7 +118,7 @@ struct MapRootView: View {
             // than floating over it — overlaying the same corner covered the top
             // bar's filter button and made it untappable.
             VStack(spacing: 0) {
-                MapTopBarView(showFilters: $showFilters)
+                MapTopBarView(showFilters: $showFilters, showHelp: $showOnboarding)
 
                 HStack {
                     Spacer()
@@ -262,7 +264,7 @@ private struct LassoDrawingLayer: View {
 }
 
 #Preview {
-    MapRootView()
+    MapRootView(showOnboarding: .constant(false))
         .environmentObject(MapViewModel(locationService: LocationService()))
         .environmentObject(SiteViewModel())
 }

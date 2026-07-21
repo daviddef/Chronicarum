@@ -17,6 +17,28 @@ targets:
   Chronicarum:
     type: application
     platform: iOS
+    # A hand-written Info.plist rather than the generated one, so the launch screen can
+    # carry a solid dark background (UILaunchScreen → UIColorName). That matches the first
+    # frame of the animated SplashView, so cold-start hands off with no white flash. A
+    # launch screen must be static; the animation lives in SwiftUI once the app is up.
+    info:
+      path: Chronicarum/Info.plist
+      properties:
+        CFBundleDisplayName: Chronicarum
+        NSLocationWhenInUseUsageDescription: "Chronicarum uses your location to show heritage sites near you and centre the map on where you are."
+        # The app only makes standard HTTPS requests (map tiles, Commons photos), which is
+        # exempt. Declaring it stops TestFlight holding every build for a manual
+        # export-compliance answer.
+        ITSAppUsesNonExemptEncryption: false
+        # All four are required because the app targets iPad and iPad multitasking demands
+        # the full set — App Store validation rejects the bundle otherwise (error 90474).
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UILaunchScreen:
+          UIColorName: LaunchBackground
     sources:
       - path: Chronicarum
         excludes:
@@ -30,17 +52,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chronicarum.app
         PRODUCT_NAME: Chronicarum
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Chronicarum
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Chronicarum uses your location to show heritage sites near you and centre the map on where you are."
-        # All four are required because the app targets iPad (TARGETED_DEVICE_FAMILY 1,2)
-        # and iPad multitasking demands the full set — App Store validation rejects the
-        # bundle otherwise (error 90474).
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
-        # The app only makes standard HTTPS requests (map tiles, Commons photos), which is
-        # exempt. Declaring it here stops TestFlight holding every build for a manual
-        # export-compliance answer.
-        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentGold
         TARGETED_DEVICE_FAMILY: "1,2"

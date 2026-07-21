@@ -20,6 +20,7 @@
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
 		44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = 490E6A73385E51BC23C07148 /* OpeningPattern.swift */; };
+		50ADEE7ACE31BFCF904012B0 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
 		5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */ = {isa = PBXBuildFile; fileRef = B43CE8B5F5585283B332BAAD /* merimee_history.json */; };
 		5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */; };
@@ -45,6 +46,7 @@
 		EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85E35BAD09F94104E31D296 /* LocationService.swift */; };
 		F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1C8EB07A51868342759E1E2F /* Assets.xcassets */; };
 		F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */; };
+		FBC42BF01D1777259666D48A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F444ACB8634D2BBEB711DA4B /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +70,7 @@
 		8A9F74C0BE405A0D5C654CDE /* BulkData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkData.swift; sourceTree = "<group>"; };
 		9BFD4858D1B74EF7BCA13446 /* attribution.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = attribution.json; sourceTree = "<group>"; };
 		A26B76309F8494021C50CC55 /* WikipediaExtract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaExtract.swift; sourceTree = "<group>"; };
+		A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
 		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
@@ -79,12 +82,14 @@
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
 		D73170330E1865B973F1BE67 /* Empire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Empire.swift; sourceTree = "<group>"; };
 		DB2656A9226831B85426DAF9 /* SiteData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteData.swift; sourceTree = "<group>"; };
+		DCCD9CCBA4BAB3DAB19C3A1D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E1A247BA366A9C5B10865075 /* websites.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = websites.json; sourceTree = "<group>"; };
 		E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
 		E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCredits.swift; sourceTree = "<group>"; };
 		E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		EF03E268E066215CE65549FC /* ChapterMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMarkup.swift; sourceTree = "<group>"; };
 		F1288A7864863444DEA3835A /* ChronicArumApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChronicArumApp.swift; sourceTree = "<group>"; };
+		F444ACB8634D2BBEB711DA4B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F85E35BAD09F94104E31D296 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonumentHistory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -146,6 +151,7 @@
 			children = (
 				1C8EB07A51868342759E1E2F /* Assets.xcassets */,
 				F1288A7864863444DEA3835A /* ChronicArumApp.swift */,
+				DCCD9CCBA4BAB3DAB19C3A1D /* Info.plist */,
 				B724BE458905B86C36C49E1C /* Models */,
 				195513595B5A7D73760400EB /* Resources */,
 				F64D4A0E766E0BE438490235 /* Services */,
@@ -161,11 +167,21 @@
 				C5253630662A704FABEE643A /* ContentView.swift */,
 				E3DA4422D438494A7AD06520 /* Explore */,
 				54BDAC5EEB7D93EB7FF1862D /* Map */,
+				85B560BEC42361709EBE62BA /* Onboarding */,
 				28A495B32397EAEC08951C1D /* Plan */,
 				3631DA8D80B9F796CEA6B907 /* Settings */,
 				0437AB89BEF9EA7D4A59BF1C /* Sites */,
+				F71818AB3EDBD46674533BD9 /* Splash */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		85B560BEC42361709EBE62BA /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				F444ACB8634D2BBEB711DA4B /* OnboardingView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		900DB24C6B5BD25016609F22 /* ViewModels */ = {
@@ -229,6 +245,14 @@
 				39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		F71818AB3EDBD46674533BD9 /* Splash */ = {
+			isa = PBXGroup;
+			children = (
+				A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */,
+			);
+			path = Splash;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -325,6 +349,7 @@
 				14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */,
 				6739FBE03FB60A650BB28BA9 /* MonumentHistory.swift in Sources */,
 				A92D70BB5FC42005FF76587D /* OfficialWebsite.swift in Sources */,
+				FBC42BF01D1777259666D48A /* OnboardingView.swift in Sources */,
 				44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */,
 				DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */,
 				BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */,
@@ -334,6 +359,7 @@
 				CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */,
 				F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */,
 				02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */,
+				50ADEE7ACE31BFCF904012B0 /* SplashView.swift in Sources */,
 				01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */,
 				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
 				5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */,
@@ -351,12 +377,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentGold;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Chronicarum;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Chronicarum uses your location to show heritage sites near you and centre the map on where you are.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = Chronicarum/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -441,12 +462,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentGold;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Chronicarum;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Chronicarum uses your location to show heritage sites near you and centre the map on where you are.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = Chronicarum/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

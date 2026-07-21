@@ -1,6 +1,35 @@
 import SwiftUI
 
+/// Wraps the app in its launch sequence: the animated splash plays over the top on cold
+/// start, and the first-run walkthrough appears once the splash clears.
+struct RootView: View {
+    @State private var showSplash = true
+    /// Persisted, so the walkthrough is a first-run event, not an every-launch one.
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @State private var showOnboarding = false
+
+    var body: some View {
+        ContentView(showOnboarding: $showOnboarding)
+            .opacity(showSplash ? 0 : 1)
+            .overlay {
+                if showSplash {
+                    SplashView {
+                        withAnimation(.easeInOut(duration: 0.4)) { showSplash = false }
+                        // Only after the splash clears, so the walkthrough isn't racing
+                        // the intro animation for the screen.
+                        if !hasSeenOnboarding { showOnboarding = true }
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .onChange(of: showOnboarding) { _, isShowing in
+                if !isShowing { hasSeenOnboarding = true }
+            }
+    }
+}
+
 struct ContentView: View {
+    @Binding var showOnboarding: Bool
     @State private var selectedTab: Tab = .map
 
     enum Tab: String, CaseIterable {
@@ -19,7 +48,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            MapRootView()
+            MapRootView(showOnboarding: $showOnboarding)
                 .tabItem {
                     Label("Map", systemImage: "map.fill")
                 }
@@ -38,11 +67,14 @@ struct ContentView: View {
                 .tag(Tab.saved)
         }
         .tint(Color("AccentGold"))   // define in Assets.xcassets — #C9A84C
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView()
+        }
     }
 }
 
 #Preview {
-    ContentView()
+    RootView()
         .environmentObject(MapViewModel(locationService: LocationService()))
         .environmentObject(SiteViewModel())
 }

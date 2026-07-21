@@ -15,7 +15,7 @@ struct ChronicArumApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environmentObject(mapVM)
                 .environmentObject(siteVM)
                 .environmentObject(locationService)

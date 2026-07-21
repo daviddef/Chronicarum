@@ -2,10 +2,11 @@ import SwiftUI
 
 struct MapTopBarView: View {
     @Binding var showFilters: Bool
+    @Binding var showHelp: Bool
     @EnvironmentObject private var mapVM: MapViewModel
 
     var body: some View {
-        HStack {
+        HStack(spacing: 18) {
             // App wordmark
             Text("CHRONICARUM")
                 .font(.system(size: 15, weight: .bold, design: .serif))
@@ -13,6 +14,16 @@ struct MapTopBarView: View {
                 .tracking(3)
 
             Spacer()
+
+            // Re-open the walkthrough
+            Button {
+                showHelp = true
+            } label: {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 16))
+                    .foregroundColor(.primary)
+            }
+            .accessibilityLabel("How to use Chronicarum")
 
             // Filter toggle
             Button {
