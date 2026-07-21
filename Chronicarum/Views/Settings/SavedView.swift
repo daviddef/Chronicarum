@@ -73,6 +73,18 @@ struct SavedView: View {
                 }
             }
             .navigationTitle("Saved")
+            // The Saved tab is the app's only screen that isn't the catalogue, so the
+            // licence credits hang off it rather than earning a tab of their own.
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        CreditsView()
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .accessibilityLabel("Sources and licences")
+                }
+            }
             .sheet(item: $selectedSite) { site in
                 SiteDetailView(site: site)
                     .presentationDetents([.medium, .large])

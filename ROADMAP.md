@@ -620,9 +620,8 @@ deciding which six are worth a day — and no containment data solves it.
 
 Still open for containment itself:
 
-- **Geometric containment.** Several registers (UK, SA, Croatia) publish polygon layers;
-  only points were imported. A point inside another site's footprint is contained. This is
-  the route to real coverage and it means re-importing geometry.
+- **Geometric containment.** Attempted — and the premise above turned out to be mostly
+  false. See *Geometric containment, and the polygon layer that isn't* below.
 - **Wikidata `P527` (has part)**, the inverse — some items record only one direction.
 
 ## Selection — which six of the fifty-two
@@ -967,6 +966,65 @@ but it no longer claims you can drive there.
 the shape of the plan, which still comes from the estimate. Valhalla remains the answer if
 per-leg routing ever needs to happen inside the selection loop — but nothing currently wants
 that.
+
+## Geometric containment, and the polygon layer that isn't
+
+This document has said for a while that several registers publish polygon layers, that only
+points were imported, and that re-importing geometry was "the route to real coverage".
+Checking that before building on it was worth more than the build would have been, because
+the premise is mostly false.
+
+| source | listed buildings | scheduled monuments |
+|---|---|---|
+| Historic England | 379,680 "polygons" — **97% are 2.5 m placeholder triangles** | **19,998 real boundaries** |
+| Historic Environment Scotland | 67,480 points, **740 polygons (1.1%)** | 8,072 real boundaries |
+| South Australia | 23,229 real, but cadastral parcels rather than footprints | — |
+
+Historic England's listed-building polygon layer is the trap: it has *exactly* the same
+record count as the point layer, which reads as complete coverage. Sampling it says
+otherwise — Grade I buildings in central Whitehall come back as 4-vertex rings 2.4 m across.
+Only listings created or amended since April 2011 carry a real extent, about 2.6%, and
+dense historic cities are overwhelmingly older than that. Scotland is worse: Edinburgh is
+the single most clustered place in the catalogue, 7,547 sites within 250 m of another, and
+it has no listed-building geometry at all.
+
+So **geometric containment is a scheduled-monument feature**, not a general one. It finds
+precincts, city walls, abbey grounds and dockyards. It will never find the terraced street,
+which is where the double-counting is worst. 18,525 usable footprints yielded **1,188 new
+relations**, taking the catalogue from 3,266 contained sites to 4,454 — real, surveyed, and
+small. Worth having; not the fix the entry above promised.
+
+Joined via Wikidata `P1216` (the NHLE entry number) rather than by matching name and
+position, which is the approach that deleted Dover Castle during the dedup work. Licensed
+under OGL v3; only the derived relations ship, never the boundaries, and the credit now has
+somewhere to live — a **Sources & licences** screen, which the app had been missing while
+already carrying CC BY obligations.
+
+### The bug it exposed, which was worth more than the data
+
+Reading the new relations found something the old ones had been quietly getting wrong for
+as long as containment has existed. The planner dropped the *child* whenever its parent was
+also present — reasonable, if the container is the destination and its parts are what you
+see while there. For a Georgian terrace holding 39 listed houses, it is exactly right. For
+a scheduled monument it is frequently backwards, because the designation is drawn *around*
+the thing rather than being the thing:
+
+    Fulham Palace moated site  (significance 20)  contains  Fulham Palace  (65)
+    Portsmouth Dockyard docks  (significance 23)  contains  HMS Victory    (56)
+                                                            Mary Rose      (43)
+                                                            HMS M33        (36)
+
+A Portsmouth day would have spent itself at a dockyard wall and never boarded HMS Victory.
+The planner now drops whichever end of a contained pair is **worth less**, which gets both
+families right at once: the terrace still beats its 39 houses, and all four ships beat the
+basin they float in. Chester likewise now keeps the Roman Amphitheatre rather than the
+fortress designation enclosing it.
+
+Catalogue-wide the two rules disagree on **819 of 4,454 pairs — 18.4%**, and in every one
+of those the old rule discarded the more significant site. That was latent long before the
+footprints arrived; it took a source of containment where the direction is usually reversed
+to make it visible. The same pattern this document keeps recording: the new surface exposes
+what the previous one hid.
 
 ## Open question: institutional sites
 

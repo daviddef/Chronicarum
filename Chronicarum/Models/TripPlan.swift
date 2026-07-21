@@ -182,13 +182,28 @@ enum TripPlanner {
                 && site.approxDistanceKm(from: origin) < radiusKm
         }
 
-        // Anything contained by another site in the pool is something you see while
-        // visiting that site, not a separate stop.
-        let present = Set(pool.map(\.id))
-        pool = pool.filter { site in
-            guard let parent = site.parentID else { return true }
-            return !present.contains(parent)
+        // A site and the site containing it are one visit, not two. Which of the two to
+        // drop is the whole question, and the obvious answer — keep the container, it is
+        // the bigger thing — is wrong often enough to matter:
+        //
+        //     Fulham Palace moated site (20)  contains  Fulham Palace (65)
+        //     Portsmouth Dockyard docks (23)  contains  HMS Victory (56), Mary Rose (43)
+        //
+        // A scheduled area is frequently a designation drawn *around* something rather than
+        // a destination itself, so keeping the container would spend an afternoon at a
+        // dockyard wall and never board HMS Victory. Keeping whichever end is worth more
+        // gets both families right: the Georgian terrace beats its 39 listed houses, and
+        // the ships beat the basin they float in.
+        var byID: [String: Site] = [:]
+        for site in pool { byID[site.id] = site }
+        var suppressed = Set<String>()
+        for site in pool {
+            guard let parentID = site.parentID, let parent = byID[parentID] else { continue }
+            // Ties go to the container, which is the safer default: it is the reading that
+            // removes more stops, and over-counting a place is the failure this exists for.
+            suppressed.insert(site.significance > parent.significance ? parentID : site.id)
         }
+        pool = pool.filter { !suppressed.contains($0.id) }
 
         // A stop has to be worth stopping for. Without this the day fills with railings
         // and gate piers — they are real listed structures and nobody plans around them.
