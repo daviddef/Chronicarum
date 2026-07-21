@@ -211,9 +211,12 @@ Ordered by my sense of value.
       separate bugs defeated the auto-centre before instrumenting found them:
       `onMapCameraChange` fires twice on first layout, and the location fix usually lands
       before the map appears.
-- [ ] **◀ YOU ARE HERE** — Australia is now covered by heritage designation rather than
-      Wikipedia fame (see *Why the catalogue was thin*). Next: roll the same query to the
-      other markets, then bounded collections and a Year in Review.
+- [x] **Bounded collections** — World Heritage by country and the complete record of 1,200
+      small places. See *Bounded collections* above, including the three completeness claims
+      that were false on the first pass and the guard that keeps Auschwitz out of a set of
+      things to tick off.
+- [ ] **◀ YOU ARE HERE** — next: a Year in Review, gated on a season's worth of visits the
+      way Letterboxd gates on ten films.
 
 ---
 
@@ -1026,6 +1029,66 @@ footprints arrived; it took a source of containment where the direction is usual
 to make it visible. The same pattern this document keeps recording: the new surface exposes
 what the previous one hid.
 
+## Bounded collections
+
+The retention research below argues people pay for the record of what they did, and that
+the mechanism which works is a **finite set where 100% means something** — the National Park
+Passport, ~433 units, which exists explicitly to push visitors toward places they would
+otherwise skip. The mechanisms that fail are documented too: Foursquare removed its own
+points because they were arbitrary across heterogeneous places and hundreds of badges made
+badges "stop feeling special".
+
+Two families shipped, both official lists rather than inventions
+([`derive_collections.py`](scripts/derive_collections.py)):
+
+- **World Heritage Sites of *country*** — 71 countries. Canonical, and genuinely
+  long-tailed, which is what makes it a passport rather than a trophy cabinet: everyone has
+  been to Bath, almost nobody to Blaenavon or the Flow Country, and both are on the UK's
+  list.
+- **All of *village*** — 1,200 small places whose entire designated record is finishable in
+  an afternoon. This is where the roadside chapel lives, the long tail no popularity ranking
+  will ever surface.
+
+1,271 collections and 13,587 memberships, of which the app shows perhaps a dozen at a time:
+what you have started, what is around you, and the World Heritage list for where you are.
+That surfacing rule is the whole defence against becoming the badge wall Foursquare warned
+about — the sets exist, they just stay out of sight until they are relevant.
+
+### Three claims that were false and had to be made true
+
+**Serial inscriptions.** UNESCO numbers Hadrian's Wall *and* every milefortlet on it. Taken
+naively that gave the UK 235 World Heritage Sites against a real 36. Only bare-numbered ids
+(`430`, not `430-001`) are whole inscriptions.
+
+**"All of London — 24 places."** The first place sets were grouped by the catalogue's
+locality label, and a label is not a boundary: London has thousands of designated places and
+only 24 rows carry the bare label, the rest being tagged by borough. Bungay claimed 6 with
+11 standing on the ground. Collections are now bounded **geometrically** — single-linkage
+clustering at 500 m, kept only if nothing else stands within 800 m of any member — so "all"
+is true by construction rather than by assumption.
+
+**A denominator that hides the gap.** The catalogue holds 31 of the UK's 36 inscriptions,
+44 of France's 51. Showing 31 with no further comment quietly claims that is the whole list,
+so the real UNESCO total travels with each collection and the app states what is missing.
+
+### The guard that matters most
+
+Pokémon GO placed capture points at Auschwitz-Birkenau and the Hiroshima Peace Memorial.
+Any collection mechanic will eventually invite someone to tick off a genocide memorial
+unless something stops it, and `Site.isSensitive` is that something — it strips 212 of the
+13,587 memberships, **Auschwitz among them, out of World Heritage Sites of Poland.**
+
+The filter runs in Swift at load and deliberately *not* in the generator. A second copy of
+that logic in Python could drift, and drift here is not a cosmetic bug. One implementation,
+and the totals shown agree with it by construction.
+
+It over-includes on purpose, which for collections needed one extra piece of honesty: it
+also removes the Etruscan Necropolises and the Temple and Cemetery of Confucius. Those are
+in the catalogue and are ordinary attractions, so counting them as "not in Chronicarum yet"
+would be false. The two exclusions are reported separately and in their own words — one says
+the catalogue lacks them, the other says they are places of atrocity or burial and are not
+things to tick off.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
@@ -1159,7 +1222,7 @@ rather than a punishment. It works: their servers **crashed on 2 January 2026** 
 traffic. Far better suited than a daily streak to something done a few times a year.
 ([YiR FAQ](https://letterboxd.com/journal/2025-letterboxd-year-in-review-faq/))
 
-**3. Bounded collections, not open-ended points.** **Been** scores against finite sets so
+**3. ~~Bounded collections~~ — done, see *Bounded collections* above.** **Been** scores against finite sets so
 100% means something. The **US National Park Passport** (~433 units, stamps since 1986)
 exists explicitly to push visitors toward "smaller hidden gems", and collectors report
 visiting parks they'd otherwise skip purely for the stamp. This is the most credible

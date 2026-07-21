@@ -9,12 +9,14 @@ struct SavedView: View {
     enum SavedTab: String, CaseIterable {
         case bookmarked = "Bookmarked"
         case visited    = "Visited"
+        case collecting = "Collecting"
     }
 
     var displayedSites: [Site] {
         switch selectedTab {
         case .bookmarked: return siteVM.bookmarkedSites
         case .visited:    return siteVM.visitedSites
+        case .collecting: return []      // Collections draw their own list.
         }
     }
 
@@ -29,7 +31,11 @@ struct SavedView: View {
                 .pickerStyle(.segmented)
                 .padding()
 
-                if displayedSites.isEmpty {
+                if selectedTab == .collecting {
+                    // Sets you can actually finish, rather than a score. See
+                    // `SiteCollection` for why this is bounded.
+                    CollectionsView()
+                } else if displayedSites.isEmpty {
                     ContentUnavailableView(
                         selectedTab == .bookmarked ? "No Bookmarks Yet" : "No Visited Sites",
                         systemImage: selectedTab == .bookmarked ? "bookmark" : "checkmark.circle",

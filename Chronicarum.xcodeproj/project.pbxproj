@@ -19,6 +19,7 @@
 		1874E39D384D2B6E55FC6833 /* WikipediaExtract.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26B76309F8494021C50CC55 /* WikipediaExtract.swift */; };
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
+		311ACADBC35CCD5803842D59 /* CollectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411DF9F2ED27E55C3F53DD6C /* CollectionsView.swift */; };
 		44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = 490E6A73385E51BC23C07148 /* OpeningPattern.swift */; };
 		50ADEE7ACE31BFCF904012B0 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
@@ -27,9 +28,11 @@
 		5F049BF57A23BE3BB3C693B9 /* ClusterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */; };
 		622B3A9443E0241D9B110F4C /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F0B86D90615B736FE506EBF /* CreditsView.swift */; };
 		6739FBE03FB60A650BB28BA9 /* MonumentHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */; };
+		817F86E0B5487D0223C0DE47 /* SiteCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D557A57F5F649719C5D1DBAC /* SiteCollection.swift */; };
 		835DEAA8877E78EC9B5751EE /* Site.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D077ED9B01BBFC0966CC7DB /* Site.swift */; };
 		863E6279E1558654BF5B95CE /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C381E3019A64B55DD81919 /* SavedView.swift */; };
 		916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5253630662A704FABEE643A /* ContentView.swift */; };
+		98E8B4DBF4B1D7F498946908 /* collections.json in Resources */ = {isa = PBXBuildFile; fileRef = C7ABEC5B1E964E214313E25F /* collections.json */; };
 		9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2656A9226831B85426DAF9 /* SiteData.swift */; };
 		A92D70BB5FC42005FF76587D /* OfficialWebsite.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF26399E32C64942E33F712C /* OfficialWebsite.swift */; };
 		A9AF29C8A3E1AAE53C6F4110 /* bulk_columnar.json in Resources */ = {isa = PBXBuildFile; fileRef = 26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */; };
@@ -63,6 +66,7 @@
 		33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineData.swift; sourceTree = "<group>"; };
 		37C381E3019A64B55DD81919 /* SavedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
 		39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		411DF9F2ED27E55C3F53DD6C /* CollectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsView.swift; sourceTree = "<group>"; };
 		490E6A73385E51BC23C07148 /* OpeningPattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningPattern.swift; sourceTree = "<group>"; };
 		4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterSheetView.swift; sourceTree = "<group>"; };
 		5AB186FC00439FF284794EAF /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
@@ -82,8 +86,10 @@
 		BAA2C1E3FA04D4125019FD3C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		BF26399E32C64942E33F712C /* OfficialWebsite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialWebsite.swift; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C7ABEC5B1E964E214313E25F /* collections.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = collections.json; sourceTree = "<group>"; };
 		D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopBarView.swift; sourceTree = "<group>"; };
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
+		D557A57F5F649719C5D1DBAC /* SiteCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCollection.swift; sourceTree = "<group>"; };
 		D73170330E1865B973F1BE67 /* Empire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Empire.swift; sourceTree = "<group>"; };
 		DB2656A9226831B85426DAF9 /* SiteData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteData.swift; sourceTree = "<group>"; };
 		DCCD9CCBA4BAB3DAB19C3A1D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -112,6 +118,7 @@
 			children = (
 				9BFD4858D1B74EF7BCA13446 /* attribution.json */,
 				26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */,
+				C7ABEC5B1E964E214313E25F /* collections.json */,
 				A85F2D259BED16C5C1BD66E3 /* featured_images.json */,
 				B43CE8B5F5585283B332BAAD /* merimee_history.json */,
 				E1A247BA366A9C5B10865075 /* websites.json */,
@@ -131,6 +138,7 @@
 		3631DA8D80B9F796CEA6B907 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				411DF9F2ED27E55C3F53DD6C /* CollectionsView.swift */,
 				7F0B86D90615B736FE506EBF /* CreditsView.swift */,
 				37C381E3019A64B55DD81919 /* SavedView.swift */,
 			);
@@ -226,6 +234,7 @@
 				490E6A73385E51BC23C07148 /* OpeningPattern.swift */,
 				E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */,
 				5D077ED9B01BBFC0966CC7DB /* Site.swift */,
+				D557A57F5F649719C5D1DBAC /* SiteCollection.swift */,
 				DB2656A9226831B85426DAF9 /* SiteData.swift */,
 				BAA2C1E3FA04D4125019FD3C /* Theme.swift */,
 				33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */,
@@ -324,6 +333,7 @@
 				F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */,
 				00CD6B2254FA535ADBA03234 /* attribution.json in Resources */,
 				A9AF29C8A3E1AAE53C6F4110 /* bulk_columnar.json in Resources */,
+				98E8B4DBF4B1D7F498946908 /* collections.json in Resources */,
 				02B4817F6DD3407982657B74 /* featured_images.json in Resources */,
 				5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */,
 				0F7F060DF83DBC9A5AA9ADA7 /* websites.json in Resources */,
@@ -342,6 +352,7 @@
 				EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */,
 				C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */,
 				5F049BF57A23BE3BB3C693B9 /* ClusterSheetView.swift in Sources */,
+				311ACADBC35CCD5803842D59 /* CollectionsView.swift in Sources */,
 				027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */,
 				916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */,
 				622B3A9443E0241D9B110F4C /* CreditsView.swift in Sources */,
@@ -363,6 +374,7 @@
 				AB591CAC14A00706BEF5DFD8 /* RouteService.swift in Sources */,
 				863E6279E1558654BF5B95CE /* SavedView.swift in Sources */,
 				835DEAA8877E78EC9B5751EE /* Site.swift in Sources */,
+				817F86E0B5487D0223C0DE47 /* SiteCollection.swift in Sources */,
 				9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */,
 				CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */,
 				F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */,
