@@ -216,7 +216,10 @@ def main():
             "id": f"place-{slug(locality)}",
             "kind": "place",
             "title": f"All of {place}",
-            "blurb": f"Every designated place around {place} — {len(members)} of them.",
+            # No count in the blurb. The app removes sensitive members after this runs, so a
+            # number baked in here contradicted the list beside it — "6 of them" above
+            # "0 of 4 visited". The resolved count is the only honest one.
+            "blurb": f"Every designated place around {place}.",
             "region": locality,
             "sites": members,
         }))

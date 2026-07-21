@@ -63,6 +63,19 @@ struct ResolvedCollection: Identifiable {
     /// The mean position of the members, for deciding what is near you.
     let centre: CLLocationCoordinate2D
 
+    /// Distance to the *nearest* member.
+    ///
+    /// Not to the first member, and not to `centre`. Both get a national set badly wrong:
+    /// the UK's World Heritage list is ordered by significance, so its first entry is the
+    /// Heart of Neolithic Orkney, and its centre sits somewhere in the Irish Sea. Sorting
+    /// by either put "World Heritage Sites of the Netherlands" above the UK's own list for
+    /// someone standing in Bath.
+    func nearestKm(from origin: CLLocationCoordinate2D) -> Double {
+        sites.reduce(Double.greatestFiniteMagnitude) {
+            min($0, $1.approxDistanceKm(from: origin))
+        }
+    }
+
     func visitedCount(in visitedIDs: Set<String>) -> Int {
         sites.reduce(0) { $0 + (visitedIDs.contains($1.id) ? 1 : 0) }
     }
@@ -139,7 +152,7 @@ enum SiteCollectionStore {
 
         let nearby = all
             .filter { $0.collection.kind == .place && !startedIDs.contains($0.id) }
-            .map { ($0, $0.sites[0].approxDistanceKm(from: origin)) }
+            .map { ($0, $0.nearestKm(from: origin)) }
             .filter { $0.1 < 60 }
             .sorted { $0.1 < $1.1 }
             .prefix(6)
@@ -147,7 +160,7 @@ enum SiteCollectionStore {
 
         let heritage = all
             .filter { $0.collection.kind == .worldHeritage && !startedIDs.contains($0.id) }
-            .map { ($0, $0.sites[0].approxDistanceKm(from: origin)) }
+            .map { ($0, $0.nearestKm(from: origin)) }
             .sorted { $0.1 < $1.1 }
             .prefix(3)
             .map(\.0)
