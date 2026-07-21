@@ -47,7 +47,7 @@ enum ItineraryPDF {
             /// Starts a new page when the next block would run past the bottom margin.
             func ensureRoom(for height: CGFloat) {
                 if y + height > pageSize.height - margin - 30 {
-                    drawFooter(context)
+                    drawFooter(context, plan: plan)
                     context.beginPage()
                     y = margin
                 }
@@ -104,6 +104,14 @@ enum ItineraryPDF {
                     }
                 }
 
+                let unreachable = day.unreachableStops
+                if !unreachable.isEmpty {
+                    let names = unreachable.map(\.name).joined(separator: ", ")
+                    draw("No road route to: \(names). Likely an island — you would need a "
+                         + "boat, and the times above do not include the crossing.",
+                         Style.warning, indent: 4, spacing: 6)
+                }
+
                 let closed = day.commonlyClosedStops()
                 if !closed.isEmpty {
                     let names = closed.map(\.name).joined(separator: ", ")
@@ -114,15 +122,15 @@ enum ItineraryPDF {
                 }
             }
 
-            drawFooter(context)
+            drawFooter(context, plan: plan)
         }
     }
 
     /// Both caveats, on every page. See the type comment: print is where a plan stops
     /// being questioned.
-    private static func drawFooter(_ context: UIGraphicsPDFRendererContext) {
-        let text = "Travel times are estimated from straight-line distance, not routed. "
-            + "Opening hours are not known for any site — no heritage register records "
+    private static func drawFooter(_ context: UIGraphicsPDFRendererContext, plan: TripPlan) {
+        let text = plan.travelCaveat
+            + " Opening hours are not known for any site — no heritage register records "
             + "them — so any closures noted are what's typical for that kind of place, not "
             + "fact. Check before you set out."
         let string = NSAttributedString(string: text, attributes: Style.footnote)

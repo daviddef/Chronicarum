@@ -11,6 +11,15 @@ struct PlannedStop: Identifiable {
     /// threshold it fell, and guessing from duration showed a walking figure next to
     /// "Salona, 13m", which is a drive out of the city.
     let isWalk: Bool
+    /// True once `RouteService` has replaced the straight-line guess with a real routed
+    /// time. Carried so the caveats can say which of the two the reader is looking at —
+    /// "estimated" printed over a measured number is as misleading as the reverse.
+    var isMeasured: Bool = false
+    /// Set when MapKit could find no driving route at all over a distance where there
+    /// plainly should be one. In practice that means water: the site is on an island, and
+    /// getting there needs a ferry the planner knows nothing about. The leg keeps its
+    /// straight-line estimate, which would otherwise present a sea crossing as a drive.
+    var noRoadRoute: Bool = false
 
     var id: String { site.id }
 }
@@ -35,6 +44,9 @@ struct PlannedDay: Identifiable {
             $0.openingPattern?.isCommonlyClosed(on: date, calendar: calendar) ?? false
         }
     }
+    /// Stops with no road route to them — almost always an island. See `noRoadRoute`.
+    var unreachableStops: [Site] { stops.filter(\.noRoadRoute).map(\.site) }
+
     var visitMinutes: Int { stops.reduce(0) { $0 + $1.site.visitMinutes } }
     var travelMinutes: Int { stops.reduce(0) { $0 + $1.travelMinutes } }
     var totalMinutes: Int { visitMinutes + travelMinutes }
@@ -53,6 +65,29 @@ struct TripPlan {
 
     var isEmpty: Bool { days.allSatisfy(\.stops.isEmpty) }
     var totalStops: Int { days.reduce(0) { $0 + $1.stops.count } }
+
+    /// How many legs carry a real routed time. Partial is the normal case, not an error:
+    /// MapKit answers for most legs and not for some, and the wording adapts rather than
+    /// claiming all or nothing.
+    var measuredLegs: Int {
+        days.reduce(0) { $0 + $1.stops.filter(\.isMeasured).count }
+    }
+    var isFullyRouted: Bool { totalStops > 0 && measuredLegs == totalStops }
+
+    /// One sentence about how much to trust the travel numbers, written from what actually
+    /// happened rather than from a fixed claim. Shared by the screen and the printed page
+    /// so the two can never disagree.
+    var travelCaveat: String {
+        if isFullyRouted {
+            return "Travel times are real routed times, without traffic. Add time for "
+                 + "parking and for getting lost."
+        }
+        if measuredLegs > 0 {
+            return "Most travel times are real routed times; the rest are estimated from "
+                 + "straight-line distance where no route could be found."
+        }
+        return "Travel times are estimated from straight-line distance, not routed."
+    }
 }
 
 /// Builds a day-by-day itinerary from the catalogue.
@@ -62,27 +97,47 @@ struct TripPlan {
 /// it — the registers, the themes, the durations, the containment, the significance
 /// scores — exists so this can answer.
 ///
-/// **Travel time is estimated, not routed.** Straight-line distance × 1.25 for road
-/// winding, walked below 1.5 km and driven above. Real routing (Valhalla over OSM) is the
-/// known next step; the shape of the plan does not change when it arrives, only the
-/// numbers.
+/// **Selection runs on estimated travel; the chosen legs are then routed for real.**
+/// A cheap estimate — see `travelMinutes` — is what ranks thousands of candidate legs.
+/// `RouteService` then measures the forty-odd legs that survived, using MapKit. The shape
+/// of the plan comes from the estimate, its printed numbers from the measurement, which is
+/// why the estimate still has to be good: it decides what a day can hold.
 enum TripPlanner {
 
     /// A day is four to seven places. Without a cap the planner filled a Bath day with
     /// **26 stops**, most of them Georgian door numbers and gate railings.
     private static let maxStopsPerDay = 7
+    /// Walking: straight-line × 1.25 at 4.5 km/h, i.e. ~3.6 km/h made good. Checked
+    /// against MapKit walking ETAs in five cities, which come out at 3.3–3.7 km/h made
+    /// good. This part was right and is unchanged.
     private static let roadFactor = 1.25
     private static let walkingSpeedKmh = 4.5
-    private static let drivingSpeedKmh = 45.0
     private static let walkThresholdKm = 1.5
-    private static let parkingMinutes = 5.0
+
+    /// Driving: **fitted, not assumed.** The old model — straight-line × 1.25 at a flat
+    /// 45 km/h — was measured against 48 real MapKit ETAs across Split, Bath, Rome, Sydney
+    /// and Paris and was wrong by 44% RMS, almost always *optimistic*: it called the
+    /// 5 km hop from Diocletian's Palace to Salona 13 minutes against a real 34.
+    ///
+    /// Effective speed is not constant — it climbs with distance, because a short leg is
+    /// all city street and a long one is mostly open road. Fitting `v = vmax·d/(d+d₀)`
+    /// gives vmax 53.5 km/h and d₀ 12 km, which rearranges to something simpler to read:
+    /// **13.5 minutes of getting out of one place and into another, then 53 km/h.** RMS
+    /// error 24%, near the irreducible scatter — Paris and Sydney genuinely differ.
+    private static let driveOverheadMinutes = 13.5
+    private static let drivingSpeedKmh = 53.5
+    /// Finding somewhere to leave the car. Added on top of a routed drive too — MapKit
+    /// times the road, not the ten minutes circling a walled town looking for a space.
+    static let parkingMinutes = 5
 
     static func travelMinutes(overKm straightLine: Double) -> Int {
-        let km = straightLine * roadFactor
-        if km < walkThresholdKm {
-            return Int((km / walkingSpeedKmh * 60).rounded())
+        if straightLine * roadFactor < walkThresholdKm {
+            return Int((straightLine * roadFactor / walkingSpeedKmh * 60).rounded())
         }
-        return Int((km / drivingSpeedKmh * 60 + parkingMinutes).rounded())
+        // Straight-line distance goes in directly: the fit absorbed road winding, so
+        // applying `roadFactor` here as well would count it twice.
+        let driving = driveOverheadMinutes + straightLine / drivingSpeedKmh * 60
+        return Int(driving.rounded()) + parkingMinutes
     }
 
     /// Put a day's chosen stops into a sensible walking/driving order.

@@ -54,6 +54,18 @@ struct TripPlanView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                            // Ahead of the closure note: a place you cannot drive to is a
+                            // bigger problem with the day than a place that might be shut.
+                            let unreachable = day.unreachableStops
+                            if !unreachable.isEmpty {
+                                Label(unreachable.count == 1
+                                      ? "There's no road route to \(unreachable[0].name) — it's likely an island, so you'd need a boat. The time shown doesn't include the crossing."
+                                      : "\(unreachable.count) of these have no road route — likely an island, so you'd need a boat. The times shown don't include the crossing.",
+                                      systemImage: "ferry")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+
                             let closed = day.commonlyClosedStops()
                             if !closed.isEmpty {
                                 // Advisory, never a claim. See `OpeningPattern`: there is
@@ -76,11 +88,11 @@ struct TripPlanView: View {
                     }
 
                     Section {
-                        Text("Travel times are estimated from straight-line distance, not "
-                             + "routed. Opening hours are not known for any site — no "
-                             + "heritage register records them — so closures here are "
-                             + "what's typical for that kind of place, not fact. Check "
-                             + "before you set out.")
+                        Text(plan.travelCaveat
+                             + " Opening hours are not known for any site — no heritage "
+                             + "register records them — so closures here are what's "
+                             + "typical for that kind of place, not fact. Check before "
+                             + "you set out.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -113,8 +125,9 @@ struct TripPlanView: View {
                     }
                 }
             }
-            .task(id: days) { rebuild() }
-            .task(id: startDate) { rebuild() }
+            // One task over both inputs, not two. Separate `.task(id:)` modifiers each
+            // fired on their own input and built the same plan twice.
+            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)") { await rebuild() }
             .sheet(item: $selectedSite) { SiteDetailView(site: $0) }
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
@@ -131,21 +144,37 @@ struct TripPlanView: View {
         }
     }
 
-    private func rebuild() {
+    /// Two passes, and the first one is what the user sees.
+    ///
+    /// The estimated plan is shown as soon as it exists; routing then measures the chosen
+    /// legs and the numbers settle a moment later. Waiting for MapKit before showing
+    /// anything would trade a complete plan now for a slightly better one after several
+    /// seconds of blank screen, which is the wrong way round — and routing can fail
+    /// entirely, in which case there would be nothing to fall back to.
+    private func rebuild() async {
         isBuilding = true
         // 260k sites and a greedy inner loop — off the main thread so the stepper stays
         // responsive while a longer trip is built.
         let requestedDays = days
         let requestedStart = startDate
-        DispatchQueue.global(qos: .userInitiated).async {
-            let built = TripPlanner.plan(from: origin, themes: themes,
-                                         days: requestedDays, startDate: requestedStart)
-            DispatchQueue.main.async {
-                plan = built
-                isBuilding = false
-                regeneratePDF(built)
+        let built: TripPlan = await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning:
+                    TripPlanner.plan(from: origin, themes: themes,
+                                     days: requestedDays, startDate: requestedStart))
             }
         }
+        guard !Task.isCancelled else { return }
+        plan = built
+        isBuilding = false
+        regeneratePDF(built)
+
+        guard !built.isEmpty else { return }
+        let routed = await TripRouteRefiner.refined(built)
+        // The stepper may have moved while MapKit was answering; that run's plan is stale.
+        guard !Task.isCancelled else { return }
+        plan = routed
+        regeneratePDF(routed)
     }
 }
 

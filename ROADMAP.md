@@ -23,7 +23,7 @@ when Dubrovnik had exactly one site in it.
 | **2. A catalogue** | Enough places that anywhere you stand has something worth seeing | ✅ Done — 260,008 sites |
 | **3. Substance** | Each place says something: photo, date, description, why it matters | ◐ Partial — 63% photos, ~37% descriptions |
 | **4. Understanding you** | Filters become preferences: "castles and Roman history", not checkboxes | ◐ Themes shipped — 16 of them, 65% of the catalogue tagged |
-| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Itineraries build, render, and avoid typical closures. **Real routing still missing** |
+| **5. The plan** | Days, routes, opening hours, travel time, a sensible order | ◐ Itineraries build, render, avoid typical closures, and their legs are **really routed** |
 | **6. Taking it with you** | PDF, email, calendar, offline | ◐ **PDF export shipping.** Email/calendar via the share sheet; offline not started |
 | **7. The record** | Where you went, what you saw, a diary worth keeping | ◐ Partial — visits + stats exist |
 
@@ -38,9 +38,8 @@ than it is:
 
 - **Opening hours, closures, admission.** Not in any register. A plan that sends someone to
   a closed monastery on a Monday is worse than no plan.
-- **Travel time between places.** We have straight-line distance and a nearest-neighbour
-  ordering. A real day plan needs road and walking time — self-hosted Valhalla over OSM is
-  the identified route, and it is a server, not a bundled file.
+- ~~**Travel time between places.**~~ Done, and without the server — see *Real routing,
+  without a server* below. MapKit measures the chosen legs on device.
 - **What a place is *for*.** "Roman history" is not a filter we can express. `era` and
   `type` are crude proxies; there is no theme model.
 - **How long to spend somewhere.** Diocletian's Palace is a morning. A roadside chapel is
@@ -886,6 +885,88 @@ space, so any frame offset cancels. Verified in the simulator by running the rea
 conversion path — a small loop at the map centre now encloses only sites within ~80 km of
 that centre (matching the loop's actual coverage), where the bug placed them 210 km
 outside the visible region.
+
+## Real routing, without a server
+
+The plan's travel numbers were straight-line distance × 1.25, and every version of this
+document has named the fix as **self-hosted Valhalla over OSM** — which would have been the
+first server this project ever needed, with hosting, updates and an ODbL question attached.
+
+`MKDirections` does the same job on device: free, no key, no entitlement, and it knows
+about one-way systems, ferries and the fact that the two banks of a river are not adjacent.
+It was passed over earlier because routing *during* planning is impossible — selection
+evaluates thousands of candidate legs and MapKit would throttle instantly.
+
+**The split is what makes it work.** Selection keeps the straight-line heuristic, which is
+what it was always good enough for — it decides *which* stops, and a 20% error in a leg
+almost never changes that choice. Routing then measures only the legs that survived: about
+six a day, roughly forty for a week.
+[`RouteService.swift`](Chronicarum/Services/RouteService.swift) caches by coordinate
+rounded to ~11 m, so re-planning the same trip costs nothing, and caps a single plan at 60
+legs — a fourteen-day trip is 98, and the last days of one are the least likely to be read.
+
+Two design points that are really honesty points:
+
+- **The estimate is still shown first.** The plan appears immediately and the numbers
+  settle a moment later. Blocking on MapKit would trade a complete plan now for a slightly
+  better one after several seconds of blank screen — and routing can fail entirely, which
+  would leave nothing at all.
+- **Every failure keeps the estimate, and the caveat says which you are reading.** No route,
+  no network, a throttle — the leg keeps its guess and `isMeasured` stays false. The screen
+  and the PDF share one `travelCaveat` string that reads "real routed times", "most … the
+  rest estimated", or the original wording, from what actually happened. A partial result is
+  the normal case; printing "estimated" over a measured number is as misleading as the
+  reverse.
+
+Parking stays added on top of a routed drive. MapKit times the road, not the ten minutes
+spent circling a walled town looking for a space.
+
+### Recalibrating the estimate, which was worse than anyone had checked
+
+Having a source of truth made the old estimate testable for the first time, and it was
+badly wrong. Straight-line × 1.25 at a flat 45 km/h, measured against 48 real MapKit ETAs
+across Split, Bath, Rome, Sydney and Paris: **44% RMS error, and optimistic** — the 5 km hop
+from Diocletian's Palace to Salona was called 13 minutes against a real 34. Since selection
+spends that estimate against a day's budget, every day in the app was being overfilled.
+
+Effective speed is not constant. It climbs with distance, because a short leg is all city
+street and a long one is mostly open road:
+
+| straight-line | measured effective speed |
+|---|---|
+| 1–3 km | 5–12 km/h |
+| 5 km | 9–12 km/h |
+| 8–9 km | 16–22 km/h |
+| 17–26 km | 17–41 km/h |
+| 35–60 km | 38–54 km/h |
+| 85 km | 55–60 km/h |
+
+Fitting `v = vmax·d/(d+d₀)` gives vmax 53.5 km/h, d₀ 12 km — which rearranges into something
+much easier to read: **13.5 minutes of getting out of one place and into another, then
+53 km/h.** RMS error 24%, bias −5%, near the irreducible scatter given Paris and Sydney
+genuinely differ.
+
+The walking model was checked the same way and left alone: × 1.25 at 4.5 km/h is 3.6 km/h
+made good, against 3.3–3.7 measured. It was right all along.
+
+### And a defect it immediately exposed
+
+Following the pattern this document keeps recording — each new surface exposes what the
+last one hid — routing found something the estimate could not have: **a three-day Split
+plan whose second day is on Hvar, an island.** MapKit answers "Directions are not
+available" for Split → Hvar, because there are 42 km of Adriatic in the way. The estimate
+had cheerfully called it a 50-minute drive.
+
+So a failed *drive* over more than 2 km is now treated as evidence, not as a missing
+answer: below that a missing route usually means the pin sits in a pedestrianised old town,
+above it there is genuinely no road. Those stops keep their estimate and the day carries a
+ferry warning, on screen and in print. The planner still does not know the crossing exists —
+but it no longer claims you can drive there.
+
+**What this does not fix:** traffic (ETAs are free-flow), ferry times and timetables, and
+the shape of the plan, which still comes from the estimate. Valhalla remains the answer if
+per-leg routing ever needs to happen inside the selection loop — but nothing currently wants
+that.
 
 ## Open question: institutional sites
 

@@ -32,6 +32,7 @@
 		9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2656A9226831B85426DAF9 /* SiteData.swift */; };
 		A92D70BB5FC42005FF76587D /* OfficialWebsite.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF26399E32C64942E33F712C /* OfficialWebsite.swift */; };
 		A9AF29C8A3E1AAE53C6F4110 /* bulk_columnar.json in Resources */ = {isa = PBXBuildFile; fileRef = 26B05DF2AAF7F0F5B598C39D /* bulk_columnar.json */; };
+		AB591CAC14A00706BEF5DFD8 /* RouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E5F1F9F00030B9E38F7091 /* RouteService.swift */; };
 		B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */; };
 		B4AAD9AB4CD2A258417E53E9 /* wikipedia_titles.json in Resources */ = {isa = PBXBuildFile; fileRef = 26DFE83499A6D326061043C9 /* wikipedia_titles.json */; };
 		BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */; };
@@ -72,6 +73,7 @@
 		A26B76309F8494021C50CC55 /* WikipediaExtract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaExtract.swift; sourceTree = "<group>"; };
 		A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6E5F1F9F00030B9E38F7091 /* RouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteService.swift; sourceTree = "<group>"; };
 		A85F2D259BED16C5C1BD66E3 /* featured_images.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = featured_images.json; sourceTree = "<group>"; };
 		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
 		B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryPDF.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 			children = (
 				F85E35BAD09F94104E31D296 /* LocationService.swift */,
 				39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */,
+				A6E5F1F9F00030B9E38F7091 /* RouteService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -353,6 +356,7 @@
 				44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */,
 				DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */,
 				BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */,
+				AB591CAC14A00706BEF5DFD8 /* RouteService.swift in Sources */,
 				863E6279E1558654BF5B95CE /* SavedView.swift in Sources */,
 				835DEAA8877E78EC9B5751EE /* Site.swift in Sources */,
 				9EDE75B063C7009A4B85BBD0 /* SiteData.swift in Sources */,
