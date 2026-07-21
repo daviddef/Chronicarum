@@ -21,7 +21,10 @@ row-wise file repeats all ten key names 187,507 times.
 """
 import json, os, sys
 
-RESOURCES = "/Users/daviddefranceski/Claude/Projects/Chronicarum/Chronicarum/Resources"
+# Relative to this file, so a git worktree regenerates its own catalogue rather than the
+# main checkout's.
+RESOURCES = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Chronicarum/Resources")
 SRC = f"{RESOURCES}/bulk_sites.json"
 OUT = f"{RESOURCES}/bulk_columnar.json"
 

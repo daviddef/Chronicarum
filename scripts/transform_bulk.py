@@ -93,6 +93,9 @@ for r in by_qid.values():
         "lon":  r["lon"],
         "type": STYPE[r["stype"]],
         "era":  era_from_inception(r.get("inception")),
+        # Whichever P17 value the SPARQL happened to return first, which for a
+        # transnational inscription is one arbitrary country of seven and for a ruin is
+        # often an empire. derive_country.py settles it afterwards, from the coordinates.
         "country": r.get("country") or "",
         "desc": (r.get("desc") or "").strip(),
     }

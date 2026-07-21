@@ -40,11 +40,13 @@ invites someone to tick off a genocide memorial. The app filters membership on l
 instead, so there stays exactly one implementation and the totals shown always agree with
 it.
 """
-import json, math, re, unicodedata
+import json, math, os, re, unicodedata
 from collections import Counter, defaultdict
 
-SP = "/private/tmp/claude-501/-Users-daviddefranceski-Claude-Projects-Chronicarum/2e1454ca-a069-4f93-baf5-8ff725f648bc/scratchpad"
-ROOT = "/Users/daviddefranceski/Claude/Projects/Chronicarum"
+SP = os.environ.get("CHRONICARUM_SCRATCH",
+                    "/private/tmp/claude-501/-Users-daviddefranceski-Claude-Projects-Chronicarum/2e1454ca-a069-4f93-baf5-8ff725f648bc/scratchpad")
+# Relative to this file, so a git worktree regenerates its own catalogue.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUNDLE = f"{ROOT}/Chronicarum/Resources/bulk_sites.json"
 OUT = f"{ROOT}/Chronicarum/Resources/collections.json"
 
