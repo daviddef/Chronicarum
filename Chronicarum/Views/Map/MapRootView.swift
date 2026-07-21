@@ -207,7 +207,12 @@ struct MapRootView: View {
         // showing — a known-correct bound, so it never depends on converting the loop.
         // Projecting a few thousand of them to screen points is a one-shot cost on
         // release, not per frame.
-        let enclosed = mapVM.candidateSites(in: mapVM.visibleRegion).filter { site in
+        // A far higher candidate cap than the default. That default protects work done on
+        // every camera change; this runs once, when a finger lifts, so it can afford to
+        // consider everything on screen rather than pre-emptively throwing away places the
+        // user has literally drawn a line around.
+        let enclosed = mapVM.candidateSites(in: mapVM.visibleRegion, limit: 25_000)
+            .filter { site in
             guard let point = proxy.convert(site.coordinate, to: .named(Self.lassoSpace))
             else { return false }
             return Self.polygon(loop, contains: point)

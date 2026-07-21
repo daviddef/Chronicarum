@@ -41,7 +41,16 @@ struct ClusterSheetView: View {
     }
 
     /// Beyond this the list stops being browsable and zooming is the better move.
-    private let listCap = 40
+    ///
+    /// Raised from 40, which was too tight to be the answer to "what did I just draw
+    /// around?" — a hundred-odd places is a perfectly readable list, and `List` is lazy so
+    /// the rows cost nothing until they scroll into view. The cap is really about a bubble
+    /// at world zoom holding well over a thousand.
+    private let listCap = 200
+
+    /// A suggested order stops meaning anything long before the list does: nobody walks
+    /// two hundred stops. Kept near the old number on purpose.
+    private let routeCap = 40
 
     private var isCapped: Bool { cluster.count > listCap }
 
@@ -59,8 +68,12 @@ struct ClusterSheetView: View {
     }
 
     private var route: (stops: [Site], totalKm: Double) {
-        // Route the capped set — a walking order through 1,400 stops is meaningless.
-        SiteCluster(id: cluster.id, coordinate: cluster.coordinate, sites: orderedSites)
+        // Route the most significant few — a walking order through 200 stops is
+        // meaningless, and nearest-neighbour is O(n²).
+        let stops = Array(cluster.sites
+            .sorted { $0.significance > $1.significance }
+            .prefix(routeCap))
+        return SiteCluster(id: cluster.id, coordinate: cluster.coordinate, sites: stops)
             .route(from: userLocation)
     }
 
@@ -153,8 +166,8 @@ struct ClusterSheetView: View {
             }
 
             if isCapped {
-                Text("Too many to list — showing the most significant \(listCap). "
-                     + "Zoom in to see the rest.")
+                Text("Listing the most significant \(listCap) of \(cluster.count.formatted()). "
+                     + "A trip planned from here still considers all of them.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -194,7 +207,10 @@ struct ClusterSheetView: View {
 
             if showRoute {
                 let plan = route
-                Text("\(plan.stops.count) stops · \(distanceLabel(plan.totalKm)) total, "
+                Text("\(plan.stops.count) stops"
+                     + (cluster.count > routeCap
+                        ? " — the most significant of \(cluster.count.formatted())" : "")
+                     + " · \(distanceLabel(plan.totalKm)) total, "
                      + "nearest-neighbour order — a sensible walk, not the shortest possible.")
                     .font(.caption2)
                     .foregroundColor(.secondary)

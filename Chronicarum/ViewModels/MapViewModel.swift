@@ -69,9 +69,20 @@ final class MapViewModel: ObservableObject {
     /// nearest, suggested route, "plan a route" — presents them unchanged. Capped and
     /// significance-ordered: a loop around a dense city should offer the best of it, not a
     /// route through every listed doorway.
-    func lassoCluster(fromEnclosed sites: [Site], limit: Int = 40) -> SiteCluster? {
+    /// Everything the loop enclosed, most significant first.
+    ///
+    /// This used to keep only the top 40, which made the header lie: drawing around two
+    /// bubbles holding 97 and 9 places reported "40 places". The cap was defensible when a
+    /// lasso could only produce a list and a walking order — 40 is a day's worth, and
+    /// routing ten thousand railings is meaningless. It stopped being defensible once a
+    /// region could be turned into a multi-day trip, because the planner then never saw
+    /// the places it was meant to choose between.
+    ///
+    /// Trimming now happens where it belongs: the sheet caps how many rows it *lists* and
+    /// how many stops it *routes*, and says so. Nothing is discarded on the way in.
+    func lassoCluster(fromEnclosed sites: [Site]) -> SiteCluster? {
         guard !sites.isEmpty else { return nil }
-        let ranked = Array(sites.sorted { $0.significance > $1.significance }.prefix(limit))
+        let ranked = sites.sorted { $0.significance > $1.significance }
         let centreLat = ranked.map(\.latitude).reduce(0, +) / Double(ranked.count)
         let centreLon = ranked.map(\.longitude).reduce(0, +) / Double(ranked.count)
         return SiteCluster(
