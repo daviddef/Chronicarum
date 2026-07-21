@@ -12,6 +12,15 @@ struct TripPlanView: View {
     /// Where the trip starts, in words — used to title the PDF. Best effort: the location
     /// line of the nearest notable site, which is a place name far more often than not.
     var placeName: String? = nil
+    /// Restrict the plan to a specific set of places rather than the whole catalogue.
+    ///
+    /// This is what a region drawn on the map produces: "three days around *these*", not
+    /// "three days around here". `nil` means the usual behaviour — everything within
+    /// `radiusKm` of the origin.
+    var confinedTo: [Site]? = nil
+    /// How far from the origin to consider. Widened when confined to a drawn region, since
+    /// the region is already the boundary and the default 80 km would clip it.
+    var radiusKm: Double = 80
 
     @Environment(\.dismiss) private var dismiss
     @State private var days = 3
@@ -40,9 +49,14 @@ struct TripPlanView: View {
                 } header: {
                     Text("Your trip")
                 } footer: {
-                    Text(themes.isEmpty
-                         ? "No interests selected, so this uses the best of everything nearby."
-                         : "Built from what's near you, ranked by what's worth the detour.")
+                    if let confinedTo {
+                        Text("Only the \(confinedTo.count) places inside the region you drew"
+                             + (themes.isEmpty ? "." : ", matching your interests."))
+                    } else {
+                        Text(themes.isEmpty
+                             ? "No interests selected, so this uses the best of everything nearby."
+                             : "Built from what's near you, ranked by what's worth the detour.")
+                    }
                 }
 
                 if let plan, !plan.isEmpty {
@@ -98,8 +112,12 @@ struct TripPlanView: View {
                     }
                 } else if plan != nil {
                     Section {
-                        Text("Nothing nearby matches those interests. Try more days, or "
-                             + "fewer interests.")
+                        Text(confinedTo == nil
+                             ? "Nothing nearby matches those interests. Try more days, or "
+                               + "fewer interests."
+                             : "Nothing in the region you drew is worth a planned stop — the "
+                               + "places there are too minor, or don't match your interests. "
+                               + "Try drawing wider, or clearing the interest filters.")
                             .foregroundColor(.secondary)
                     }
                 }
@@ -157,11 +175,15 @@ struct TripPlanView: View {
         // responsive while a longer trip is built.
         let requestedDays = days
         let requestedStart = startDate
+        let catalogue = confinedTo ?? SiteData.all
+        let requestedRadius = radiusKm
         let built: TripPlan = await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 continuation.resume(returning:
                     TripPlanner.plan(from: origin, themes: themes,
-                                     days: requestedDays, startDate: requestedStart))
+                                     days: requestedDays, startDate: requestedStart,
+                                     radiusKm: requestedRadius,
+                                     catalogue: catalogue))
             }
         }
         guard !Task.isCancelled else { return }

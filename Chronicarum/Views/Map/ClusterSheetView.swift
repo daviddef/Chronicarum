@@ -15,6 +15,30 @@ struct ClusterSheetView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var showRoute = false
+    @State private var showPlanner = false
+
+    /// Where a trip through this region starts.
+    ///
+    /// Your own position if you are close enough for it to be the sensible first stop,
+    /// otherwise the middle of the region itself — drawing a loop around Cornwall from a
+    /// desk in Sydney should plan Cornwall, not a 17,000 km first leg.
+    private var planningOrigin: CLLocationCoordinate2D {
+        guard let userLocation,
+              cluster.sites.contains(where: { $0.approxDistanceKm(from: userLocation) < 60 })
+        else { return cluster.coordinate }
+        return userLocation
+    }
+
+    /// Far enough to reach everything drawn, so the planner's own radius never clips the
+    /// region the user chose. The region is the boundary; this just stops a second one
+    /// being imposed on top of it.
+    private var planningRadiusKm: Double {
+        let origin = planningOrigin
+        let furthest = cluster.sites.reduce(0.0) {
+            max($0, $1.approxDistanceKm(from: origin))
+        }
+        return furthest + 5
+    }
 
     /// Beyond this the list stops being browsable and zooming is the better move.
     private let listCap = 40
@@ -78,6 +102,15 @@ struct ClusterSheetView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showPlanner) {
+                // The whole cluster, not the capped list: the cap exists so a 1,400-row
+                // list stays readable, and has nothing to do with what a trip may draw on.
+                TripPlanView(origin: planningOrigin,
+                             themes: [],
+                             placeName: cluster.sites.first?.location,
+                             confinedTo: cluster.sites,
+                             radiusKm: planningRadiusKm)
+            }
         }
     }
 
@@ -126,12 +159,14 @@ struct ClusterSheetView: View {
                     .foregroundColor(.secondary)
             }
 
+            // Two different questions, and only one of them used to be answerable here.
+            // "Plan a route" orders these places for a single visit; "Plan a trip" spreads
+            // them over days, which is what drawing a region around a county is asking for.
             HStack(spacing: 10) {
                 Button {
-                    withAnimation { showRoute.toggle() }
+                    showPlanner = true
                 } label: {
-                    Label(showRoute ? "Show list" : "Plan a route",
-                          systemImage: showRoute ? "list.bullet" : "point.topleft.down.to.point.bottomright.curvepath")
+                    Label("Plan a trip", systemImage: "calendar.badge.plus")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
@@ -139,12 +174,22 @@ struct ClusterSheetView: View {
                 .tint(Color(hex: "#C9A84C"))
 
                 Button {
-                    onZoomToArea(); dismiss()
+                    withAnimation { showRoute.toggle() }
                 } label: {
-                    Label("Zoom", systemImage: "arrow.up.left.and.arrow.down.right")
+                    Label(showRoute ? "List" : "Route",
+                          systemImage: showRoute ? "list.bullet" : "point.topleft.down.to.point.bottomright.curvepath")
                         .font(.subheadline)
                 }
                 .buttonStyle(.bordered)
+
+                Button {
+                    onZoomToArea(); dismiss()
+                } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Zoom to this area")
             }
 
             if showRoute {

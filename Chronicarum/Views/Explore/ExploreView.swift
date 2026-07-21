@@ -89,17 +89,25 @@ struct ExploreView: View {
                         Button {
                             showPlanner = true
                         } label: {
+                            // Titled, not just an icon. As a bare `calendar.badge.plus` in
+                            // the toolbar this was the least findable thing in the app —
+                            // and it was `.disabled` whenever location was unavailable, so
+                            // for anyone who declined the permission it rendered as a grey
+                            // smudge that did nothing. It now says what it is and always
+                            // works; without a fix it plans from the map instead.
                             Label("Plan a trip", systemImage: "calendar.badge.plus")
+                                .labelStyle(.titleAndIcon)
+                                .font(.subheadline.weight(.medium))
                         }
-                        .disabled(mapVM.userLocation == nil)
                     }
                 }
                 .sheet(isPresented: $showPlanner) {
-                    if let origin = mapVM.userLocation {
-                        TripPlanView(origin: origin,
-                                     themes: siteVM.selectedThemes,
-                                     placeName: siteVM.nearestPlaceName(to: origin))
-                    }
+                    // Falling back to wherever the map is looking means no location, no
+                    // dead end — you get a plan for what you were just looking at.
+                    let origin = mapVM.userLocation ?? mapVM.visibleRegion.center
+                    TripPlanView(origin: origin,
+                                 themes: siteVM.selectedThemes,
+                                 placeName: siteVM.nearestPlaceName(to: origin))
                 }
             }
             .navigationTitle("Explore")
