@@ -1168,6 +1168,49 @@ Neither affects World Heritage collections (both registers are national, and the
 carry no UNESCO inscription number), which is why they are recorded here rather than fixed
 in the same pass.
 
+## Getting around without a car
+
+Every plan the app had ever produced assumed a car. "What if I have no car?" is not a
+labelling change — it changes what a day can *contain*, because reach is a function of how
+you move.
+
+**MapKit answers all three, and fails honestly on the third.** Measured before designing
+anything: transit ETAs come back for London, Paris, New York, Sydney and rural Bath, and
+come back **empty** for outback Queensland, the Scottish Highlands and interior Iceland —
+`MKErrorDomain 4, "Directions are not available"`. That is exactly the behaviour needed: a
+missing answer means no service, not a silent fallback to walking. Hvar returned 343 minutes
+for 12 km, which is an honest description of that island's buses, and Split → Hvar returned
+141 minutes because **transit routing includes ferries** — the one crossing the driving mode
+has to warn about.
+
+Transit was then fitted the same way driving was, across the same five cities: **19 minutes
+of getting to a stop and waiting, then 25.75 km/h**, 26% RMS error. Roughly half driving
+speed at every distance.
+
+| | reach | Tower of London → Westminster (6.1 km) |
+|---|---|---|
+| Driving | 80 km | 25 min |
+| Public transport | 50 km | 33 min |
+| Walking only | 6 km | 102 min |
+
+The reach column is the part that matters. Left at the driving radius, a walking plan
+anchors a day on something 60 km away and spends sixteen hours getting there — so each mode
+carries its own, and the footer says which, because otherwise a shorter list reads as the
+app having simply found less.
+
+### A bug that only walking made fatal
+
+Anchor selection tested whether the *visit* fit the day's budget and ignored the journey
+entirely. Survivable while everything was driven — a 6 km anchor is a 20-minute drive — and
+absurd on foot, where the same anchor is 100 minutes and the day spends its whole budget on
+pavement before arriving. The anchor now has to fit travel *and* visit.
+
+### What it still cannot do
+
+Timetables. The estimate assumes services run as scheduled, and the caveat says so, because
+a Sunday bus and a Tuesday bus are not the same bus and nothing in the app knows which one
+you are standing at.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**

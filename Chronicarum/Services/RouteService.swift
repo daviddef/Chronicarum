@@ -25,13 +25,14 @@ actor RouteService {
     /// being measured and means re-planning the same trip costs nothing.
     private struct Leg: Hashable {
         let fromLat: Int, fromLon: Int, toLat: Int, toLon: Int
-        let walking: Bool
+        let kind: UInt
 
-        init(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D, walking: Bool) {
+        init(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D,
+             type: MKDirectionsTransportType) {
             func q(_ d: Double) -> Int { Int((d * 10_000).rounded()) }
             fromLat = q(from.latitude);  fromLon = q(from.longitude)
             toLat   = q(to.latitude);    toLon   = q(to.longitude)
-            self.walking = walking
+            kind = type.rawValue
         }
     }
 
@@ -40,14 +41,14 @@ actor RouteService {
     /// Measured minutes for one leg, or `nil` if MapKit could not answer.
     func minutes(from: CLLocationCoordinate2D,
                  to: CLLocationCoordinate2D,
-                 walking: Bool) async -> Int? {
-        let leg = Leg(from: from, to: to, walking: walking)
+                 type: MKDirectionsTransportType) async -> Int? {
+        let leg = Leg(from: from, to: to, type: type)
         if let hit = cache[leg] { return hit }
 
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: from))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: to))
-        request.transportType = walking ? .walking : .automobile
+        request.transportType = type
 
         // `calculateETA` rather than `calculate`: we want a number, not a polyline, and
         // the ETA endpoint is the cheaper of the two.
@@ -88,23 +89,29 @@ enum TripRouteRefiner {
                 var refinedStop = stop
                 if budget > 0 {
                     budget -= 1
+                    // A short hop is walked whatever the mode — nobody catches a bus 300 m
+                    // — so ask MapKit the question the leg actually poses.
+                    let type: MKDirectionsTransportType =
+                        stop.isWalk ? .walking : plan.mode.directionsType
                     let measured = await RouteService.shared.minutes(from: here,
                                                                      to: stop.site.coordinate,
-                                                                     walking: stop.isWalk)
+                                                                     type: type)
                     if let measured {
                         // Parking stays on top of a drive: MapKit times the road, not
-                        // finding somewhere to leave the car at the other end.
-                        let parking = stop.isWalk ? 0 : TripPlanner.parkingMinutes
+                        // finding somewhere to leave the car at the other end. A bus does
+                        // not need parking, and neither do your feet.
+                        let parking = (plan.mode == .driving && !stop.isWalk)
+                            ? TripPlanner.parkingMinutes : 0
                         refinedStop = PlannedStop(site: stop.site,
                                                   travelMinutes: measured + parking,
                                                   isWalk: stop.isWalk,
                                                   isMeasured: true)
                     } else if !stop.isWalk,
                               stop.site.approxDistanceKm(from: here) >= noRoadRouteThresholdKm {
-                        // A drive of this length with no route at all is not a routing
-                        // hiccup, it is water. Split to Hvar is 42 km of open sea and
-                        // MapKit says so; without this the day claims a 50-minute drive to
-                        // an island.
+                        // No route at all over this distance is evidence, not a hiccup.
+                        // Driving: water — Split to Hvar is 42 km of open sea. Transit:
+                        // there is simply no bus or train, which the outback, the Highlands
+                        // and interior Iceland all answered plainly when asked.
                         refinedStop.noRoadRoute = true
                     }
                 }
@@ -120,7 +127,7 @@ enum TripRouteRefiner {
             days.append(contentsOf: plan.days.dropFirst(days.count))
         }
 
-        return TripPlan(days: days, origin: plan.origin,
-                        themes: plan.themes, startDate: plan.startDate)
+        return TripPlan(days: days, origin: plan.origin, themes: plan.themes,
+                        startDate: plan.startDate, mode: plan.mode)
     }
 }

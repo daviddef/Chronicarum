@@ -25,6 +25,7 @@ struct TripPlanView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var days = 3
     @State private var startDate = Date()
+    @State private var mode: TravelMode = .driving
     @State private var plan: TripPlan?
     @State private var isBuilding = false
     @State private var selectedSite: Site?
@@ -36,6 +37,11 @@ struct TripPlanView: View {
                 Section {
                     Stepper("\(days) \(days == 1 ? "day" : "days")", value: $days, in: 1...14)
                     DatePicker("Starting", selection: $startDate, displayedComponents: .date)
+                    Picker("Getting around", selection: $mode) {
+                        ForEach(TravelMode.allCases) { option in
+                            Label(option.label, systemImage: option.icon).tag(option)
+                        }
+                    }
                     if !themes.isEmpty {
                         HStack {
                             Text("Interests").foregroundColor(.secondary)
@@ -51,11 +57,13 @@ struct TripPlanView: View {
                 } footer: {
                     if let confinedTo {
                         Text("Only the \(confinedTo.count) places inside the region you drew"
-                             + (themes.isEmpty ? "." : ", matching your interests."))
+                             + (themes.isEmpty ? "." : ", matching your interests.")
+                             + modeFooter)
                     } else {
-                        Text(themes.isEmpty
-                             ? "No interests selected, so this uses the best of everything nearby."
-                             : "Built from what's near you, ranked by what's worth the detour.")
+                        Text((themes.isEmpty
+                              ? "No interests selected, so this uses the best of everything nearby."
+                              : "Built from what's near you, ranked by what's worth the detour.")
+                             + modeFooter)
                     }
                 }
 
@@ -68,14 +76,14 @@ struct TripPlanView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            // Ahead of the closure note: a place you cannot drive to is a
-                            // bigger problem with the day than a place that might be shut.
+                            // Ahead of the closure note: somewhere you cannot get to at all
+                            // is a bigger problem with the day than somewhere that might be
+                            // shut. What "cannot get to" means depends on the mode — water
+                            // if you are driving, no service if you are not.
                             let unreachable = day.unreachableStops
                             if !unreachable.isEmpty {
-                                Label(unreachable.count == 1
-                                      ? "There's no road route to \(unreachable[0].name) — it's likely an island, so you'd need a boat. The time shown doesn't include the crossing."
-                                      : "\(unreachable.count) of these have no road route — likely an island, so you'd need a boat. The times shown don't include the crossing.",
-                                      systemImage: "ferry")
+                                Label(unreachableNote(unreachable, mode: plan.mode),
+                                      systemImage: plan.mode == .driving ? "ferry" : "exclamationmark.triangle")
                                     .font(.caption)
                                     .foregroundColor(.orange)
                             }
@@ -145,11 +153,49 @@ struct TripPlanView: View {
             }
             // One task over both inputs, not two. Separate `.task(id:)` modifiers each
             // fired on their own input and built the same plan twice.
-            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)") { await rebuild() }
+            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)") {
+                await rebuild()
+            }
             .sheet(item: $selectedSite) { SiteDetailView(site: $0) }
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
             }
+        }
+    }
+
+    /// Says what could not be reached, in the terms of the mode that failed to reach it.
+    private func unreachableNote(_ sites: [Site], mode: TravelMode) -> String {
+        let names = sites.count == 1 ? sites[0].name : "\(sites.count) of these"
+        switch mode {
+        case .driving:
+            return sites.count == 1
+                ? "There's no road route to \(names) — it's likely an island, so you'd need a "
+                  + "boat. The time shown doesn't include the crossing."
+                : "\(names) have no road route — likely an island, so you'd need a boat. The "
+                  + "times shown don't include the crossing."
+        case .transit:
+            return sites.count == 1
+                ? "Apple Maps knows no public transport to \(names). The time shown is a "
+                  + "straight-line guess, so treat it as a taxi or a lift."
+                : "Apple Maps knows no public transport to \(names). Those times are "
+                  + "straight-line guesses, so treat them as taxis or lifts."
+        case .walking:
+            return sites.count == 1
+                ? "There's no walking route to \(names) — likely water or a motorway in the way."
+                : "\(names) have no walking route — likely water or a motorway in the way."
+        }
+    }
+
+    /// What choosing a mode actually changed, in a line — the reach is the part people
+    /// would otherwise read as the app having simply found less.
+    private var modeFooter: String {
+        switch mode {
+        case .driving: return ""
+        case .transit: return " On public transport, so nothing further than "
+                            + "\(Int(TravelMode.transit.radiusKm)) km out."
+        case .walking: return " On foot, so only what's within "
+                            + "\(Int(TravelMode.walking.radiusKm)) km — a day you could "
+                            + "actually walk."
         }
     }
 
@@ -176,12 +222,16 @@ struct TripPlanView: View {
         let requestedDays = days
         let requestedStart = startDate
         let catalogue = confinedTo ?? SiteData.all
-        let requestedRadius = radiusKm
+        let requestedMode = mode
+        // A drawn region is its own boundary; otherwise the mode decides how far is
+        // reachable, which is the difference between a walkable day and a fantasy.
+        let requestedRadius: Double? = confinedTo == nil ? nil : radiusKm
         let built: TripPlan = await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 continuation.resume(returning:
                     TripPlanner.plan(from: origin, themes: themes,
                                      days: requestedDays, startDate: requestedStart,
+                                     mode: requestedMode,
                                      radiusKm: requestedRadius,
                                      catalogue: catalogue))
             }

@@ -1,5 +1,85 @@
 import Foundation
 import CoreLocation
+import MapKit
+
+/// How you are getting around, which changes what a day can contain rather than just how
+/// the legs are labelled.
+///
+/// Every figure here is **fitted against real MapKit ETAs**, not assumed. Walking and
+/// driving were measured during the routing work; transit was measured the same way across
+/// Split, Bath, Rome, Sydney and Paris — 19 minutes of getting to a stop and waiting, then
+/// 25.75 km/h, at 26% RMS error. It is roughly half the speed of driving at every distance,
+/// which is the whole reason a car-shaped day is the wrong shape without one.
+enum TravelMode: String, CaseIterable, Identifiable {
+    case driving
+    case transit
+    case walking
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .driving: "Driving"
+        case .transit: "Public transport"
+        case .walking: "Walking only"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .driving: "car.fill"
+        case .transit: "tram.fill"
+        case .walking: "figure.walk"
+        }
+    }
+
+    /// What MapKit should be asked for when the chosen legs are measured for real.
+    var directionsType: MKDirectionsTransportType {
+        switch self {
+        case .driving: .automobile
+        case .transit: .transit
+        case .walking: .walking
+        }
+    }
+
+    /// How far from the start it is worth considering anything at all.
+    ///
+    /// Not cosmetic: with the driving radius, a walking plan would happily anchor a day on
+    /// something 60 km away and then spend sixteen hours getting there.
+    var radiusKm: Double {
+        switch self {
+        case .driving: 80
+        case .transit: 50
+        case .walking: 6
+        }
+    }
+
+    /// Minutes for one leg, from straight-line kilometres. See the type comment for where
+    /// each of these numbers comes from.
+    func estimatedMinutes(overKm straightLine: Double) -> Int {
+        switch self {
+        case .walking:
+            // × 1.25 for the detour a street plan forces, at 4.5 km/h — about 3.6 km/h made
+            // good, against 3.3–3.7 measured.
+            return Int((straightLine * 1.25 / 4.5 * 60).rounded())
+        case .driving:
+            // Short legs are all city street and long ones mostly open road, so effective
+            // speed climbs with distance; this is that curve rearranged.
+            return Int((13.5 + straightLine / 53.5 * 60).rounded()) + TripPlanner.parkingMinutes
+        case .transit:
+            return Int((19.0 + straightLine / 25.75 * 60).rounded())
+        }
+    }
+
+    /// Whether a leg of this length is walked even in this mode — used for the icon, and
+    /// for asking MapKit the right question. Nobody catches a bus 300 metres.
+    func isWalked(overKm straightLine: Double) -> Bool {
+        switch self {
+        case .walking: true
+        case .driving, .transit: straightLine * 1.25 < 1.5
+        }
+    }
+}
 
 /// A single stop in a day: somewhere to go, and how long it takes to get there.
 struct PlannedStop: Identifiable {
@@ -44,7 +124,8 @@ struct PlannedDay: Identifiable {
             $0.openingPattern?.isCommonlyClosed(on: date, calendar: calendar) ?? false
         }
     }
-    /// Stops with no road route to them — almost always an island. See `noRoadRoute`.
+    /// Stops MapKit could find no route to in the chosen mode. Driving, that is almost
+    /// always water; on public transport it means there is no service.
     var unreachableStops: [Site] { stops.filter(\.noRoadRoute).map(\.site) }
 
     var visitMinutes: Int { stops.reduce(0) { $0 + $1.site.visitMinutes } }
@@ -62,6 +143,7 @@ struct TripPlan {
     let origin: CLLocationCoordinate2D
     let themes: Theme
     let startDate: Date
+    let mode: TravelMode
 
     var isEmpty: Bool { days.allSatisfy(\.stops.isEmpty) }
     var totalStops: Int { days.reduce(0) { $0 + $1.stops.count } }
@@ -78,15 +160,21 @@ struct TripPlan {
     /// happened rather than from a fixed claim. Shared by the screen and the printed page
     /// so the two can never disagree.
     var travelCaveat: String {
+        let tail: String
+        switch mode {
+        case .driving: tail = " Add time for parking and for getting lost."
+        case .transit: tail = " They assume services are running as timetabled, which on a "
+                            + "Sunday or a holiday they may not be."
+        case .walking: tail = " They are flat-ground times and take no account of hills."
+        }
         if isFullyRouted {
-            return "Travel times are real routed times, without traffic. Add time for "
-                 + "parking and for getting lost."
+            return "Travel times are real routed \(mode.label.lowercased()) times." + tail
         }
         if measuredLegs > 0 {
             return "Most travel times are real routed times; the rest are estimated from "
-                 + "straight-line distance where no route could be found."
+                 + "straight-line distance where no route could be found." + tail
         }
-        return "Travel times are estimated from straight-line distance, not routed."
+        return "Travel times are estimated from straight-line distance, not routed." + tail
     }
 }
 
@@ -107,38 +195,9 @@ enum TripPlanner {
     /// A day is four to seven places. Without a cap the planner filled a Bath day with
     /// **26 stops**, most of them Georgian door numbers and gate railings.
     private static let maxStopsPerDay = 7
-    /// Walking: straight-line × 1.25 at 4.5 km/h, i.e. ~3.6 km/h made good. Checked
-    /// against MapKit walking ETAs in five cities, which come out at 3.3–3.7 km/h made
-    /// good. This part was right and is unchanged.
-    private static let roadFactor = 1.25
-    private static let walkingSpeedKmh = 4.5
-    private static let walkThresholdKm = 1.5
-
-    /// Driving: **fitted, not assumed.** The old model — straight-line × 1.25 at a flat
-    /// 45 km/h — was measured against 48 real MapKit ETAs across Split, Bath, Rome, Sydney
-    /// and Paris and was wrong by 44% RMS, almost always *optimistic*: it called the
-    /// 5 km hop from Diocletian's Palace to Salona 13 minutes against a real 34.
-    ///
-    /// Effective speed is not constant — it climbs with distance, because a short leg is
-    /// all city street and a long one is mostly open road. Fitting `v = vmax·d/(d+d₀)`
-    /// gives vmax 53.5 km/h and d₀ 12 km, which rearranges to something simpler to read:
-    /// **13.5 minutes of getting out of one place and into another, then 53 km/h.** RMS
-    /// error 24%, near the irreducible scatter — Paris and Sydney genuinely differ.
-    private static let driveOverheadMinutes = 13.5
-    private static let drivingSpeedKmh = 53.5
-    /// Finding somewhere to leave the car. Added on top of a routed drive too — MapKit
-    /// times the road, not the ten minutes circling a walled town looking for a space.
+    /// Finding somewhere to leave the car, on top of any driving leg. MapKit times the
+    /// road, not the ten minutes circling a walled town looking for a space.
     static let parkingMinutes = 5
-
-    static func travelMinutes(overKm straightLine: Double) -> Int {
-        if straightLine * roadFactor < walkThresholdKm {
-            return Int((straightLine * roadFactor / walkingSpeedKmh * 60).rounded())
-        }
-        // Straight-line distance goes in directly: the fit absorbed road winding, so
-        // applying `roadFactor` here as well would count it twice.
-        let driving = driveOverheadMinutes + straightLine / drivingSpeedKmh * 60
-        return Int(driving.rounded()) + parkingMinutes
-    }
 
     /// Put a day's chosen stops into a sensible walking/driving order.
     ///
@@ -148,7 +207,8 @@ enum TripPlanner {
     /// by value rather than by route. Nearest-neighbour from the starting point is crude
     /// but it never produces that.
     private static func ordered(_ sites: [Site],
-                                from origin: CLLocationCoordinate2D) -> [PlannedStop] {
+                                from origin: CLLocationCoordinate2D,
+                                mode: TravelMode) -> [PlannedStop] {
         var remaining = sites
         var here = origin
         var result: [PlannedStop] = []
@@ -162,8 +222,8 @@ enum TripPlanner {
             }
             let next = remaining.remove(at: nearestIndex)
             result.append(PlannedStop(site: next,
-                                      travelMinutes: travelMinutes(overKm: nearestKm),
-                                      isWalk: nearestKm * roadFactor < walkThresholdKm))
+                                      travelMinutes: mode.estimatedMinutes(overKm: nearestKm),
+                                      isWalk: mode.isWalked(overKm: nearestKm)))
             here = next.coordinate
         }
         return result
@@ -174,12 +234,16 @@ enum TripPlanner {
                      days: Int,
                      startDate: Date = Date(),
                      hoursPerDay: Double = 8,
-                     radiusKm: Double = 80,
+                     mode: TravelMode = .driving,
+                     radiusKm: Double? = nil,
                      catalogue: [Site] = SiteData.all) -> TripPlan {
 
+        // The mode decides how far is worth considering unless a caller has drawn its own
+        // boundary — a walking day anchored 60 km away is sixteen hours of pavement.
+        let reach = radiusKm ?? mode.radiusKm
         var pool = catalogue.filter { site in
             site.matches(themes: themes)
-                && site.approxDistanceKm(from: origin) < radiusKm
+                && site.approxDistanceKm(from: origin) < reach
         }
 
         // A site and the site containing it are one visit, not two. Which of the two to
@@ -238,14 +302,22 @@ enum TripPlanner {
             // Anchor first. Choosing purely by value-per-minute defers the expensive
             // flagship indefinitely — it put the Historical Complex of Split, the best
             // thing in the city, on day 3 while spending day 1 on its own gates.
+            // Getting there has to fit the day too. This used to test the *visit* alone,
+            // which was survivable while everything was driven and is not once it might be
+            // walked: a 6 km anchor is a 20-minute drive and a 100-minute walk, and the day
+            // would open by spending its entire budget on the pavement before arriving.
             guard let anchor = pool
-                .filter({ !used.contains($0.id) && Double($0.visitMinutes) <= budget })
+                .filter({ site in
+                    guard !used.contains(site.id) else { return false }
+                    let travel = mode.estimatedMinutes(overKm: site.approxDistanceKm(from: here))
+                    return Double(travel + site.visitMinutes) <= budget
+                })
                 .max(by: { a, b in
                     a.detourScore(from: origin) * closureFactor(a)
                         < b.detourScore(from: origin) * closureFactor(b)
                 }) else { break }
 
-            let anchorTravel = travelMinutes(overKm: anchor.approxDistanceKm(from: here))
+            let anchorTravel = mode.estimatedMinutes(overKm: anchor.approxDistanceKm(from: here))
             used.insert(anchor.id)
             stops.append(PlannedStop(site: anchor, travelMinutes: anchorTravel,
                                      isWalk: false))   // replaced by `ordered` below
@@ -260,7 +332,7 @@ enum TripPlanner {
 
                 for site in pool where !used.contains(site.id) {
                     guard Double(site.significance) >= floor else { continue }
-                    let travel = travelMinutes(overKm: site.approxDistanceKm(from: here))
+                    let travel = mode.estimatedMinutes(overKm: site.approxDistanceKm(from: here))
                     let cost = Double(travel + site.visitMinutes)
                     guard cost <= budget else { continue }
 
@@ -288,10 +360,11 @@ enum TripPlanner {
             }
 
             built.append(PlannedDay(index: dayIndex,
-                                    stops: ordered(stops.map(\.site), from: origin),
+                                    stops: ordered(stops.map(\.site), from: origin, mode: mode),
                                     date: dayDate))
         }
 
-        return TripPlan(days: built, origin: origin, themes: themes, startDate: startDate)
+        return TripPlan(days: built, origin: origin, themes: themes,
+                        startDate: startDate, mode: mode)
     }
 }
