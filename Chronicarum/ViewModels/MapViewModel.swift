@@ -194,7 +194,23 @@ final class MapViewModel: ObservableObject {
                 guard let self else { return }
                 guard let error else { self.locationError = nil; return }
                 self.isLocating = false
-                self.locationError = error.localizedDescription
+                // Only complain about something the user can act on.
+                //
+                // `kCLErrorLocationUnknown` (code 0) is transient — Core Location reports
+                // it and keeps trying, and the simulator emits it constantly. Surfacing it
+                // put "Can't find you (kCLErrorDomain error 0)" over the map on every
+                // launch, which is worse than the silence it was meant to fix.
+                let code = CLError.Code(rawValue: (error as NSError).code)
+                switch code {
+                case .denied:
+                    self.locationError = "Location is turned off for Chronicarum. "
+                        + "Settings › Privacy › Location Services will let it back on."
+                case .network:
+                    self.locationError = "Couldn't reach location services. "
+                        + "Check your connection and try again."
+                default:
+                    break   // transient; it will retry
+                }
             }
             .store(in: &cancellables)
     }

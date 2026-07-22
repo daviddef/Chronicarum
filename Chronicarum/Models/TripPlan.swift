@@ -57,10 +57,19 @@ enum TravelMode: String, CaseIterable, Identifiable {
     /// Minutes for one leg, from straight-line kilometres. See the type comment for where
     /// each of these numbers comes from.
     func estimatedMinutes(overKm straightLine: Double) -> Int {
-        switch self {
-        case .walking:
+        // A leg short enough to walk is walked, whatever the mode — and is therefore
+        // charged at walking speed. Missing this priced the 46-metre stroll from the Great
+        // Spa Towns to the Roman Baths at 19 minutes, because it paid the full driving
+        // overhead plus parking to cross a courtyard. Every short leg in every city plan
+        // was inflated the same way, and the label said "19 min walk" over a driving
+        // number, which is how it was caught in print.
+        if isWalked(overKm: straightLine) {
             // × 1.25 for the detour a street plan forces, at 4.5 km/h — about 3.6 km/h made
             // good, against 3.3–3.7 measured.
+            return Int((straightLine * 1.25 / 4.5 * 60).rounded())
+        }
+        switch self {
+        case .walking:
             return Int((straightLine * 1.25 / 4.5 * 60).rounded())
         case .driving:
             // Short legs are all city street and long ones mostly open road, so effective
