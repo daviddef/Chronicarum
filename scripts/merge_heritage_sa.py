@@ -175,7 +175,11 @@ for feat in features:
         # The register records listing dates, not construction dates, so inferring an era
         # from shrstatusdate would date every place to the 1980s. Honest answer: unknown.
         "era": "unknown",
-        "country": f"{suburb}, South Australia" if suburb else "South Australia",
+        # The last segment has to be a country: `derive_collections.py` groups on
+        # `country.split(", ")[-1]`, so ending at the state made South Australia one.
+        # Suburb, state, country — the same three-part shape the US register uses.
+        "country": (f"{suburb}, South Australia, Australia" if suburb
+                    else "South Australia, Australia"),
         "desc": tagline,
         "src": "sahr",
     })

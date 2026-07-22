@@ -159,7 +159,10 @@ for r in records:
         "lon": lon,
         "type": site_type(r["name"], r.get("restype")),
         "era": era_from_inception(extra.get("inception")),
-        "country": f"{location}, USA" if location != "United States" else location,
+        # "United States", not "USA": every other source and the Wikidata layer spell it
+        # out, and `derive_collections.py` groups on `country.split(", ")[-1]`, so the
+        # abbreviation was silently a second country.
+        "country": f"{location}, United States" if location != "United States" else location,
         # Wikidata's one-liner where it says something, else the street address.
         "desc": description(extra.get("desc"), r.get("address")),
         "src": "nrhp",

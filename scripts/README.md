@@ -27,6 +27,16 @@ python3 derive_country.py    # settle `country` from coordinates, then
 python3 derive_collections.py && python3 build_columnar.py
 ```
 
+> **`bulk_sites.json` is git-ignored, so a data fix that only commits the generated files
+> will be silently reverted by the next person who regenerates.** This is not theoretical:
+> the country fix was merged as `bulk_columnar.json` + `collections.json`, and rebuilding
+> the bundle from a local `bulk_sites.json` that predated it put Volubilis back in the
+> Roman Empire. Nothing failed and nothing warned — the numbers just quietly moved.
+>
+> So a data change is only really landed once the **script that produces it** is committed
+> and re-runnable. Before rebuilding, re-run the derive steps rather than assuming your
+> row-wise copy is current; they are deterministic, so running them again is free.
+
 **`derive_country.py` must run after any bulk (re)import.** `fetch_bulk.py` asks Wikidata
 for `P17` and gets back whichever value comes first, which for a transnational inscription
 is an arbitrary one of seven countries and for an archaeological site is often an empire.
