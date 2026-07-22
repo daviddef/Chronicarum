@@ -814,8 +814,8 @@ Temple Quay, Whitechapel, Chapel Street — and it took seeing a rail terminus i
 list of abbeys to notice. Sacred is now vetoed for railway, bus and underground stations.
 
 **"The Great Spa Towns of Europe · Belgium"**, printed on a Bath itinerary. A transnational
-UNESCO site takes the first country Wikidata lists. Not fixed — it needs the locality
-preferred over the country for multi-country sites, which is wider than one veto.
+UNESCO site takes the first country Wikidata lists. Fixed later, and it turned out to be
+much wider than one veto — see [Whose country is this](#whose-country-is-this) below.
 
 There is a pattern here worth keeping: **each new output surface has exposed defects the
 previous ones could not.** The map hid thin data that Explore made obvious; Explore hid
@@ -1049,7 +1049,7 @@ Two families shipped, both official lists rather than inventions
   an afternoon. This is where the roadside chapel lives, the long tail no popularity ranking
   will ever surface.
 
-1,271 collections and 13,587 memberships, of which the app shows perhaps a dozen at a time:
+1,271 collections and 13,596 memberships, of which the app shows perhaps a dozen at a time:
 what you have started, what is around you, and the World Heritage list for where you are.
 That surfacing rule is the whole defence against becoming the badge wall Foursquare warned
 about — the sets exist, they just stay out of sight until they are relevant.
@@ -1067,8 +1067,8 @@ only 24 rows carry the bare label, the rest being tagged by borough. Bungay clai
 clustering at 500 m, kept only if nothing else stands within 800 m of any member — so "all"
 is true by construction rather than by assumption.
 
-**A denominator that hides the gap.** The catalogue holds 31 of the UK's 36 inscriptions,
-44 of France's 51. Showing 31 with no further comment quietly claims that is the whole list,
+**A denominator that hides the gap.** The catalogue holds 29 of the UK's 34 inscriptions,
+42 of France's 51. Showing 29 with no further comment quietly claims that is the whole list,
 so the real UNESCO total travels with each collection and the app states what is missing.
 
 ### The guard that matters most
@@ -1076,7 +1076,7 @@ so the real UNESCO total travels with each collection and the app states what is
 Pokémon GO placed capture points at Auschwitz-Birkenau and the Hiroshima Peace Memorial.
 Any collection mechanic will eventually invite someone to tick off a genocide memorial
 unless something stops it, and `Site.isSensitive` is that something — it strips 212 of the
-13,587 memberships, **Auschwitz among them, out of World Heritage Sites of Poland.**
+13,596 memberships, **Auschwitz among them, out of World Heritage Sites of Poland.**
 
 The filter runs in Swift at load and deliberately *not* in the generator. A second copy of
 that logic in Python could drift, and drift here is not a cosmetic bug. One implementation,
@@ -1088,6 +1088,85 @@ in the catalogue and are ordinary attractions, so counting them as "not in Chron
 would be false. The two exclusions are reported separately and in their own words — one says
 the catalogue lacks them, the other says they are places of atrocity or burial and are not
 things to tick off.
+
+## Whose country is this
+
+The PDF work left one defect unfixed: **"The Great Spa Towns of Europe · Belgium"** on a
+Bath itinerary. Eleven towns, seven countries, and the bulk import kept whichever `P17`
+value Wikidata returned first. The site therefore sat in *World Heritage Sites of Belgium*,
+and a user standing in Bath was told that collection was 0 km away.
+
+### Measuring it first changed what the fix had to be
+
+Only the **22,234 rows carrying a bare country name** can hold this defect — the rest were
+written by a national import (`Aberdeenshire, United Kingdom`) whose register settles the
+country. Fetching *every* `P17` value for those rows rather than the first:
+
+    21,398   one value          nothing to choose
+       379   two or more        the defect's territory
+       457   none at all        461 rows carry no country whatsoever
+
+The 379 are mostly **not** transnational sites. Sorted by what the extra values are:
+
+    Ancient Rome 63 · Soviet Union 27 · Byzantine Empire 13 · Russian Empire 12
+    Roman Empire 8 · Bosporan Kingdom 7 · Austria–Hungary 7 · Sasanian Empire 6 …
+
+`P17` answers "what state was this in", across all of history. For an archaeological site
+the honest answer is a list of empires, and first-value-wins had been filing Volubilis
+under **Roman Empire**, Bukhara under **Russian Empire**, and the Historic Centre of Saint
+Petersburg under the **Soviet Union**. Preferring the locality — the fix guessed at
+earlier — would not have touched any of those, because none of them has one.
+
+Genuinely transnational World Heritage in the catalogue: **54 inscriptions**, of which 34
+were filed under a country their own coordinates are not in.
+
+### The coordinate chooses; it does not invent
+
+[`derive_country.py`](scripts/derive_country.py) resolves each site's position against
+Natural Earth 10m boundaries ([`geolocate.py`](scripts/geolocate.py), pure-Python ray
+casting over a 1° grid — no geo dependencies) and then **picks which of the site's own
+`P17` claims to keep**. It never introduces a country the source does not already assert.
+That constraint is what makes it safe to run across 22k rows: the worst outcome is that a
+row keeps exactly what Wikidata gave it.
+
+One exception, and it is the empire case: where *every* claim is a state with a dissolution
+date, there is nothing to choose between, so the coordinate answers outright. That branch
+is also what fills the 461 blanks.
+
+**360 rows changed**, and nothing else in the catalogue did — the columnar rebuild differs
+from its predecessor in the `country` column and in no other, at 294,820 rows. In the
+collections: the Great Spa Towns moved to the UK, Hadrian's Wall's *borders of the Roman
+Empire* moved from Germany to the UK, Muskau Park from Germany to Poland, the pile
+dwellings from Slovenia to Germany, Maloti-Drakensberg from Lesotho to South Africa.
+Ecuador and Ivory Coast fell below the five-inscription floor; Tajikistan and Yemen rose
+above it.
+
+### Three places where a boundary file is not an authority
+
+Natural Earth follows **de-facto control**, which would have had the app quietly reassign
+Crimean sites to Russia and Golan sites to Israel. Those are sovereignty positions, and a
+heritage catalogue has no business taking them by side effect of a point-in-polygon test.
+Inside the regions listed in `DISPUTED` — Crimea, the Golan Heights, East Jerusalem — the
+coordinate is ignored and the source's country stands, 119 rows in all.
+
+The cost is honest and worth paying: six Crimean sites of the Bosporan Kingdom keep a
+state that fell in the 4th century, because the alternative is for the app to say who
+Kerch belongs to. Declining to answer is the answer.
+
+### What the same measurement found and did not fix
+
+Checking all 294,820 rows against their coordinates also caught two label inconsistencies
+that predate this and are not the same bug:
+
+- The US import writes `…, USA` and everything else writes `United States`, so the two
+  are separate country buckets everywhere they meet.
+- The South Australian import writes `…, South Australia` — a state, in the country slot.
+  `derive_collections.py` groups on the last comma-separated component, so "South
+  Australia" is currently a country as far as collections are concerned.
+
+Neither affects World Heritage collections (both registers are national, and their sites
+carry no UNESCO inscription number), which is why they are recorded here rather than fixed
+in the same pass.
 
 ## Open question: institutional sites
 
