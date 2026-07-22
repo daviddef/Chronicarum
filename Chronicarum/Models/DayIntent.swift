@@ -75,6 +75,9 @@ struct DayIntent: Identifiable, Hashable {
     let stepTarget: Int?
     /// Shown under the plan when the recipe is a proxy rather than recorded fact.
     let caveat: String?
+    /// The card's colour. Chosen to sit on the app's ink background beside its gold —
+    /// bright enough to be inviting, deep enough not to fight the wordmark above them.
+    let colour: String
 
     static let all: [DayIntent] = [
         DayIntent(
@@ -83,7 +86,8 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "Only the things you'd genuinely travel for.",
             icon: "crown",
             themes: [], types: [], tier: .unmissable, mode: .driving,
-            stepTarget: nil, caveat: nil),
+            stepTarget: nil, caveat: nil,
+            colour: "#C9A84C"),
 
         DayIntent(
             id: "doorstep",
@@ -91,7 +95,8 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "The history you walk past without noticing.",
             icon: "house",
             themes: [], types: [], tier: .local, mode: .walking,
-            stepTarget: nil, caveat: nil),
+            stepTarget: nil, caveat: nil,
+            colour: "#2FA39B"),
 
         DayIntent(
             id: "history",
@@ -100,7 +105,8 @@ struct DayIntent: Identifiable, Hashable {
             icon: "building.columns",
             themes: [.roman, .prehistoric, .archaeology, .castles],
             types: [], tier: .worthALook, mode: .driving,
-            stepTarget: nil, caveat: nil),
+            stepTarget: nil, caveat: nil,
+            colour: "#C2603C"),
 
         DayIntent(
             id: "indoors",
@@ -112,7 +118,8 @@ struct DayIntent: Identifiable, Hashable {
             stepTarget: nil,
             caveat: "The catalogue doesn't record whether a place is indoors. This picks "
                   + "the kinds of place that usually are — check before you set out in a "
-                  + "downpour."),
+                  + "downpour.",
+            colour: "#4E7BC4"),
 
         DayIntent(
             id: "kids",
@@ -124,7 +131,8 @@ struct DayIntent: Identifiable, Hashable {
             stepTarget: nil,
             caveat: "Nothing in the catalogue says what's good with children. This is a "
                   + "guess from the kind of place it is — a castle usually beats a "
-                  + "parish church on a wet Tuesday."),
+                  + "parish church on a wet Tuesday.",
+            colour: "#E0912F"),
 
         DayIntent(
             id: "steps",
@@ -132,7 +140,8 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "A long walk with something to see at every stop.",
             icon: "figure.walk.motion",
             themes: [], types: [], tier: .worthALook, mode: .walking,
-            stepTarget: 20_000, caveat: nil),
+            stepTarget: 20_000, caveat: nil,
+            colour: "#6FA83C"),
     ]
 }
 

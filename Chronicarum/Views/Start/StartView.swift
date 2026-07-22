@@ -1,150 +1,160 @@
 import SwiftUI
 import CoreLocation
 
-/// The question the app opens with: *what kind of day is this?*
+/// The opening screen — and the splash, which are the same thing.
 ///
-/// Everything the planner can do was previously reachable only by knowing where to look —
-/// pick themes in Explore, find a toolbar icon, choose days, choose a mode. That is a
-/// filter panel wearing a map. This asks one question in plain words and derives the
-/// filters from the answer.
+/// They used to be two: an animated splash that faded out, then a grey list sheet thrown
+/// over the map. It read as three unrelated screens in two seconds, and presenting a sheet
+/// from a sheet made the plan unreliable to reach. Now the wordmark animates in exactly as
+/// the splash always did, settles upward, and the cards arrive underneath it. Nothing is
+/// dismissed and nothing is presented; one shot, one background.
 ///
-/// Kept to one screen with no scrolling on a normal phone, because the whole value is that
-/// it is faster than the map. Three controls: what sort of day, how long, and how you're
-/// getting around — and the last two only ever show a sensible default already chosen.
+/// **Always dark.** The ink and gold are the app's own, and matching the system's light
+/// appearance here produced the grey card list this replaced — a screen that looked like
+/// Settings rather than like the splash it follows.
 struct StartView: View {
     @EnvironmentObject private var mapVM: MapViewModel
     @EnvironmentObject private var siteVM: SiteViewModel
-    /// Dismisses to the map, for anyone who would rather browse than be asked.
+    /// Straight to the map, for anyone who would rather browse than be asked.
     let onSkip: () -> Void
 
-    @State private var intent: DayIntent?
-    @State private var days = 1
-    @State private var mode: TravelMode = .driving
-    @State private var tier: SignificanceTier = .worthALook
-    @State private var showPlan = false
+    @State private var wordmarkIn = false
+    @State private var ruleWidth: CGFloat = 0
+    @State private var cardsIn = false
+    @State private var chosen: DayIntent?
+
+    private let gold = Color(hex: "#C9A84C")
+    private let ink = Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255)
+
+    private let columns = [GridItem(.flexible(), spacing: 14),
+                           GridItem(.flexible(), spacing: 14)]
 
     private var origin: CLLocationCoordinate2D {
         mapVM.userLocation ?? mapVM.visibleRegion.center
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    ForEach(DayIntent.all) { option in
-                        Button {
-                            select(option)
-                        } label: {
-                            IntentRow(intent: option, isSelected: intent?.id == option.id)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } header: {
-                    Text("What kind of day?")
+        ZStack {
+            ink.ignoresSafeArea()
+
+            // The same compass motif the splash always had, still behind everything.
+            Image(systemName: "safari")
+                .font(.system(size: 240, weight: .ultraLight))
+                .foregroundStyle(gold.opacity(0.05))
+                .scaleEffect(wordmarkIn ? 1 : 0.85)
+                .offset(y: cardsIn ? -220 : 0)
+
+            VStack(spacing: 0) {
+                // ── The splash, which stays ─────────────────────────────
+                VStack(spacing: 14) {
+                    Text("CHRONICARUM")
+                        .font(.system(size: cardsIn ? 22 : 30, weight: .bold, design: .serif))
+                        .tracking(cardsIn ? 4 : 6)
+                        .foregroundStyle(gold)
+                        .opacity(wordmarkIn ? 1 : 0)
+                        .offset(y: wordmarkIn ? 0 : 12)
+
+                    Rectangle()
+                        .fill(gold.opacity(0.7))
+                        .frame(width: ruleWidth, height: 1)
+
+                    Text(cardsIn ? "What kind of day?" : "The best of history, mapped")
+                        .font(.system(size: cardsIn ? 15 : 12,
+                                      weight: cardsIn ? .medium : .regular, design: .serif))
+                        .tracking(cardsIn ? 0.5 : 1.5)
+                        .foregroundStyle(.white.opacity(cardsIn ? 0.9 : 0.55))
+                        .opacity(ruleWidth > 0 ? 1 : 0)
                 }
+                .padding(.top, cardsIn ? 24 : 0)
+                .frame(maxHeight: cardsIn ? nil : .infinity)
 
-                if let intent {
-                    Section {
-                        Stepper(days == 1 ? "Just today" : "\(days) days",
-                                value: $days, in: 1...14)
-
-                        Picker("Getting around", selection: $mode) {
-                            ForEach(TravelMode.allCases) { option in
-                                Label(option.label, systemImage: option.icon).tag(option)
+                if cardsIn {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 14) {
+                            ForEach(Array(DayIntent.all.enumerated()), id: \.element.id) { index, option in
+                                Button { chosen = option } label: {
+                                    IntentCard(intent: option)
+                                }
+                                .buttonStyle(.plain)
+                                .transition(.opacity.combined(with: .offset(y: 18)))
                             }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 26)
+                        .padding(.bottom, 12)
 
-                        Picker("How good?", selection: $tier) {
-                            ForEach(SignificanceTier.allCases) { option in
-                                Text(option.label).tag(option)
-                            }
+                        Button(action: onSkip) {
+                            Text("Just show me the map")
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.5))
                         }
-                    } header: {
-                        Text("And…")
-                    } footer: {
-                        Text(tier.blurb + (intent.caveat.map { "\n\n" + $0 } ?? ""))
+                        .padding(.bottom, 28)
                     }
-
-                    Section {
-                        Button {
-                            showPlan = true
-                        } label: {
-                            Text("Plan it")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color(hex: "#C9A84C"))
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                    }
-                }
-            }
-            .navigationTitle("Chronicarum")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Just the map") { onSkip() }
-                        .font(.subheadline)
-                }
-            }
-            .sheet(isPresented: $showPlan) {
-                if let intent {
-                    TripPlanView(origin: origin,
-                                 themes: intent.themes,
-                                 placeName: siteVM.nearestPlaceName(to: origin),
-                                 initialDays: days,
-                                 initialMode: mode,
-                                 tier: tier,
-                                 types: intent.types,
-                                 intentCaveat: intent.caveat,
-                                 stepTarget: intent.stepTarget)
+                    .scrollIndicators(.hidden)
                 }
             }
         }
-    }
-
-    /// Choosing a kind of day pre-answers the other two questions, which is the point —
-    /// nobody picks "twenty thousand steps" and then wants to be asked whether they have a
-    /// car. They stay editable because the guess is sometimes wrong.
-    private func select(_ option: DayIntent) {
-        withAnimation {
-            intent = option
-            mode = option.mode
-            tier = option.tier
+        .preferredColorScheme(.dark)
+        .task {
+            withAnimation(.easeOut(duration: 0.7)) { wordmarkIn = true }
+            withAnimation(.easeInOut(duration: 0.6).delay(0.35)) { ruleWidth = 180 }
+            // The splash's own beat, then it becomes the menu rather than handing over.
+            try? await Task.sleep(nanoseconds: 1_300_000_000)
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.85)) { cardsIn = true }
+        }
+        .fullScreenCover(item: $chosen) { intent in
+            TripPlanView(origin: origin,
+                         themes: intent.themes,
+                         placeName: siteVM.nearestPlaceName(to: origin),
+                         initialDays: 1,
+                         initialMode: intent.mode,
+                         tier: intent.tier,
+                         types: intent.types,
+                         intentCaveat: intent.caveat,
+                         stepTarget: intent.stepTarget)
         }
     }
 }
 
-private struct IntentRow: View {
+/// One bright card. Colour does the work the icons and titles cannot: six of these should
+/// be scannable in a glance, and six grey rows never were.
+private struct IntentCard: View {
     let intent: DayIntent
-    let isSelected: Bool
+
+    private var colour: Color { Color(hex: intent.colour) }
 
     var body: some View {
-        HStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Image(systemName: intent.icon)
-                .font(.system(size: 20))
-                .foregroundColor(isSelected ? Color(hex: "#C9A84C") : .secondary)
-                .frame(width: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(intent.title)
-                    .font(.body.weight(isSelected ? .semibold : .regular))
-                Text(intent.blurb)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-            }
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(.white)
 
             Spacer(minLength: 0)
 
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Color(hex: "#C9A84C"))
-            }
+            Text(intent.title)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(intent.blurb)
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.8))
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 168, alignment: .topLeading)
+        .background(
+            LinearGradient(colors: [colour, colour.opacity(0.72)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+        )
+        .shadow(color: colour.opacity(0.35), radius: 10, y: 5)
     }
 }

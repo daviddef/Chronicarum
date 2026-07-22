@@ -1,44 +1,52 @@
 import SwiftUI
 
-/// Wraps the app in its launch sequence: the animated splash plays over the top on cold
-/// start, and the first-run walkthrough appears once the splash clears.
+/// The launch sequence, which is now a single screen rather than three.
+///
+/// It used to be: an animated splash, fading to a map, with a grey list sheet thrown over
+/// the top — read as three unrelated screens inside two seconds, and the sheet-over-sheet
+/// made the planner unreliable to reach. `StartView` *is* the splash: it plays the same
+/// intro, then settles into the menu without anything being dismissed or presented.
+///
+/// The map lives underneath and is revealed by choosing "just show me the map", so nothing
+/// is a toll gate — and the ✨ in the map's top bar brings the question back.
 struct RootView: View {
-    @State private var showSplash = true
     /// Persisted, so the walkthrough is a first-run event, not an every-launch one.
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var showOnboarding = false
-    /// The app opens by asking what sort of day this is, rather than handing over a map
-    /// and a filter panel. Dismissed to the map by "Just the map", and re-openable from
-    /// the top bar, so it is an offer rather than a toll gate.
-    @State private var showStart = false
+    /// True until the map is asked for. Not a sheet — the start screen is the root.
+    @State private var showStart = true
+
+    /// The map is not built until it is wanted, and never torn down once it is.
+    ///
+    /// Building it eagerly behind the start screen — even at zero opacity — forced the
+    /// 294,820-site catalogue to parse before SwiftUI could draw a single frame, so the
+    /// static launch screen sat there for seconds and the splash animation played to
+    /// nobody. The opening screen needs none of that data; it asks a question.
+    @State private var hasEnteredApp = false
 
     var body: some View {
-        ContentView(showOnboarding: $showOnboarding, showStart: $showStart)
-            .opacity(showSplash ? 0 : 1)
-            .overlay {
-                if showSplash {
-                    SplashView {
-                        withAnimation(.easeInOut(duration: 0.4)) { showSplash = false }
-                        // Only after the splash clears, so the walkthrough isn't racing
-                        // the intro animation for the screen.
-                        if hasSeenOnboarding {
-                            showStart = true
-                        } else {
-                            showOnboarding = true
-                        }
-                    }
-                    .transition(.opacity)
+        ZStack {
+            if hasEnteredApp {
+                ContentView(showOnboarding: $showOnboarding, showStart: $showStart)
+                    .opacity(showStart ? 0 : 1)
+            }
+
+            if showStart {
+                StartView {
+                    hasEnteredApp = true
+                    withAnimation(.easeInOut(duration: 0.35)) { showStart = false }
+                    if !hasSeenOnboarding { showOnboarding = true }
                 }
+                .transition(.opacity)
             }
-            .onChange(of: showOnboarding) { _, isShowing in
-                guard !isShowing else { return }
-                hasSeenOnboarding = true
-                // Straight from the walkthrough into the question it just explained.
-                showStart = true
-            }
-            .sheet(isPresented: $showStart) {
-                StartView { showStart = false }
-            }
+        }
+        .onChange(of: showStart) { _, isShowing in
+            // Coming back to the question from the map must not discard the map.
+            if isShowing { hasEnteredApp = true }
+        }
+        .onChange(of: showOnboarding) { _, isShowing in
+            if !isShowing { hasSeenOnboarding = true }
+        }
     }
 }
 
