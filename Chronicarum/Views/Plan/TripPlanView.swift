@@ -113,11 +113,19 @@ struct TripPlanView: View {
                                     .foregroundColor(.orange)
                             }
                         } header: {
-                            HStack {
-                                Text("Day \(day.index + 1) · \(day.weekdayName)")
+                            HStack(alignment: .firstTextBaseline) {
+                                Text("Day \(day.index + 1)")
+                                    .font(.system(.headline, design: .serif))
+                                    .foregroundColor(Color(hex: "#C9A84C"))
+                                Text("· \(day.weekdayName)")
+                                    .font(.system(.subheadline, design: .serif))
+                                    .foregroundColor(.secondary)
                                 Spacer()
-                                Text(day.summary).foregroundColor(.secondary)
+                                Text(day.summary)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
+                            .textCase(nil)
                         }
                     }
 
@@ -142,6 +150,16 @@ struct TripPlanView: View {
                         }
                     }
 
+                    if plan.relaxedTier {
+                        Section {
+                            Label("Nothing top-tier is within range of here, so this is the "
+                                  + "best there is nearby rather than the greatest hits.",
+                                  systemImage: "sparkle.magnifyingglass")
+                                .font(.caption)
+                                .foregroundColor(Color(hex: "#C9A84C"))
+                        }
+                    }
+
                     Section {
                         Text(plan.travelCaveat
                              + " Opening hours are not known for any site — no heritage "
@@ -153,16 +171,25 @@ struct TripPlanView: View {
                     }
                 } else if plan != nil {
                     Section {
+                        // With the tier now relaxing to fill the days, a genuinely empty
+                        // plan means there is nothing designated near here at all — deep
+                        // ocean, remote desert. Interests and days are no longer plausible
+                        // causes, so the message no longer suggests them.
                         Text(confinedTo == nil
-                             ? "Nothing nearby matches those interests. Try more days, or "
-                               + "fewer interests."
+                             ? "There's nothing on the heritage registers close enough to "
+                               + "build a day around here. You'd need to start somewhere "
+                               + "with more nearby."
                              : "Nothing in the region you drew is worth a planned stop — the "
                                + "places there are too minor, or don't match your interests. "
-                               + "Try drawing wider, or clearing the interest filters.")
+                               + "Try drawing wider.")
                             .foregroundColor(.secondary)
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255).ignoresSafeArea())
+            .tint(Color(hex: "#C9A84C"))
+            .preferredColorScheme(.dark)
             .navigationTitle("Plan a trip")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

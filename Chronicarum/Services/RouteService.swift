@@ -128,6 +128,7 @@ enum TripRouteRefiner {
         }
 
         return TripPlan(days: days, origin: plan.origin, themes: plan.themes,
-                        startDate: plan.startDate, mode: plan.mode)
+                        startDate: plan.startDate, mode: plan.mode,
+                        relaxedTier: plan.relaxedTier)
     }
 }

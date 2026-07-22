@@ -153,6 +153,9 @@ struct TripPlan {
     let themes: Theme
     let startDate: Date
     let mode: TravelMode
+    /// True when the quality bar had to be lowered to find enough nearby — "nothing
+    /// tier-one is within range, so here is the best there is".
+    var relaxedTier: Bool = false
 
     var isEmpty: Bool { days.allSatisfy(\.stops.isEmpty) }
     var totalStops: Int { days.reduce(0) { $0 + $1.stops.count } }
@@ -286,10 +289,28 @@ enum TripPlanner {
 
         // A stop has to be worth stopping for. Without this the day fills with railings
         // and gate piers — they are real listed structures and nobody plans around them.
-        // The floor is the chosen tier, except at the most local setting, where the point
-        // is precisely to surface what a quality bar would hide.
-        let floorSignificance = max(tier.minimumSignificance, tier == .local ? 12 : 25)
-        pool = pool.filter { $0.visitMinutes >= 10 && $0.significance >= floorSignificance }
+        pool = pool.filter { $0.visitMinutes >= 10 }
+
+        // The tier is a **preference, not a gate.** "The greatest hits" asks for
+        // significance ≥ 70, which is 618 sites on Earth: Bath clears it, Perth and Boise
+        // hold nothing at all, and the plan came back empty with "try fewer interests" —
+        // advice that could not help, because interests were not the problem. So the floor
+        // is relaxed one tier at a time until there is enough to build the days asked for,
+        // and `relaxedTier` records that it happened so the plan can say "nothing tier-one
+        // is near you; here is the best there is" rather than an unexplained downgrade.
+        let requestedFloor = max(tier.minimumSignificance, tier == .local ? 12 : 25)
+        let wanted = max(4, days * 3)
+        var floorSignificance = requestedFloor
+        for candidate in [requestedFloor, 50, 33, 25, 12] where candidate <= requestedFloor {
+            floorSignificance = candidate
+            if pool.filter({ $0.significance >= candidate }).count >= wanted { break }
+        }
+        // Derived from where the floor actually landed, not set inside the loop: the loop
+        // breaks the moment it finds enough, so a flag set *after* the break check was
+        // never reached on the common path — Perth relaxed 70→50 and still claimed it
+        // hadn't. This cannot disagree with the floor it reports on.
+        let relaxedTier = floorSignificance < requestedFloor
+        pool = pool.filter { $0.significance >= floorSignificance }
 
         // Best-first, so the anchor of each day is the best thing still unseen.
         pool.sort { $0.detourScore(from: origin) > $1.detourScore(from: origin) }
@@ -383,6 +404,6 @@ enum TripPlanner {
         }
 
         return TripPlan(days: built, origin: origin, themes: themes,
-                        startDate: startDate, mode: mode)
+                        startDate: startDate, mode: mode, relaxedTier: relaxedTier)
     }
 }

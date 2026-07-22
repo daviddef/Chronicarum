@@ -1211,6 +1211,34 @@ Timetables. The estimate assumes services run as scheduled, and the caveat says 
 a Sunday bus and a Tuesday bus are not the same bus and nothing in the app knows which one
 you are standing at.
 
+## Later: the outdoors — trails, walks, bike rides
+
+Requested but explicitly **not now**. Every intent the app plans today is a set of *points*
+— places you stand in front of. There is a whole category it cannot express: the *line* you
+travel along for its own sake. A coast path, a canal towpath, a forest MTB loop, a
+long-distance walking trail, a Sunday cycle route. The "outdoor type" wants a route, not a
+list of monuments near one.
+
+This is a genuinely different data model, which is why it is parked rather than bolted on:
+
+- **The unit is a polyline, not a pin.** A trail has a length, an ascent profile, a
+  difficulty, a surface, and a direction — none of which the `Site` model or the
+  significance/duration/theme derivations have any place for.
+- **The sources are different.** OSM relations (`route=hiking|bicycle|foot`) are the obvious
+  candidate and are enormous — but that is the ODbL share-alike problem the roadmap has
+  already walked away from once, so it needs the same licence scrutiny the heritage
+  registers got. National trail registries (National Trails in England, the GR network in
+  France, Rail Trails Australia) may be cleaner per-country, exactly as the heritage
+  registers were.
+- **The planner would compose rather than route.** The interesting version is not "here is
+  the South West Coast Path" — a map already does that — but "a day on foot that strings
+  together the castle, the two churches and a stretch of the coast path between them",
+  which is the point-and-line hybrid nothing here can currently express.
+
+When it comes, it fits the intent screen naturally — a seventh card, *Out for a walk* or
+*On two wheels* — but the work is a data and modelling project of its own, not a filter
+tweak.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**
