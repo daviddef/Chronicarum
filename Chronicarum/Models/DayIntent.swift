@@ -122,6 +122,24 @@ struct DayIntent: Identifiable, Hashable {
             colour: "#4E7BC4"),
 
         DayIntent(
+            id: "outdoors",
+            title: "A day outdoors",
+            blurb: "Coast, gardens, ancient stones and natural wonders — out in the open.",
+            icon: "sun.max",
+            // Themes, and deliberately no type restriction. Natural wonders — Uluru, the
+            // national parks, the coast — are `type: natural`, which every other card's
+            // type filter silently drops. They do carry the `gardens` theme, so a
+            // theme-only reach catches all 2,173 of them while a type filter would have
+            // hidden the very gap this card exists to close.
+            themes: [.gardens, .prehistoric, .archaeology, .maritime, .rural, .monuments],
+            types: [], tier: .worthALook, mode: .driving,
+            stepTarget: nil,
+            caveat: "Whether a place is really open-air isn't recorded. This picks the "
+                  + "kinds that usually are — ruins, coast, gardens, ancient sites — so a "
+                  + "wet-weather backup is worth having.",
+            colour: "#2E9E5B"),
+
+        DayIntent(
             id: "kids",
             title: "With the kids",
             blurb: "Castles to climb, ruins to run around, things to look at.",
