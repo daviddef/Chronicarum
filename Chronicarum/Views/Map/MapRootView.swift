@@ -180,6 +180,15 @@ struct MapRootView: View {
             MapFilterView()
                 .presentationDetents([.medium])
         }
+        // Location failure used to be written to `locationError` and read by nothing, so
+        // a denied permission made the locate button look broken rather than blocked.
+        .alert("Can't find you",
+               isPresented: Binding(get: { mapVM.locationError != nil },
+                                    set: { if !$0 { mapVM.locationError = nil } })) {
+            Button("OK", role: .cancel) { mapVM.locationError = nil }
+        } message: {
+            Text(mapVM.locationError ?? "")
+        }
         .animation(.easeInOut(duration: 0.3), value: mapVM.timelineState.isVisible)
         .animation(.easeInOut(duration: 0.2), value: mapVM.isLassoActive)
     }

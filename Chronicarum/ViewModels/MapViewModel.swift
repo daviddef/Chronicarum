@@ -169,10 +169,17 @@ final class MapViewModel: ObservableObject {
                 // otherwise a background fix would yank the map out from under them.
                 if self.isLocating {
                     self.isLocating = false
-                    guard !self.hasUserMovedMap else { return }
+                    // No `hasUserMovedMap` guard here, deliberately. That guard exists to
+                    // stop an *unsolicited* fix yanking the map mid-pan, and applying it to
+                    // a deliberate tap broke the button entirely: panning the map is what
+                    // sets the flag, and having panned away is the only reason anyone ever
+                    // presses "locate me". It did nothing for everyone who needed it.
                     self.setRegion(MKCoordinateRegion(
                         center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 5, longitudeDelta: 5)
+                        // Close enough to see where you are. The old 5° span was ~550 km
+                        // tall — even when it did recentre, it showed half a country, which
+                        // does not read as having been taken anywhere.
+                        span: Self.locateSpan
                     ))
                 } else {
                     // An unsolicited fix — from the authorisation callback — still counts
@@ -361,9 +368,19 @@ final class MapViewModel: ObservableObject {
     }
 
     /// Asks for a location fix and centres the map on it once it arrives.
+    /// How close "take me to my location" gets. Shared so the immediate move and the one
+    /// on the fresh fix cannot drift apart and jump the map twice.
+    static let locateSpan = MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+
     func requestUserLocation() {
         isLocating = true
         locationError = nil
+        // Move on the fix already in hand, immediately. Waiting for a fresh one made the
+        // button feel dead — and left it doing nothing at all when the new request was
+        // slow, failed, or returned the same coordinate.
+        if let userLocation {
+            setRegion(MKCoordinateRegion(center: userLocation, span: Self.locateSpan))
+        }
         locationService.requestLocation()
     }
 
