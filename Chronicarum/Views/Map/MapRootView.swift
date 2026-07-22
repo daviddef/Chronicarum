@@ -5,6 +5,7 @@ import MapKit
 struct MapRootView: View {
     /// Lets the top-bar "?" re-open the first-run walkthrough.
     @Binding var showOnboarding: Bool
+    @Binding var showStart: Bool
     @EnvironmentObject private var mapVM: MapViewModel
     @EnvironmentObject private var siteVM: SiteViewModel
     @State private var showSiteSheet = false
@@ -118,7 +119,8 @@ struct MapRootView: View {
             // than floating over it — overlaying the same corner covered the top
             // bar's filter button and made it untappable.
             VStack(spacing: 0) {
-                MapTopBarView(showFilters: $showFilters, showHelp: $showOnboarding)
+                MapTopBarView(showFilters: $showFilters, showHelp: $showOnboarding,
+                              showStart: $showStart)
 
                 HStack {
                     Spacer()
@@ -278,7 +280,7 @@ private struct LassoDrawingLayer: View {
 }
 
 #Preview {
-    MapRootView(showOnboarding: .constant(false))
+    MapRootView(showOnboarding: .constant(false), showStart: .constant(false))
         .environmentObject(MapViewModel(locationService: LocationService()))
         .environmentObject(SiteViewModel())
 }

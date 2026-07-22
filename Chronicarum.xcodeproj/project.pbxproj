@@ -17,6 +17,7 @@
 		1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C92390CBAEED8687E2BAA25 /* MapControlsView.swift */; };
 		14573CE4B32A774A7B46CB4F /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */; };
 		1874E39D384D2B6E55FC6833 /* WikipediaExtract.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26B76309F8494021C50CC55 /* WikipediaExtract.swift */; };
+		21CB3392FDDC03C26A78E001 /* StartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23B8695F7D2FF15BCF8C951 /* StartView.swift */; };
 		22D7DBEEBBAD666547B76086 /* BulkData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9F74C0BE405A0D5C654CDE /* BulkData.swift */; };
 		2DDD66A298583A8A7B90715F /* MapTopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20BBF370ABE9C00E0CD1AF6 /* MapTopBarView.swift */; };
 		311ACADBC35CCD5803842D59 /* CollectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411DF9F2ED27E55C3F53DD6C /* CollectionsView.swift */; };
@@ -40,6 +41,7 @@
 		B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */; };
 		B4AAD9AB4CD2A258417E53E9 /* wikipedia_titles.json in Resources */ = {isa = PBXBuildFile; fileRef = 26DFE83499A6D326061043C9 /* wikipedia_titles.json */; };
 		BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */; };
+		C040FE14959616DEDB8725DC /* DayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC10978FDE3DA8EA7CEB35EB /* DayIntent.swift */; };
 		C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1288A7864863444DEA3835A /* ChronicArumApp.swift */; };
 		C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111ECDBF6E6398A93E34711C /* MapRootView.swift */; };
 		CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1389CCD88C933F622515A48F /* SiteDetailView.swift */; };
@@ -76,6 +78,7 @@
 		7F0B86D90615B736FE506EBF /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
 		8A9F74C0BE405A0D5C654CDE /* BulkData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkData.swift; sourceTree = "<group>"; };
 		9BFD4858D1B74EF7BCA13446 /* attribution.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = attribution.json; sourceTree = "<group>"; };
+		A23B8695F7D2FF15BCF8C951 /* StartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartView.swift; sourceTree = "<group>"; };
 		A26B76309F8494021C50CC55 /* WikipediaExtract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaExtract.swift; sourceTree = "<group>"; };
 		A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		A6C2D79DE3E1870D966B2A36 /* Chronicarum.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Chronicarum.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -84,6 +87,7 @@
 		B43CE8B5F5585283B332BAAD /* merimee_history.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = merimee_history.json; sourceTree = "<group>"; };
 		B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryPDF.swift; sourceTree = "<group>"; };
 		BAA2C1E3FA04D4125019FD3C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		BC10978FDE3DA8EA7CEB35EB /* DayIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayIntent.swift; sourceTree = "<group>"; };
 		BF26399E32C64942E33F712C /* OfficialWebsite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialWebsite.swift; sourceTree = "<group>"; };
 		C5253630662A704FABEE643A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C7ABEC5B1E964E214313E25F /* collections.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = collections.json; sourceTree = "<group>"; };
@@ -185,8 +189,17 @@
 				3631DA8D80B9F796CEA6B907 /* Settings */,
 				0437AB89BEF9EA7D4A59BF1C /* Sites */,
 				F71818AB3EDBD46674533BD9 /* Splash */,
+				730E905E7E32FACF7711AB8E /* Start */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		730E905E7E32FACF7711AB8E /* Start */ = {
+			isa = PBXGroup;
+			children = (
+				A23B8695F7D2FF15BCF8C951 /* StartView.swift */,
+			);
+			path = Start;
 			sourceTree = "<group>";
 		};
 		85B560BEC42361709EBE62BA /* Onboarding */ = {
@@ -227,6 +240,7 @@
 			children = (
 				8A9F74C0BE405A0D5C654CDE /* BulkData.swift */,
 				EF03E268E066215CE65549FC /* ChapterMarkup.swift */,
+				BC10978FDE3DA8EA7CEB35EB /* DayIntent.swift */,
 				D73170330E1865B973F1BE67 /* Empire.swift */,
 				B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */,
 				FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */,
@@ -356,6 +370,7 @@
 				027DAF193A5C3181B0145E27 /* ConquestTimelineBar.swift in Sources */,
 				916A1B4EE6B51A9792995658 /* ContentView.swift in Sources */,
 				622B3A9443E0241D9B110F4C /* CreditsView.swift in Sources */,
+				C040FE14959616DEDB8725DC /* DayIntent.swift in Sources */,
 				DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */,
 				B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */,
 				D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */,
@@ -380,6 +395,7 @@
 				F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */,
 				02076BA70FA934F5BFDAC2E5 /* SiteViewModel.swift in Sources */,
 				50ADEE7ACE31BFCF904012B0 /* SplashView.swift in Sources */,
+				21CB3392FDDC03C26A78E001 /* StartView.swift in Sources */,
 				01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */,
 				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
 				5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */,

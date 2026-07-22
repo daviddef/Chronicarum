@@ -3,6 +3,7 @@ import SwiftUI
 struct MapTopBarView: View {
     @Binding var showFilters: Bool
     @Binding var showHelp: Bool
+    @Binding var showStart: Bool
     @EnvironmentObject private var mapVM: MapViewModel
 
     var body: some View {
@@ -14,6 +15,16 @@ struct MapTopBarView: View {
                 .tracking(3)
 
             Spacer()
+
+            // Back to "what kind of day?" — the app's actual front door.
+            Button {
+                showStart = true
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(hex: "#C9A84C"))
+            }
+            .accessibilityLabel("Plan a day")
 
             // Re-open the walkthrough
             Button {

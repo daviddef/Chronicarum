@@ -21,11 +21,23 @@ struct TripPlanView: View {
     /// How far from the origin to consider. Widened when confined to a drawn region, since
     /// the region is already the boundary and the default 80 km would clip it.
     var radiusKm: Double = 80
+    /// Pre-answers from the "what kind of day?" screen, so the plan opens already shaped
+    /// rather than making someone set it up twice.
+    var initialDays: Int = 3
+    var initialMode: TravelMode = .driving
+    var tier: SignificanceTier = .worthALook
+    var types: Set<SiteType> = []
+    /// Carried from the intent when its recipe is a proxy rather than a recorded fact.
+    var intentCaveat: String? = nil
+    /// Set when the walking itself is the point, so the plan can report progress toward it.
+    var stepTarget: Int? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var days = 3
     @State private var startDate = Date()
     @State private var mode: TravelMode = .driving
+    /// Applies the caller's choices once, without freezing them — the pickers still work.
+    @State private var hasAdoptedDefaults = false
     @State private var plan: TripPlan?
     @State private var isBuilding = false
     @State private var selectedSite: Site?
@@ -109,6 +121,27 @@ struct TripPlanView: View {
                         }
                     }
 
+                    if let stepTarget {
+                        Section {
+                            let km = plan.days.first.map(walkedKm) ?? 0
+                            let steps = Int(km * DayIntent.stepsPerKm)
+                            Label("Day 1 walks about \(Int(km)) km — roughly "
+                                  + "\(steps.formatted()) steps of your "
+                                  + "\(stepTarget.formatted()).",
+                                  systemImage: "figure.walk.motion")
+                                .font(.caption)
+                                .foregroundColor(steps >= stepTarget ? Color(hex: "#C9A84C") : .secondary)
+                        }
+                    }
+
+                    if let intentCaveat {
+                        Section {
+                            Text(intentCaveat)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
                     Section {
                         Text(plan.travelCaveat
                              + " Opening hours are not known for any site — no heritage "
@@ -153,6 +186,12 @@ struct TripPlanView: View {
             }
             // One task over both inputs, not two. Separate `.task(id:)` modifiers each
             // fired on their own input and built the same plan twice.
+            .task {
+                guard !hasAdoptedDefaults else { return }
+                hasAdoptedDefaults = true
+                days = initialDays
+                mode = initialMode
+            }
             .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)") {
                 await rebuild()
             }
@@ -161,6 +200,12 @@ struct TripPlanView: View {
                 if isBuilding { ProgressView().controlSize(.large) }
             }
         }
+    }
+
+    /// Straight-line kilometres walked across a day's legs — only the walked ones count.
+    private func walkedKm(_ day: PlannedDay) -> Double {
+        // The estimator is invertible: walking minutes are straight-line × 1.25 ÷ 4.5.
+        Double(day.stops.filter(\.isWalk).reduce(0) { $0 + $1.travelMinutes }) / 60 * 4.5 / 1.25
     }
 
     /// Says what could not be reached, in the terms of the mode that failed to reach it.
@@ -223,6 +268,8 @@ struct TripPlanView: View {
         let requestedStart = startDate
         let catalogue = confinedTo ?? SiteData.all
         let requestedMode = mode
+        let requestedTier = tier
+        let requestedTypes = types
         // A drawn region is its own boundary; otherwise the mode decides how far is
         // reachable, which is the difference between a walkable day and a fantasy.
         let requestedRadius: Double? = confinedTo == nil ? nil : radiusKm
@@ -232,6 +279,8 @@ struct TripPlanView: View {
                     TripPlanner.plan(from: origin, themes: themes,
                                      days: requestedDays, startDate: requestedStart,
                                      mode: requestedMode,
+                                     tier: requestedTier,
+                                     types: requestedTypes,
                                      radiusKm: requestedRadius,
                                      catalogue: catalogue))
             }

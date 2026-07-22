@@ -235,6 +235,8 @@ enum TripPlanner {
                      startDate: Date = Date(),
                      hoursPerDay: Double = 8,
                      mode: TravelMode = .driving,
+                     tier: SignificanceTier = .worthALook,
+                     types: Set<SiteType> = [],
                      radiusKm: Double? = nil,
                      catalogue: [Site] = SiteData.all) -> TripPlan {
 
@@ -244,6 +246,10 @@ enum TripPlanner {
         var pool = catalogue.filter { site in
             site.matches(themes: themes)
                 && site.approxDistanceKm(from: origin) < reach
+                && (types.isEmpty || types.contains(site.type))
+                // A day with children, or in the rain, should never offer up a massacre
+                // site because it happens to be indoors and highly rated.
+                && !site.isSensitive
         }
 
         // A site and the site containing it are one visit, not two. Which of the two to
@@ -271,7 +277,10 @@ enum TripPlanner {
 
         // A stop has to be worth stopping for. Without this the day fills with railings
         // and gate piers — they are real listed structures and nobody plans around them.
-        pool = pool.filter { $0.visitMinutes >= 10 && $0.significance >= 25 }
+        // The floor is the chosen tier, except at the most local setting, where the point
+        // is precisely to surface what a quality bar would hide.
+        let floorSignificance = max(tier.minimumSignificance, tier == .local ? 12 : 25)
+        pool = pool.filter { $0.visitMinutes >= 10 && $0.significance >= floorSignificance }
 
         // Best-first, so the anchor of each day is the best thing still unseen.
         pool.sort { $0.detourScore(from: origin) > $1.detourScore(from: origin) }

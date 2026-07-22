@@ -7,9 +7,13 @@ struct RootView: View {
     /// Persisted, so the walkthrough is a first-run event, not an every-launch one.
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var showOnboarding = false
+    /// The app opens by asking what sort of day this is, rather than handing over a map
+    /// and a filter panel. Dismissed to the map by "Just the map", and re-openable from
+    /// the top bar, so it is an offer rather than a toll gate.
+    @State private var showStart = false
 
     var body: some View {
-        ContentView(showOnboarding: $showOnboarding)
+        ContentView(showOnboarding: $showOnboarding, showStart: $showStart)
             .opacity(showSplash ? 0 : 1)
             .overlay {
                 if showSplash {
@@ -17,19 +21,30 @@ struct RootView: View {
                         withAnimation(.easeInOut(duration: 0.4)) { showSplash = false }
                         // Only after the splash clears, so the walkthrough isn't racing
                         // the intro animation for the screen.
-                        if !hasSeenOnboarding { showOnboarding = true }
+                        if hasSeenOnboarding {
+                            showStart = true
+                        } else {
+                            showOnboarding = true
+                        }
                     }
                     .transition(.opacity)
                 }
             }
             .onChange(of: showOnboarding) { _, isShowing in
-                if !isShowing { hasSeenOnboarding = true }
+                guard !isShowing else { return }
+                hasSeenOnboarding = true
+                // Straight from the walkthrough into the question it just explained.
+                showStart = true
+            }
+            .sheet(isPresented: $showStart) {
+                StartView { showStart = false }
             }
     }
 }
 
 struct ContentView: View {
     @Binding var showOnboarding: Bool
+    @Binding var showStart: Bool
     @State private var selectedTab: Tab = .map
 
     enum Tab: String, CaseIterable {
@@ -48,7 +63,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            MapRootView(showOnboarding: $showOnboarding)
+            MapRootView(showOnboarding: $showOnboarding, showStart: $showStart)
                 .tabItem {
                     Label("Map", systemImage: "map.fill")
                 }
