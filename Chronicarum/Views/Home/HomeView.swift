@@ -94,27 +94,14 @@ struct HomeView: View {
                         }
                     }
 
-                    // ── Recent plans ─────────────────────────────────────
-                    if !recents.trips.isEmpty {
-                        HStack {
-                            Text("Recent")
-                                .font(.system(.headline, design: .serif))
-                                .foregroundStyle(.white.opacity(0.9))
-                            Spacer()
-                            Button("Clear") { recents.clear() }
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.5))
-                        }
-                        .padding(.top, 8)
+                    // ── Saved plans ──────────────────────────────────────
+                    if !recents.saved.isEmpty {
+                        tripSection(title: "Saved", trips: recents.saved, showClear: false)
+                    }
 
-                        VStack(spacing: 8) {
-                            ForEach(recents.trips) { trip in
-                                Button { open(recent: trip) } label: {
-                                    RecentRow(trip: trip)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                    // ── Recent plans ─────────────────────────────────────
+                    if !recents.recent.isEmpty {
+                        tripSection(title: "Recent", trips: recents.recent, showClear: true)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -138,6 +125,31 @@ struct HomeView: View {
         .sheet(isPresented: $showSearch) {
             LocationPickerView { coordinate, name in
                 focus.set(coordinate, name: name)
+            }
+        }
+    }
+
+    /// A titled list of trips — Saved or Recent — each reopening on tap and starrable.
+    @ViewBuilder
+    private func tripSection(title: String, trips: [RecentTrip], showClear: Bool) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(.headline, design: .serif))
+                .foregroundStyle(.white.opacity(0.9))
+            Spacer()
+            if showClear {
+                Button("Clear") { recents.clearRecent() }
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+        .padding(.top, 8)
+
+        VStack(spacing: 8) {
+            ForEach(trips) { trip in
+                RecentRow(trip: trip,
+                          onOpen: { open(recent: trip) },
+                          onToggleSave: { recents.toggleSaved(trip) })
             }
         }
     }
@@ -238,32 +250,46 @@ struct IntentCard: View {
     }
 }
 
-/// One recent plan, as a slim row that reopens it.
+/// One saved or recent plan, as a slim row: tap the body to reopen it, the star to keep it.
 private struct RecentRow: View {
     let trip: RecentTrip
+    let onOpen: () -> Void
+    let onToggleSave: () -> Void
+
+    private let gold = Color(hex: "#C9A84C")
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: trip.intent?.icon ?? "clock")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 38, height: 38)
-                .background(Color(hex: trip.intent?.colour ?? "#C9A84C"), in: RoundedRectangle(cornerRadius: 10))
+            Button(action: onOpen) {
+                HStack(spacing: 12) {
+                    Image(systemName: trip.intent?.icon ?? "clock")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(Color(hex: trip.intent?.colour ?? "#C9A84C"),
+                                    in: RoundedRectangle(cornerRadius: 10))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(trip.intent?.title ?? "A trip")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
-                Text([trip.placeName, trip.days == 1 ? "a day" : "\(trip.days) days"]
-                        .compactMap { $0 }.joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(trip.intent?.title ?? "A trip")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white)
+                        Text([trip.placeName, trip.days == 1 ? "a day" : "\(trip.days) days"]
+                                .compactMap { $0 }.joined(separator: " · "))
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                }
             }
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.4))
+            .buttonStyle(.plain)
+
+            Button(action: onToggleSave) {
+                Image(systemName: trip.isSaved ? "star.fill" : "star")
+                    .font(.system(size: 15))
+                    .foregroundStyle(trip.isSaved ? gold : .white.opacity(0.4))
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

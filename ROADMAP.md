@@ -215,6 +215,16 @@ Ordered by my sense of value.
       small places. See *Bounded collections* above, including the three completeness claims
       that were false on the first pass and the guard that keeps Auschwitz out of a set of
       things to tick off.
+- [x] **The trip workflow now closes the loop** — planning a day used to end at "Done",
+      which dumped you back at the "what kind of day" question with nothing kept. A plan is
+      now *recorded the moment it opens* ([`RecentTripsStore`](Chronicarum/ViewModels/RecentTripsStore.swift)),
+      and the home screen shows **Recent** at the bottom and **Saved** above it. A star on
+      each row keeps a plan; starred trips survive the eight-deep recent cap and sit in their
+      own section. Tapping either reopens the exact plan — same place, same kind of day, same
+      length. Stored in `UserDefaults`: a handful of tiny records, not worth a database.
+- [x] **Each printed day carries its own map** — see [*A map of each day, drawn on*](#a-map-of-each-day-drawn-on).
+      `MKMapSnapshotter` plus the route line and numbered discs drawn on by hand, matching
+      the numbers on the rows and closing the loop on a there-and-back walk.
 - [ ] **◀ YOU ARE HERE** — next: a Year in Review, gated on a season's worth of visits the
       way Letterboxd gates on ten films.
 
@@ -805,6 +815,20 @@ selectable and searchable at print resolution. Rendering views to images gives n
 trusted without question and least likely to be re-checked, because it leaves the app
 behind. Travel times are estimates; opening hours are unknown for every site; the page says
 so.
+
+### A map of each day, drawn on
+
+Each day now prints its own map. `MKMapSnapshotter` renders the region holding that day's
+stops, and the route line and numbered gold discs are drawn *onto* the snapshot with
+`snapshot.point(for:)` — so the printed page shows the *shape* of the day, not only a list
+of names. The numbers on the map match the numbers on the rows beneath it, and when the day
+loops back to where it started (the "20,000 steps" walk) the line closes the loop.
+
+Fetched synchronously up-front like the photographs, with a hard 15-second timeout and a
+`if let mapImage` guard: a map is a page worth having, never a spinner, and a snapshot that
+doesn't come back simply leaves the list to stand on its own rather than failing the export.
+The snapshot map is deliberately POI-free (`.excludingAll`) so the gold route reads cleanly
+against plain streets on white paper.
 
 ### Printing it found two bugs the screen had hidden
 

@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import MapKit
 
 /// Renders a trip plan as a printable PDF worth keeping.
 ///
@@ -93,10 +94,106 @@ enum ItineraryPDF {
         return found
     }
 
+    // MARK: - Day maps
+
+    private static let dayMapHeight: CGFloat = 150
+
+    /// A map of each day's route, rendered with `MKMapSnapshotter` and then drawn on with
+    /// the gold line and numbered pins — so the printed page shows the shape of the day, not
+    /// just a list. Synchronous like the photographs, with a hard timeout: a page worth
+    /// having, never a spinner.
+    private static func dayMaps(for plan: TripPlan) -> [Int: UIImage] {
+        var result: [Int: UIImage] = [:]
+        let lock = NSLock()
+        let group = DispatchGroup()
+
+        for day in plan.days where !day.stops.isEmpty {
+            var coords = day.stops.map(\.site.coordinate)
+            if day.returnMinutes != nil { coords.append(plan.origin) }
+
+            let options = MKMapSnapshotter.Options()
+            options.region = region(fitting: coords)
+            options.size = CGSize(width: contentWidth, height: dayMapHeight)
+            options.pointOfInterestFilter = .excludingAll
+
+            group.enter()
+            MKMapSnapshotter(options: options).start(with: .global()) { snapshot, _ in
+                defer { group.leave() }
+                guard let snapshot else { return }
+                let drawn = drawRoute(on: snapshot, day: day, origin: plan.origin,
+                                      size: options.size)
+                lock.lock(); result[day.index] = drawn; lock.unlock()
+            }
+        }
+        _ = group.wait(timeout: .now() + 15)
+        return result
+    }
+
+    /// A region holding every coordinate with margin; a lone stop gets a sensible span.
+    private static func region(fitting coords: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
+        guard let first = coords.first else {
+            return MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                                      span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1))
+        }
+        var minLat = first.latitude, maxLat = first.latitude
+        var minLon = first.longitude, maxLon = first.longitude
+        for c in coords {
+            minLat = min(minLat, c.latitude);  maxLat = max(maxLat, c.latitude)
+            minLon = min(minLon, c.longitude); maxLon = max(maxLon, c.longitude)
+        }
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2,
+                                           longitude: (minLon + maxLon) / 2),
+            span: MKCoordinateSpan(latitudeDelta: max((maxLat - minLat) * 1.5, 0.02),
+                                   longitudeDelta: max((maxLon - minLon) * 1.5, 0.02)))
+    }
+
+    /// Draw the day's route line and numbered discs over a map snapshot.
+    private static func drawRoute(on snapshot: MKMapSnapshotter.Snapshot,
+                                  day: PlannedDay,
+                                  origin: CLLocationCoordinate2D,
+                                  size: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            snapshot.image.draw(at: .zero)
+
+            var points = day.stops.map { snapshot.point(for: $0.site.coordinate) }
+            if day.returnMinutes != nil { points.append(snapshot.point(for: origin)) }
+
+            // The route line.
+            if points.count > 1 {
+                let path = UIBezierPath()
+                path.move(to: points[0])
+                for p in points.dropFirst() { path.addLine(to: p) }
+                gold.withAlphaComponent(0.9).setStroke()
+                path.lineWidth = 3
+                path.lineJoinStyle = .round
+                path.lineCapStyle = .round
+                path.stroke()
+            }
+
+            // Numbered discs — per day, matching the numbers in the list below.
+            for (index, stop) in day.stops.enumerated() {
+                let centre = snapshot.point(for: stop.site.coordinate)
+                let r: CGFloat = 11
+                let disc = CGRect(x: centre.x - r, y: centre.y - r, width: r * 2, height: r * 2)
+                gold.setFill(); UIBezierPath(ovalIn: disc).fill()
+                UIColor.white.setStroke()
+                let ring = UIBezierPath(ovalIn: disc); ring.lineWidth = 1.5; ring.stroke()
+                let n = NSAttributedString(string: "\(index + 1)", attributes: [
+                    .font: UIFont.systemFont(ofSize: 12, weight: .bold),
+                    .foregroundColor: ink])
+                let s = n.size()
+                n.draw(at: CGPoint(x: centre.x - s.width / 2, y: centre.y - s.height / 2))
+            }
+        }
+    }
+
     // MARK: - Rendering
 
     static func render(_ plan: TripPlan, placeName: String?) -> Data {
         let photos = photographs(for: plan, limit: 24)
+        let maps = dayMaps(for: plan)
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize))
 
         return renderer.pdfData { context in
@@ -143,6 +240,23 @@ enum ItineraryPDF {
                 y += 12
                 draw("Day \(day.index + 1) · \(day.weekdayName)", Style.dayHeading, spacing: 2)
                 draw(day.summary.uppercased(), Style.daySummary, spacing: 12)
+
+                // The shape of the day: the route drawn over a map, numbered to match the
+                // stops below. Skipped silently if the snapshot didn't come back in time.
+                if let mapImage = maps[day.index] {
+                    ensureRoom(for: dayMapHeight + 12)
+                    let rect = CGRect(x: margin, y: y, width: contentWidth, height: dayMapHeight)
+                    let clip = UIBezierPath(roundedRect: rect, cornerRadius: 8)
+                    context.cgContext.saveGState()
+                    clip.addClip()
+                    mapImage.draw(in: rect)
+                    context.cgContext.restoreGState()
+                    UIColor(white: 0, alpha: 0.12).setStroke()
+                    let border = UIBezierPath(roundedRect: rect, cornerRadius: 8)
+                    border.lineWidth = 1
+                    border.stroke()
+                    y += dayMapHeight + 12
+                }
 
                 for (index, stop) in day.stops.enumerated() {
                     let rowHeight: CGFloat = 62

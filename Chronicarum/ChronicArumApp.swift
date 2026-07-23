@@ -46,7 +46,8 @@ struct ChronicArumApp: App {
               let lon = Double(arguments[index + 2]) else { return }
 
         let origin = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        let plan = TripPlanner.plan(from: origin, themes: [], days: 3)
+        let plan = TripPlanner.plan(from: origin, themes: [], days: 3,
+                                    lunchMinutes: 60, loopBack: true)
         let data = ItineraryPDF.render(plan, placeName: "Bath")
         let url = URL.documentsDirectory.appendingPathComponent("sample.pdf")
         try? data.write(to: url)
