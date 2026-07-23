@@ -176,7 +176,13 @@ enum ItineraryPDF {
                     let textWidth = contentWidth - 92
                     var ty = top
 
-                    let legText = "\(stop.travelMinutes) min \(stop.isWalk ? "walk" : (plan.mode == .transit ? "by transport" : "drive"))"
+                    let verb: String
+                    switch stop.legMode {
+                    case .walking: verb = "walk"
+                    case .transit: verb = "by transport"
+                    case .driving, .any: verb = "drive"
+                    }
+                    let legText = "\(stop.travelMinutes) min \(verb)"
                     let leg = NSAttributedString(string: legText.uppercased(), attributes: Style.leg)
                     leg.draw(at: CGPoint(x: textX, y: ty))
                     ty += 12

@@ -11,14 +11,31 @@ import MapKit
 /// 25.75 km/h, at 26% RMS error. It is roughly half the speed of driving at every distance,
 /// which is the whole reason a car-shaped day is the wrong shape without one.
 enum TravelMode: String, CaseIterable, Identifiable {
+    /// Pick the sensible mode for each leg by its length: walk what is walkable, take
+    /// transit across a city, drive between them. This is `.any` — "however's easiest" —
+    /// and the one case that varies per leg rather than applying one answer to the day.
+    case any
     case driving
     case transit
     case walking
 
     var id: String { rawValue }
 
+    /// For `.any`, the mode a single leg of this length should actually use. Everything
+    /// else answers with itself — a walking day walks even the long legs, on purpose.
+    func legMode(overKm straightLine: Double) -> TravelMode {
+        guard self == .any else {
+            // A short hop is walked whatever the day's mode: nobody drives 300 metres.
+            return isWalked(overKm: straightLine) ? .walking : self
+        }
+        if straightLine * 1.25 < 2.0 { return .walking }   // ~2.5 km on foot
+        if straightLine < 20 { return .transit }           // city-scale
+        return .driving                                    // between towns
+    }
+
     var label: String {
         switch self {
+        case .any:     "However's easiest"
         case .driving: "Driving"
         case .transit: "Public transport"
         case .walking: "Walking only"
@@ -27,6 +44,7 @@ enum TravelMode: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
+        case .any:     "arrow.triangle.swap"
         case .driving: "car.fill"
         case .transit: "tram.fill"
         case .walking: "figure.walk"
@@ -34,9 +52,10 @@ enum TravelMode: String, CaseIterable, Identifiable {
     }
 
     /// What MapKit should be asked for when the chosen legs are measured for real.
+    /// `.any` never reaches here — its legs are measured per their own `legMode`.
     var directionsType: MKDirectionsTransportType {
         switch self {
-        case .driving: .automobile
+        case .any, .driving: .automobile
         case .transit: .transit
         case .walking: .walking
         }
@@ -48,7 +67,7 @@ enum TravelMode: String, CaseIterable, Identifiable {
     /// something 60 km away and then spend sixteen hours getting there.
     var radiusKm: Double {
         switch self {
-        case .driving: 80
+        case .any, .driving: 80
         case .transit: 50
         case .walking: 6
         }
@@ -57,6 +76,11 @@ enum TravelMode: String, CaseIterable, Identifiable {
     /// Minutes for one leg, from straight-line kilometres. See the type comment for where
     /// each of these numbers comes from.
     func estimatedMinutes(overKm straightLine: Double) -> Int {
+        // `.any` defers to whichever mode this leg would actually use, so a mixed day is
+        // costed leg by leg rather than pretending it is all one thing.
+        if self == .any {
+            return legMode(overKm: straightLine).estimatedMinutes(overKm: straightLine)
+        }
         // A leg short enough to walk is walked, whatever the mode — and is therefore
         // charged at walking speed. Missing this priced the 46-metre stroll from the Great
         // Spa Towns to the Roman Baths at 19 minutes, because it paid the full driving
@@ -77,6 +101,8 @@ enum TravelMode: String, CaseIterable, Identifiable {
             return Int((13.5 + straightLine / 53.5 * 60).rounded()) + TripPlanner.parkingMinutes
         case .transit:
             return Int((19.0 + straightLine / 25.75 * 60).rounded())
+        case .any:
+            return 0   // handled above
         }
     }
 
@@ -85,6 +111,7 @@ enum TravelMode: String, CaseIterable, Identifiable {
     func isWalked(overKm straightLine: Double) -> Bool {
         switch self {
         case .walking: true
+        case .any: straightLine * 1.25 < 2.0
         case .driving, .transit: straightLine * 1.25 < 1.5
         }
     }
@@ -95,11 +122,16 @@ struct PlannedStop: Identifiable {
     let site: Site
     /// Travel minutes from the previous stop (or from the trip's start, for the first).
     let travelMinutes: Int
-    /// Whether that leg is a walk. Carried rather than inferred from the minutes: a
-    /// 13-minute leg is a short walk or a 10 km drive depending on which side of the
-    /// threshold it fell, and guessing from duration showed a walking figure next to
-    /// "Salona, 13m", which is a drive out of the city.
-    let isWalk: Bool
+    /// How this leg is actually made — walk, tram or car. For a fixed-mode day it is the
+    /// day's mode, except short hops which always walk; for an "however's easiest" day it
+    /// varies leg by leg, which is the whole point of that mode. Carried rather than
+    /// inferred from the minutes: a 13-minute leg is a short walk or a 10 km drive
+    /// depending which side of the threshold it fell, and guessing from duration once put
+    /// a walking figure beside "Salona, 13m", a drive out of the city.
+    let legMode: TravelMode
+
+    /// Convenience for the several places that only care whether the leg is on foot.
+    var isWalk: Bool { legMode == .walking }
     /// True once `RouteService` has replaced the straight-line guess with a real routed
     /// time. Carried so the caveats can say which of the two the reader is looking at —
     /// "estimated" printed over a measured number is as misleading as the reverse.
@@ -174,6 +206,8 @@ struct TripPlan {
     var travelCaveat: String {
         let tail: String
         switch mode {
+        case .any: tail = " Each leg uses whatever suits its length — walk, transit or "
+                        + "car — so times mix parking, waiting and getting lost."
         case .driving: tail = " Add time for parking and for getting lost."
         case .transit: tail = " They assume services are running as timetabled, which on a "
                             + "Sunday or a holiday they may not be."
@@ -235,7 +269,7 @@ enum TripPlanner {
             let next = remaining.remove(at: nearestIndex)
             result.append(PlannedStop(site: next,
                                       travelMinutes: mode.estimatedMinutes(overKm: nearestKm),
-                                      isWalk: mode.isWalked(overKm: nearestKm)))
+                                      legMode: mode.legMode(overKm: nearestKm)))
             here = next.coordinate
         }
         return result
@@ -359,7 +393,7 @@ enum TripPlanner {
             let anchorTravel = mode.estimatedMinutes(overKm: anchor.approxDistanceKm(from: here))
             used.insert(anchor.id)
             stops.append(PlannedStop(site: anchor, travelMinutes: anchorTravel,
-                                     isWalk: false))   // replaced by `ordered` below
+                                     legMode: mode))   // legMode replaced by `ordered` below
             budget -= Double(anchorTravel + anchor.visitMinutes)
             here = anchor.coordinate
             lastTheme = anchor.themes
@@ -392,7 +426,7 @@ enum TripPlanner {
                 guard let pick = best else { break }
                 used.insert(pick.site.id)
                 stops.append(PlannedStop(site: pick.site, travelMinutes: pick.travel,
-                                         isWalk: false))
+                                         legMode: mode))
                 budget -= Double(pick.travel + pick.site.visitMinutes)
                 here = pick.site.coordinate
                 lastTheme = pick.site.themes

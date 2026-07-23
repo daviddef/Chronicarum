@@ -89,22 +89,33 @@ enum TripRouteRefiner {
                 var refinedStop = stop
                 if budget > 0 {
                     budget -= 1
-                    // A short hop is walked whatever the mode — nobody catches a bus 300 m
-                    // — so ask MapKit the question the leg actually poses.
-                    let type: MKDirectionsTransportType =
-                        stop.isWalk ? .walking : plan.mode.directionsType
-                    let measured = await RouteService.shared.minutes(from: here,
-                                                                     to: stop.site.coordinate,
-                                                                     type: type)
+                    // Ask MapKit the question this specific leg poses. On an "however's
+                    // easiest" day that varies leg to leg; on a fixed-mode day the leg mode
+                    // is the day's mode, except short hops which walk.
+                    var legMode = stop.legMode
+                    var measured = await RouteService.shared.minutes(
+                        from: here, to: stop.site.coordinate, type: legMode.directionsType)
+
+                    // A mixed-mode day guessed transit for a mid-length leg; if there is no
+                    // service there, fall back to the car it was already willing to use,
+                    // rather than reporting the leg as unreachable.
+                    if measured == nil, plan.mode == .any, legMode == .transit {
+                        budget -= 1
+                        if let byCar = await RouteService.shared.minutes(
+                            from: here, to: stop.site.coordinate, type: .automobile) {
+                            legMode = .driving
+                            measured = byCar
+                        }
+                    }
+
                     if let measured {
                         // Parking stays on top of a drive: MapKit times the road, not
                         // finding somewhere to leave the car at the other end. A bus does
                         // not need parking, and neither do your feet.
-                        let parking = (plan.mode == .driving && !stop.isWalk)
-                            ? TripPlanner.parkingMinutes : 0
+                        let parking = legMode == .driving ? TripPlanner.parkingMinutes : 0
                         refinedStop = PlannedStop(site: stop.site,
                                                   travelMinutes: measured + parking,
-                                                  isWalk: stop.isWalk,
+                                                  legMode: legMode,
                                                   isMeasured: true)
                     } else if !stop.isWalk,
                               stop.site.approxDistanceKm(from: here) >= noRoadRouteThresholdKm {

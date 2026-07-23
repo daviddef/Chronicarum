@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import MapKit
 
 /// The itinerary screen: pick how long you have, get a day-by-day plan.
 ///
@@ -129,6 +130,16 @@ struct TripPlanView: View {
                         }
                     }
 
+                    Section {
+                        TripMapView(plan: plan)
+                            .frame(height: 220)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    } header: {
+                        Text("On the map").textCase(nil)
+                            .foregroundColor(.secondary)
+                    }
+
                     if let stepTarget {
                         Section {
                             let km = plan.days.first.map(walkedKm) ?? 0
@@ -239,7 +250,7 @@ struct TripPlanView: View {
     private func unreachableNote(_ sites: [Site], mode: TravelMode) -> String {
         let names = sites.count == 1 ? sites[0].name : "\(sites.count) of these"
         switch mode {
-        case .driving:
+        case .any, .driving:
             return sites.count == 1
                 ? "There's no road route to \(names) — it's likely an island, so you'd need a "
                   + "boat. The time shown doesn't include the crossing."
@@ -262,7 +273,7 @@ struct TripPlanView: View {
     /// would otherwise read as the app having simply found less.
     private var modeFooter: String {
         switch mode {
-        case .driving: return ""
+        case .any, .driving: return ""
         case .transit: return " On public transport, so nothing further than "
                             + "\(Int(TravelMode.transit.radiusKm)) km out."
         case .walking: return " On foot, so only what's within "
@@ -332,8 +343,11 @@ private struct PlannedStopRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             VStack(spacing: 2) {
-                Image(systemName: stop.isWalk ? "figure.walk" : "car.fill")
-                    .font(.system(size: 10))
+                // The mode this leg actually uses — the same icon whatever the day's
+                // setting, so an "however's easiest" day reads as walk / tram / car down
+                // the column and you can see the shape of it at a glance.
+                Image(systemName: stop.legMode.icon)
+                    .font(.system(size: 11))
                 Text("\(stop.travelMinutes)m")
                     .font(.system(size: 10, weight: .medium))
             }
@@ -359,5 +373,69 @@ private struct PlannedStopRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// A small map of the whole trip: every stop as a numbered gold pin, each day's stops
+/// joined in visiting order.
+///
+/// Deliberately a summary, not a route line — the joins are drawn per day, so a multi-day
+/// trip does not draw a stray line from the last stop of Tuesday back across the county to
+/// the first of Wednesday. It frames itself to fit whatever the plan covers, whether that
+/// is four streets or four counties.
+private struct TripMapView: View {
+    let plan: TripPlan
+
+    private var days: [[Site]] {
+        plan.days.map { $0.stops.map(\.site) }.filter { !$0.isEmpty }
+    }
+    private var allSites: [Site] { days.flatMap { $0 } }
+
+    /// A region that holds every stop with a little air around it. A single stop gets a
+    /// sensible default span rather than an infinite zoom.
+    private var region: MKCoordinateRegion {
+        let coords = allSites.map(\.coordinate)
+        guard let first = coords.first else {
+            return MKCoordinateRegion(center: plan.origin,
+                                      span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
+        }
+        var minLat = first.latitude, maxLat = first.latitude
+        var minLon = first.longitude, maxLon = first.longitude
+        for c in coords {
+            minLat = min(minLat, c.latitude);  maxLat = max(maxLat, c.latitude)
+            minLon = min(minLon, c.longitude); maxLon = max(maxLon, c.longitude)
+        }
+        let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2,
+                                            longitude: (minLon + maxLon) / 2)
+        let span = MKCoordinateSpan(
+            latitudeDelta: max((maxLat - minLat) * 1.4, 0.01),
+            longitudeDelta: max((maxLon - minLon) * 1.4, 0.01))
+        return MKCoordinateRegion(center: center, span: span)
+    }
+
+    var body: some View {
+        let gold = Color(hex: "#C9A84C")
+        return Map(initialPosition: .region(region)) {
+            ForEach(Array(days.enumerated()), id: \.offset) { _, dayStops in
+                MapPolyline(coordinates: dayStops.map(\.coordinate))
+                    .stroke(gold.opacity(0.8), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+            }
+            // Numbered continuously across the trip, so the pins read in the order you'd
+            // do them. `enumerated` keeps the index stable rather than mutating a captured
+            // counter, which a ViewBuilder re-evaluates unpredictably.
+            ForEach(Array(allSites.enumerated()), id: \.element.id) { index, site in
+                Annotation("", coordinate: site.coordinate) {
+                    Text("\(index + 1)")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255))
+                        .frame(width: 22, height: 22)
+                        .background(gold, in: Circle())
+                        .overlay(Circle().strokeBorder(.white.opacity(0.85), lineWidth: 1))
+                        .shadow(radius: 1.5)
+                }
+                .annotationTitles(.hidden)
+            }
+        }
+        .mapStyle(.standard(elevation: .flat, emphasis: .muted))
     }
 }
