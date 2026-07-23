@@ -7,6 +7,9 @@ struct ChronicArumApp: App {
     @StateObject private var locationService: LocationService
     @StateObject private var mapVM: MapViewModel
     @StateObject private var siteVM = SiteViewModel()
+    /// The searched place, shared by every tab and every sheet — injected at the root so a
+    /// full-screen cover can never find it missing.
+    @StateObject private var focus = AppFocus()
 
     init() {
         let locationService = LocationService()
@@ -20,6 +23,7 @@ struct ChronicArumApp: App {
                 .environmentObject(mapVM)
                 .environmentObject(siteVM)
                 .environmentObject(locationService)
+                .environmentObject(focus)
 #if DEBUG
                 .task { Self.renderSamplePDFIfRequested() }
 #endif

@@ -1,10 +1,16 @@
 import SwiftUI
+import CoreLocation
 
 /// List-based discovery view with search and era/type filters.
 struct ExploreView: View {
     @EnvironmentObject private var siteVM: SiteViewModel
     @EnvironmentObject private var mapVM: MapViewModel
+    @EnvironmentObject private var focus: AppFocus
     @State private var selectedSite: Site? = nil
+
+    /// Where "near me" is measured from: the place searched on the home screen if there is
+    /// one, otherwise your own location. Explore always lists nearest-first from here.
+    private var nearHere: CLLocationCoordinate2D? { focus.coordinate ?? mapVM.userLocation }
 
     @State private var showPlanner = false
 
@@ -67,7 +73,7 @@ struct ExploreView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
 
-                if siteVM.sortMode == .nearest && mapVM.userLocation == nil {
+                if siteVM.sortMode == .nearest && nearHere == nil {
                     Text("Showing most significant — allow location to sort by distance.")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -75,9 +81,9 @@ struct ExploreView: View {
                 }
 
                 // Site list
-                List(siteVM.filteredSites(near: mapVM.userLocation)) { site in
+                List(siteVM.filteredSites(near: nearHere)) { site in
                     SiteListRow(site: site,
-                                distanceKm: mapVM.userLocation.map { site.approxDistanceKm(from: $0) })
+                                distanceKm: nearHere.map { site.approxDistanceKm(from: $0) })
                         .onTapGesture {
                             selectedSite = site
                         }
@@ -104,10 +110,10 @@ struct ExploreView: View {
                 .sheet(isPresented: $showPlanner) {
                     // Falling back to wherever the map is looking means no location, no
                     // dead end — you get a plan for what you were just looking at.
-                    let origin = mapVM.userLocation ?? mapVM.visibleRegion.center
+                    let origin = nearHere ?? mapVM.visibleRegion.center
                     TripPlanView(origin: origin,
                                  themes: siteVM.selectedThemes,
-                                 placeName: siteVM.nearestPlaceName(to: origin))
+                                 placeName: focus.name ?? siteVM.nearestPlaceName(to: origin))
                 }
             }
             .navigationTitle("Explore")

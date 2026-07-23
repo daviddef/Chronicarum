@@ -388,6 +388,12 @@ final class MapViewModel: ObservableObject {
     /// on the fresh fix cannot drift apart and jump the map twice.
     static let locateSpan = MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
 
+    /// Move the map to a searched place. Uses the same close span as "locate me" so the
+    /// result reads as "we took you there", not "here is the whole county".
+    func centre(on coordinate: CLLocationCoordinate2D) {
+        setRegion(MKCoordinateRegion(center: coordinate, span: Self.locateSpan))
+    }
+
     func requestUserLocation() {
         isLocating = true
         locationError = nil

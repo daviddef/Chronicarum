@@ -5,8 +5,8 @@ import MapKit
 struct MapRootView: View {
     /// Lets the top-bar "?" re-open the first-run walkthrough.
     @Binding var showOnboarding: Bool
-    @Binding var showStart: Bool
     @EnvironmentObject private var mapVM: MapViewModel
+    @EnvironmentObject private var focus: AppFocus
     @EnvironmentObject private var siteVM: SiteViewModel
     @State private var showSiteSheet = false
     @State private var showFilters   = false
@@ -92,7 +92,22 @@ struct MapRootView: View {
                 mapVM.noteCameraChanged(to: context.region)
             }
             .ignoresSafeArea()
-            .task { mapVM.requestInitialLocationIfNeeded() }
+            .task {
+                // If a place was searched before this tab was ever opened, open on it;
+                // otherwise fall back to the usual "centre on me".
+                if let coordinate = focus.coordinate {
+                    mapVM.centre(on: coordinate)
+                } else {
+                    mapVM.requestInitialLocationIfNeeded()
+                }
+            }
+            // A later search on the home screen re-centres the map, so the whole app moves
+            // together. Only when the focus is set — it never fights the user's panning.
+            .onChange(of: focusKey) { _, _ in
+                if let coordinate = focus.coordinate {
+                    mapVM.centre(on: coordinate)
+                }
+            }
             // ── Draw-a-region layer ──────────────────────────────────────
             // Only present while lassoing, so it never steals the map's pan/zoom the
             // rest of the time. It sits on top and captures the drag itself, tracing a
@@ -119,8 +134,7 @@ struct MapRootView: View {
             // than floating over it — overlaying the same corner covered the top
             // bar's filter button and made it untappable.
             VStack(spacing: 0) {
-                MapTopBarView(showFilters: $showFilters, showHelp: $showOnboarding,
-                              showStart: $showStart)
+                MapTopBarView(showFilters: $showFilters, showHelp: $showOnboarding)
 
                 HStack {
                     Spacer()
@@ -145,6 +159,29 @@ struct MapRootView: View {
                 if mapVM.timelineState.isVisible {
                     ConquestTimelineBar()
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+
+            // ── Draw a region — the map's headline action ────────────────────
+            // A big round floating button, bottom-right, because drawing a region is the
+            // one thing the map does that a map app doesn't. It sits above the tab bar.
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button {
+                        withAnimation { mapVM.isLassoActive.toggle() }
+                    } label: {
+                        Image(systemName: mapVM.isLassoActive ? "xmark" : "lasso")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(mapVM.isLassoActive ? .white : Color(red: 0x17/255, green: 0x15/255, blue: 0x12/255))
+                            .frame(width: 60, height: 60)
+                            .background(mapVM.isLassoActive ? Color.red : Color(hex: "#C9A84C"), in: Circle())
+                            .shadow(radius: 6, y: 3)
+                    }
+                    .accessibilityLabel(mapVM.isLassoActive ? "Cancel drawing" : "Draw a region")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 24)
                 }
             }
         }
@@ -193,6 +230,12 @@ struct MapRootView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: mapVM.timelineState.isVisible)
         .animation(.easeInOut(duration: 0.2), value: mapVM.isLassoActive)
+    }
+
+    /// A stable string that changes only when the searched place changes, so the map
+    /// re-centres exactly once per search rather than on every incidental update.
+    private var focusKey: String {
+        focus.coordinate.map { "\($0.latitude),\($0.longitude)" } ?? ""
     }
 
     /// The one coordinate space the lasso gesture and every proxy conversion share.
@@ -280,7 +323,8 @@ private struct LassoDrawingLayer: View {
 }
 
 #Preview {
-    MapRootView(showOnboarding: .constant(false), showStart: .constant(false))
+    MapRootView(showOnboarding: .constant(false))
+        .environmentObject(AppFocus())
         .environmentObject(MapViewModel(locationService: LocationService()))
         .environmentObject(SiteViewModel())
 }
