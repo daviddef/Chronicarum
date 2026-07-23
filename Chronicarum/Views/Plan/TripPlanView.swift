@@ -37,12 +37,11 @@ struct TripPlanView: View {
     @State private var days = 3
     @State private var startDate = Date()
     @State private var mode: TravelMode = .driving
-    /// What time the day begins, so the itinerary can be laid against the clock. Time only;
-    /// the date comes from `startDate` per day.
-    @State private var startTime = Calendar.current.date(
-        bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date()
-    /// Length of the midday break, in minutes. Zero means no lunch stop.
-    @State private var lunchMinutes = 60
+    /// Days start at 9 and take an hour for lunch — sensible defaults, not questions. The
+    /// itinerary is laid against the clock from here without asking.
+    private let startHour = 9
+    private let startMinute = 0
+    private let lunchMinutes = 60
     /// Applies the caller's choices once, without freezing them — the pickers still work.
     @State private var hasAdoptedDefaults = false
     @State private var plan: TripPlan?
@@ -109,15 +108,6 @@ struct TripPlanView: View {
 
                     Stepper("\(days) \(days == 1 ? "day" : "days")", value: $days, in: 1...14)
                     DatePicker("Starting", selection: $startDate, displayedComponents: .date)
-                    DatePicker("Start the day at", selection: $startTime,
-                               displayedComponents: .hourAndMinute)
-                    Picker("Lunch", selection: $lunchMinutes) {
-                        Text("None").tag(0)
-                        Text("30 min").tag(30)
-                        Text("45 min").tag(45)
-                        Text("1 hour").tag(60)
-                        Text("1½ hours").tag(90)
-                    }
                     Picker("Getting around", selection: $mode) {
                         ForEach(TravelMode.allCases) { option in
                             Label(option.label, systemImage: option.icon).tag(option)
@@ -154,11 +144,8 @@ struct TripPlanView: View {
                         // which number every stop in the trip in order.
                         let startNumber = plan.days[..<dayIndex].reduce(0) { $0 + $1.stops.count } + 1
                         Section {
-                            let cal = Calendar.current
-                            let h = cal.component(.hour, from: startTime)
-                            let m = cal.component(.minute, from: startTime)
                             ForEach(day.schedule(startingNumber: startNumber,
-                                                 startHour: h, startMinute: m,
+                                                 startHour: startHour, startMinute: startMinute,
                                                  lunchMinutes: lunchMinutes)) { item in
                                 switch item {
                                 case .stop(let number, let stop, let arrive):
