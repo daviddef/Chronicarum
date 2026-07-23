@@ -45,6 +45,7 @@
 		C040FE14959616DEDB8725DC /* DayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC10978FDE3DA8EA7CEB35EB /* DayIntent.swift */; };
 		C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1288A7864863444DEA3835A /* ChronicArumApp.swift */; };
 		C490799957D2E7AFE7AAE36D /* MapRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111ECDBF6E6398A93E34711C /* MapRootView.swift */; };
+		CB1EFB5FFD4558B16AE7A835 /* RecentTripsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7808203A9311BAB93E851BE1 /* RecentTripsStore.swift */; };
 		CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1389CCD88C933F622515A48F /* SiteDetailView.swift */; };
 		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
 		D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */; };
@@ -78,6 +79,7 @@
 		5AB186FC00439FF284794EAF /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
 		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
 		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
+		7808203A9311BAB93E851BE1 /* RecentTripsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentTripsStore.swift; sourceTree = "<group>"; };
 		7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMarkerView.swift; sourceTree = "<group>"; };
 		7F0B86D90615B736FE506EBF /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
 		8A9F74C0BE405A0D5C654CDE /* BulkData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkData.swift; sourceTree = "<group>"; };
@@ -220,6 +222,7 @@
 			children = (
 				4508BC39D0EDB1D9E79F9F46 /* AppFocus.swift */,
 				E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */,
+				7808203A9311BAB93E851BE1 /* RecentTripsStore.swift */,
 				D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */,
 			);
 			path = ViewModels;
@@ -395,6 +398,7 @@
 				44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */,
 				DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */,
 				BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */,
+				CB1EFB5FFD4558B16AE7A835 /* RecentTripsStore.swift in Sources */,
 				AB591CAC14A00706BEF5DFD8 /* RouteService.swift in Sources */,
 				863E6279E1558654BF5B95CE /* SavedView.swift in Sources */,
 				835DEAA8877E78EC9B5751EE /* Site.swift in Sources */,

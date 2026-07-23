@@ -131,6 +131,10 @@ struct SiteDetailView: View {
                 }
             }
         }
+        // Without this the sheet treats an upward swipe as "make the sheet taller" and
+        // never hands it to the scroll view, so the About text and Nearby row below the
+        // fold could not be reached. `.scrolls` makes the content scroll first.
+        .presentationContentInteraction(.scrolls)
     }
 }
 

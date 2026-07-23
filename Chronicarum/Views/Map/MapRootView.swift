@@ -41,7 +41,11 @@ struct MapRootView: View {
             // Content order is z-order: empire fills sit beneath their labels,
             // which sit beneath the site markers.
             MapReader { proxy in
-            Map(position: $mapVM.cameraPosition) {
+            // While drawing, the map's own pan and zoom are switched off — otherwise MapKit
+            // eats the drag and the lasso layer on top never sees it, which is exactly why
+            // "it turns red but I can't draw" happened.
+            Map(position: $mapVM.cameraPosition,
+                interactionModes: mapVM.isLassoActive ? [] : .all) {
 
                 if mapVM.timelineState.isVisible, let period = mapVM.timelineState.currentPeriod {
 
