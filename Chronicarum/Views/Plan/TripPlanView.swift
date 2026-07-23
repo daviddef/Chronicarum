@@ -37,6 +37,12 @@ struct TripPlanView: View {
     @State private var days = 3
     @State private var startDate = Date()
     @State private var mode: TravelMode = .driving
+    /// What time the day begins, so the itinerary can be laid against the clock. Time only;
+    /// the date comes from `startDate` per day.
+    @State private var startTime = Calendar.current.date(
+        bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date()
+    /// Length of the midday break, in minutes. Zero means no lunch stop.
+    @State private var lunchMinutes = 60
     /// Applies the caller's choices once, without freezing them — the pickers still work.
     @State private var hasAdoptedDefaults = false
     @State private var plan: TripPlan?
@@ -103,6 +109,15 @@ struct TripPlanView: View {
 
                     Stepper("\(days) \(days == 1 ? "day" : "days")", value: $days, in: 1...14)
                     DatePicker("Starting", selection: $startDate, displayedComponents: .date)
+                    DatePicker("Start the day at", selection: $startTime,
+                               displayedComponents: .hourAndMinute)
+                    Picker("Lunch", selection: $lunchMinutes) {
+                        Text("None").tag(0)
+                        Text("30 min").tag(30)
+                        Text("45 min").tag(45)
+                        Text("1 hour").tag(60)
+                        Text("1½ hours").tag(90)
+                    }
                     Picker("Getting around", selection: $mode) {
                         ForEach(TravelMode.allCases) { option in
                             Label(option.label, systemImage: option.icon).tag(option)
@@ -134,13 +149,42 @@ struct TripPlanView: View {
                 }
 
                 if let plan, !plan.isEmpty {
-                    ForEach(plan.days) { day in
+                    ForEach(Array(plan.days.enumerated()), id: \.element.id) { dayIndex, day in
+                        // Numbering continues across days so it matches the map's pins,
+                        // which number every stop in the trip in order.
+                        let startNumber = plan.days[..<dayIndex].reduce(0) { $0 + $1.stops.count } + 1
                         Section {
-                            ForEach(day.stops) { stop in
-                                Button { activeSheet = .site(stop.site) } label: {
-                                    PlannedStopRow(stop: stop)
+                            let cal = Calendar.current
+                            let h = cal.component(.hour, from: startTime)
+                            let m = cal.component(.minute, from: startTime)
+                            ForEach(day.schedule(startingNumber: startNumber,
+                                                 startHour: h, startMinute: m,
+                                                 lunchMinutes: lunchMinutes)) { item in
+                                switch item {
+                                case .stop(let number, let stop, let arrive):
+                                    Button { activeSheet = .site(stop.site) } label: {
+                                        PlannedStopRow(number: number, arrive: arrive, stop: stop)
+                                    }
+                                    .buttonStyle(.plain)
+                                case .lunch(let at, let minutes):
+                                    LunchRow(at: at, minutes: minutes)
                                 }
-                                .buttonStyle(.plain)
+                            }
+
+                            // A there-and-back walk closes the loop home.
+                            if let returnMinutes = day.returnMinutes {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "figure.walk")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                        .frame(width: 34)
+                                    Text("Back to where you started")
+                                        .font(.subheadline.weight(.medium))
+                                    Spacer(minLength: 0)
+                                    Text("\(returnMinutes)m")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                             // Ahead of the closure note: somewhere you cannot get to at all
                             // is a bigger problem with the day than somewhere that might be
@@ -283,7 +327,7 @@ struct TripPlanView: View {
                 days = initialDays
                 mode = initialMode
             }
-            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)|\(effectiveOrigin.latitude),\(effectiveOrigin.longitude)") {
+            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)|\(lunchMinutes)|\(effectiveOrigin.latitude),\(effectiveOrigin.longitude)") {
                 await rebuild()
             }
             .sheet(item: $activeSheet) { sheet in
@@ -303,10 +347,13 @@ struct TripPlanView: View {
         }
     }
 
-    /// Straight-line kilometres walked across a day's legs — only the walked ones count.
+    /// Straight-line kilometres walked across a day's legs — only the walked ones count,
+    /// plus the walk home if the day loops back, since that is real distance on your feet.
     private func walkedKm(_ day: PlannedDay) -> Double {
         // The estimator is invertible: walking minutes are straight-line × 1.25 ÷ 4.5.
-        Double(day.stops.filter(\.isWalk).reduce(0) { $0 + $1.travelMinutes }) / 60 * 4.5 / 1.25
+        let legMinutes = day.stops.filter(\.isWalk).reduce(0) { $0 + $1.travelMinutes }
+            + (day.returnMinutes ?? 0)
+        return Double(legMinutes) / 60 * 4.5 / 1.25
     }
 
     /// Says what could not be reached, in the terms of the mode that failed to reach it.
@@ -372,6 +419,10 @@ struct TripPlanView: View {
         let requestedMode = mode
         let requestedTier = tier
         let requestedTypes = types
+        let requestedLunch = lunchMinutes
+        // A step goal is a there-and-back day: the whole point is the walking, so the plan
+        // returns you to where you began and the tally counts the round trip.
+        let requestedLoop = stepTarget != nil
         // A drawn region is its own boundary; otherwise the mode decides how far is
         // reachable, which is the difference between a walkable day and a fantasy.
         let requestedRadius: Double? = confinedTo == nil ? nil : radiusKm
@@ -380,6 +431,8 @@ struct TripPlanView: View {
                 continuation.resume(returning:
                     TripPlanner.plan(from: requestedOrigin, themes: themes,
                                      days: requestedDays, startDate: requestedStart,
+                                     lunchMinutes: requestedLunch,
+                                     loopBack: requestedLoop,
                                      mode: requestedMode,
                                      tier: requestedTier,
                                      types: requestedTypes,
@@ -402,26 +455,46 @@ struct TripPlanView: View {
 }
 
 private struct PlannedStopRow: View {
+    let number: Int
+    let arrive: Date
     let stop: PlannedStop
 
+    private let gold = Color(hex: "#C9A84C")
+    private let ink = Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255)
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            VStack(spacing: 2) {
-                // The mode this leg actually uses — the same icon whatever the day's
-                // setting, so an "however's easiest" day reads as walk / tram / car down
-                // the column and you can see the shape of it at a glance.
-                Image(systemName: stop.legMode.icon)
-                    .font(.system(size: 11))
-                Text("\(stop.travelMinutes)m")
-                    .font(.system(size: 10, weight: .medium))
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 4) {
+                // The numbered gold disc, matching the pin on the map so the list and the
+                // map read as one thing.
+                Text("\(number)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(ink)
+                    .frame(width: 24, height: 24)
+                    .background(gold, in: Circle())
+                // The mode this leg is made by — walk / tram / car — and how long it takes,
+                // so an "however's easiest" day reads down the column at a glance.
+                HStack(spacing: 2) {
+                    Image(systemName: stop.legMode.icon)
+                        .font(.system(size: 9))
+                    Text("\(stop.travelMinutes)m")
+                        .font(.system(size: 9, weight: .medium))
+                }
+                .foregroundColor(.secondary)
             }
-            .foregroundColor(.secondary)
-            .frame(width: 34)
+            .frame(width: 40)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(stop.site.name)
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(2)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(stop.site.name)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(2)
+                    Spacer(minLength: 6)
+                    Text(arrive, format: .dateTime.hour().minute())
+                        .font(.caption)
+                        .foregroundColor(gold)
+                        .monospacedDigit()
+                }
                 HStack(spacing: 6) {
                     if let duration = stop.site.visitDurationLabel {
                         Text(duration)
@@ -434,7 +507,36 @@ private struct PlannedStopRow: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
             }
-            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+/// A midday break in the schedule, timed like a stop but with no place to go.
+private struct LunchRow: View {
+    let at: Date
+    let minutes: Int
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "fork.knife")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .frame(width: 40, height: 24)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Lunch")
+                        .font(.subheadline.weight(.medium))
+                    Text("about \(minutes) min")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer(minLength: 6)
+                Text(at, format: .dateTime.hour().minute())
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .monospacedDigit()
+            }
         }
         .padding(.vertical, 2)
     }
@@ -467,6 +569,15 @@ private struct TripMapView: View {
     }
     private var allSites: [Site] { days.flatMap { $0 } }
 
+    /// The line to draw for a day, closed back to the origin when the day loops home so the
+    /// there-and-back walk reads as a loop rather than a line stopping in the middle.
+    private func route(for day: PlannedDay) -> [CLLocationCoordinate2D] {
+        var coords = day.stops.map(\.site.coordinate)
+        guard !coords.isEmpty else { return coords }
+        if day.returnMinutes != nil { coords.append(plan.origin) }
+        return coords
+    }
+
     /// A region that holds every stop with air around it, so the numbered pins never crowd
     /// the edges. A single stop gets a sensible default span rather than an infinite zoom.
     static func region(for plan: TripPlan) -> MKCoordinateRegion {
@@ -494,8 +605,8 @@ private struct TripMapView: View {
     var body: some View {
         let gold = Color(hex: "#C9A84C")
         return Map(position: $position) {
-            ForEach(Array(days.enumerated()), id: \.offset) { _, dayStops in
-                MapPolyline(coordinates: dayStops.map(\.coordinate))
+            ForEach(plan.days) { day in
+                MapPolyline(coordinates: route(for: day))
                     .stroke(gold.opacity(0.8), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
             }
             // Numbered continuously across the trip, so the pins read in the order you'd

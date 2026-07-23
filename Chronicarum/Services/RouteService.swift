@@ -130,7 +130,18 @@ enum TripRouteRefiner {
                 here = stop.site.coordinate
             }
 
-            days.append(PlannedDay(index: day.index, stops: stops, date: day.date))
+            // Measure the walk home too, if the day loops back, so the round trip carries a
+            // real routed number like every other leg.
+            var returnMinutes = day.returnMinutes
+            if day.returnMinutes != nil, budget > 0,
+               let measured = await RouteService.shared.minutes(
+                    from: here, to: plan.origin, type: .walking) {
+                budget -= 1
+                returnMinutes = measured
+            }
+
+            days.append(PlannedDay(index: day.index, stops: stops,
+                                   date: day.date, returnMinutes: returnMinutes))
         }
 
         // Any day past the budget is carried through untouched rather than dropped.

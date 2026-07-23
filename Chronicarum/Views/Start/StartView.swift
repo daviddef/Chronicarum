@@ -124,28 +124,33 @@ private struct IntentCard: View {
     private var colour: Color { Color(hex: intent.colour) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        // Centred: icon over title over blurb, the whole group middle-aligned. The old
+        // top-left layout pushed the icon into one corner and the text into the other with
+        // a dead gap between, which read as unbalanced and made the cards taller than they
+        // needed to be.
+        VStack(spacing: 8) {
             Image(systemName: intent.icon)
-                .font(.system(size: 26, weight: .medium))
+                .font(.system(size: 30, weight: .medium))
                 .foregroundStyle(.white)
-
-            Spacer(minLength: 0)
+                .frame(height: 40)
 
             Text(intent.title)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(intent.blurb)
                 .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.8))
-                .multilineTextAlignment(.leading)
+                .foregroundStyle(.white.opacity(0.85))
+                .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 168, alignment: .topLeading)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 18)
+        .frame(minHeight: 150)
         .background(
             LinearGradient(colors: [colour, colour.opacity(0.72)],
                            startPoint: .topLeading, endPoint: .bottomTrailing),

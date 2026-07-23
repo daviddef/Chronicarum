@@ -151,6 +151,10 @@ struct PlannedDay: Identifiable {
     let stops: [PlannedStop]
     /// The actual date this day falls on, so closures can be reasoned about at all.
     let date: Date
+    /// Minutes to walk back to where the day began, for a there-and-back day. `nil` for an
+    /// ordinary point-to-point day, which does not loop. A step-goal walk should return you
+    /// home, one way or another, so the tally counts the whole round trip.
+    var returnMinutes: Int? = nil
 
     var id: Int { index }
 
@@ -170,12 +174,52 @@ struct PlannedDay: Identifiable {
     var unreachableStops: [Site] { stops.filter(\.noRoadRoute).map(\.site) }
 
     var visitMinutes: Int { stops.reduce(0) { $0 + $1.site.visitMinutes } }
-    var travelMinutes: Int { stops.reduce(0) { $0 + $1.travelMinutes } }
+    var travelMinutes: Int { stops.reduce(0) { $0 + $1.travelMinutes } + (returnMinutes ?? 0) }
     var totalMinutes: Int { visitMinutes + travelMinutes }
 
     var summary: String {
         let hours = Double(totalMinutes) / 60
         return "\(stops.count) stops · \(String(format: "%.1f", hours))h"
+    }
+
+    /// The day laid out against the clock, with a lunch break dropped in around midday and
+    /// each stop given the time you'd arrive. Numbers continue from `startingNumber` so the
+    /// list matches the numbered pins on the map.
+    enum ScheduleItem: Identifiable {
+        case stop(number: Int, PlannedStop, arrive: Date)
+        case lunch(at: Date, minutes: Int)
+        var id: String {
+            switch self {
+            case .stop(let n, let s, _): "stop-\(n)-\(s.id)"
+            case .lunch(let at, _):      "lunch-\(at.timeIntervalSinceReferenceDate)"
+            }
+        }
+    }
+
+    func schedule(startingNumber: Int, startHour: Int, startMinute: Int,
+                  lunchMinutes: Int, calendar: Calendar = .current) -> [ScheduleItem] {
+        var comps = calendar.dateComponents([.year, .month, .day], from: date)
+        comps.hour = startHour
+        comps.minute = startMinute
+        var clock = calendar.date(from: comps) ?? date
+        // Lunch lands before the first stop you'd reach after 12:30 — a reasonable middle
+        // of the day, and never mid-visit.
+        let lunchStart = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: clock) ?? clock
+        var lunchPending = lunchMinutes > 0
+        var number = startingNumber
+        var items: [ScheduleItem] = []
+        for stop in stops {
+            clock = clock.addingTimeInterval(Double(stop.travelMinutes) * 60)   // arrive
+            if lunchPending, clock >= lunchStart {
+                items.append(.lunch(at: clock, minutes: lunchMinutes))
+                clock = clock.addingTimeInterval(Double(lunchMinutes) * 60)
+                lunchPending = false
+            }
+            items.append(.stop(number: number, stop, arrive: clock))
+            number += 1
+            clock = clock.addingTimeInterval(Double(stop.site.visitMinutes) * 60)   // leave
+        }
+        return items
     }
 }
 
@@ -280,6 +324,8 @@ enum TripPlanner {
                      days: Int,
                      startDate: Date = Date(),
                      hoursPerDay: Double = 8,
+                     lunchMinutes: Int = 0,
+                     loopBack: Bool = false,
                      mode: TravelMode = .driving,
                      tier: SignificanceTier = .worthALook,
                      types: Set<SiteType> = [],
@@ -367,7 +413,10 @@ enum TripPlanner {
                     ? 0.35 : 1.0
             }
 
-            var budget = hoursPerDay * 60
+            // Lunch is time not spent sightseeing, so it shrinks the day rather than
+            // being squeezed in on top — otherwise a lunch break would silently push the
+            // last stop past the hours you actually have.
+            var budget = hoursPerDay * 60 - Double(lunchMinutes)
             var here = origin
             var stops: [PlannedStop] = []
             var lastTheme: Theme = []
@@ -432,9 +481,18 @@ enum TripPlanner {
                 lastTheme = pick.site.themes
             }
 
-            built.append(PlannedDay(index: dayIndex,
-                                    stops: ordered(stops.map(\.site), from: origin, mode: mode),
-                                    date: dayDate))
+            let dayStops = ordered(stops.map(\.site), from: origin, mode: mode)
+            // A there-and-back day returns you to where you began. Only worth doing when
+            // it is a walk — nobody wants a "drive 40 min back to the start" line — so it
+            // rides on the walking modes, which is exactly when it is asked for (a step
+            // goal). The return is the walk from the last stop home.
+            var returnMinutes: Int? = nil
+            if loopBack, let last = dayStops.last {
+                let backKm = last.site.approxDistanceKm(from: origin)
+                returnMinutes = TravelMode.walking.estimatedMinutes(overKm: backKm)
+            }
+            built.append(PlannedDay(index: dayIndex, stops: dayStops,
+                                    date: dayDate, returnMinutes: returnMinutes))
         }
 
         return TripPlan(days: built, origin: origin, themes: themes,

@@ -85,7 +85,7 @@ struct DayIntent: Identifiable, Hashable {
             title: "The greatest hits",
             blurb: "Only the things you'd genuinely travel for.",
             icon: "crown",
-            themes: [], types: [], tier: .unmissable, mode: .driving,
+            themes: [], types: [], tier: .unmissable, mode: .any,
             stepTarget: nil, caveat: nil,
             colour: "#C9A84C"),
 
@@ -104,7 +104,7 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "Romans, prehistory, ruins and castles.",
             icon: "building.columns",
             themes: [.roman, .prehistoric, .archaeology, .castles],
-            types: [], tier: .worthALook, mode: .driving,
+            types: [], tier: .worthALook, mode: .any,
             stepTarget: nil, caveat: nil,
             colour: "#C2603C"),
 
@@ -114,7 +114,7 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "Museums, churches and great houses — mostly under a roof.",
             icon: "cloud.rain",
             themes: [.museums, .grandHouses, .sacred],
-            types: [.museum, .sacred, .heritage], tier: .worthALook, mode: .driving,
+            types: [.museum, .sacred, .heritage], tier: .worthALook, mode: .any,
             stepTarget: nil,
             caveat: "The catalogue doesn't record whether a place is indoors. This picks "
                   + "the kinds of place that usually are — check before you set out in a "
@@ -132,7 +132,7 @@ struct DayIntent: Identifiable, Hashable {
             // theme-only reach catches all 2,173 of them while a type filter would have
             // hidden the very gap this card exists to close.
             themes: [.gardens, .prehistoric, .archaeology, .maritime, .rural, .monuments],
-            types: [], tier: .worthALook, mode: .driving,
+            types: [], tier: .worthALook, mode: .any,
             stepTarget: nil,
             caveat: "Whether a place is really open-air isn't recorded. This picks the "
                   + "kinds that usually are — ruins, coast, gardens, ancient sites — so a "
@@ -145,7 +145,7 @@ struct DayIntent: Identifiable, Hashable {
             blurb: "Castles to climb, ruins to run around, things to look at.",
             icon: "figure.and.child.holdinghands",
             themes: [.castles, .museums, .gardens, .archaeology],
-            types: [.castle, .museum, .ruin], tier: .worthALook, mode: .driving,
+            types: [.castle, .museum, .ruin], tier: .worthALook, mode: .any,
             stepTarget: nil,
             caveat: "Nothing in the catalogue says what's good with children. This is a "
                   + "guess from the kind of place it is — a castle usually beats a "
