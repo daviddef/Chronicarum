@@ -51,6 +51,7 @@
 		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
 		EA27BC80FE5C41CB8072BB85 /* ChapterMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF03E268E066215CE65549FC /* ChapterMarkup.swift */; };
 		EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85E35BAD09F94104E31D296 /* LocationService.swift */; };
+		ED5C4AEE38CC8B7A11E143A4 /* LocationPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8316673CE81C0A2536F97F9 /* LocationPickerView.swift */; };
 		F1979E311F8FA13DCBC3380E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1C8EB07A51868342759E1E2F /* Assets.xcassets */; };
 		F5FA8FE3182FBD5C2736114B /* SiteMarkerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40311BA2A4BC4CE20233BF /* SiteMarkerView.swift */; };
 		FBC42BF01D1777259666D48A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F444ACB8634D2BBEB711DA4B /* OnboardingView.swift */; };
@@ -95,6 +96,7 @@
 		D2473F1356FE7896DA2CD3C6 /* SiteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteViewModel.swift; sourceTree = "<group>"; };
 		D557A57F5F649719C5D1DBAC /* SiteCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCollection.swift; sourceTree = "<group>"; };
 		D73170330E1865B973F1BE67 /* Empire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Empire.swift; sourceTree = "<group>"; };
+		D8316673CE81C0A2536F97F9 /* LocationPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPickerView.swift; sourceTree = "<group>"; };
 		DB2656A9226831B85426DAF9 /* SiteData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteData.swift; sourceTree = "<group>"; };
 		DCCD9CCBA4BAB3DAB19C3A1D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E1A247BA366A9C5B10865075 /* websites.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = websites.json; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 		28A495B32397EAEC08951C1D /* Plan */ = {
 			isa = PBXGroup;
 			children = (
+				D8316673CE81C0A2536F97F9 /* LocationPickerView.swift */,
 				5AB186FC00439FF284794EAF /* TripPlanView.swift */,
 			);
 			path = Plan;
@@ -374,6 +377,7 @@
 				DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */,
 				B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */,
 				D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */,
+				ED5C4AEE38CC8B7A11E143A4 /* LocationPickerView.swift in Sources */,
 				EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */,
 				1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */,
 				544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */,

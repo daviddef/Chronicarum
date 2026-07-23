@@ -41,13 +41,66 @@ struct TripPlanView: View {
     @State private var hasAdoptedDefaults = false
     @State private var plan: TripPlan?
     @State private var isBuilding = false
-    @State private var selectedSite: Site?
     @State private var pdfURL: URL?
+    /// One sheet at a time. Two separate `.sheet` modifiers on the same view present
+    /// unreliably — the location picker silently refused to open beside the site sheet —
+    /// so both go through a single enum-driven presentation.
+    @State private var activeSheet: PlanSheet?
+
+    private enum PlanSheet: Identifiable {
+        case site(Site)
+        case location
+        var id: String {
+            switch self {
+            case .site(let site): "site-\(site.id)"
+            case .location:       "location"
+            }
+        }
+    }
+    /// Somewhere other than here to plan around — you can be in Brisbane planning Adelaide.
+    /// `nil` means plan from where you are.
+    @State private var overrideOrigin: CLLocationCoordinate2D?
+    @State private var overridePlaceName: String?
+
+    /// Where the plan is actually built from, and what to call it.
+    private var effectiveOrigin: CLLocationCoordinate2D { overrideOrigin ?? origin }
+    private var effectivePlaceName: String? { overridePlaceName ?? placeName }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
+                    // Where to plan around. A drawn region is already its own place, so
+                    // this only appears for the ordinary "near a point" plan.
+                    if confinedTo == nil {
+                        Button {
+                            activeSheet = .location
+                        } label: {
+                            HStack {
+                                Label("Around", systemImage: "mappin.and.ellipse")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Text(effectivePlaceName ?? "Where you are")
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                if overrideOrigin != nil {
+                                    Button {
+                                        overrideOrigin = nil
+                                        overridePlaceName = nil
+                                    } label: {
+                                        Image(systemName: "location.fill")
+                                            .font(.caption)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .foregroundColor(Color(hex: "#C9A84C"))
+                                }
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
                     Stepper("\(days) \(days == 1 ? "day" : "days")", value: $days, in: 1...14)
                     DatePicker("Starting", selection: $startDate, displayedComponents: .date)
                     Picker("Getting around", selection: $mode) {
@@ -84,7 +137,7 @@ struct TripPlanView: View {
                     ForEach(plan.days) { day in
                         Section {
                             ForEach(day.stops) { stop in
-                                Button { selectedSite = stop.site } label: {
+                                Button { activeSheet = .site(stop.site) } label: {
                                     PlannedStopRow(stop: stop)
                                 }
                                 .buttonStyle(.plain)
@@ -230,10 +283,20 @@ struct TripPlanView: View {
                 days = initialDays
                 mode = initialMode
             }
-            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)") {
+            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)|\(effectiveOrigin.latitude),\(effectiveOrigin.longitude)") {
                 await rebuild()
             }
-            .sheet(item: $selectedSite) { SiteDetailView(site: $0) }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .site(let site):
+                    SiteDetailView(site: site)
+                case .location:
+                    LocationPickerView { coordinate, name in
+                        overrideOrigin = coordinate
+                        overridePlaceName = name
+                    }
+                }
+            }
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
             }
@@ -286,7 +349,7 @@ struct TripPlanView: View {
     /// offer — it captures its item when the sheet is built, not when it is opened.
     private func regeneratePDF(_ plan: TripPlan) {
         DispatchQueue.global(qos: .utility).async {
-            let url = ItineraryPDF.writeTemporaryFile(plan, placeName: placeName)
+            let url = ItineraryPDF.writeTemporaryFile(plan, placeName: effectivePlaceName)
             DispatchQueue.main.async { pdfURL = url }
         }
     }
@@ -304,6 +367,7 @@ struct TripPlanView: View {
         // responsive while a longer trip is built.
         let requestedDays = days
         let requestedStart = startDate
+        let requestedOrigin = effectiveOrigin
         let catalogue = confinedTo ?? SiteData.all
         let requestedMode = mode
         let requestedTier = tier
@@ -314,7 +378,7 @@ struct TripPlanView: View {
         let built: TripPlan = await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 continuation.resume(returning:
-                    TripPlanner.plan(from: origin, themes: themes,
+                    TripPlanner.plan(from: requestedOrigin, themes: themes,
                                      days: requestedDays, startDate: requestedStart,
                                      mode: requestedMode,
                                      tier: requestedTier,
@@ -386,15 +450,27 @@ private struct PlannedStopRow: View {
 private struct TripMapView: View {
     let plan: TripPlan
 
+    /// Actively drives the camera rather than seeding it once. `Map(initialPosition:)`
+    /// applies only at first appearance, and inside a lazily-built List row MapKit ignored
+    /// it and fell back to the device's own location — so the stops sat off the bottom edge
+    /// and the map looked centred on nothing. A bound position that we set to the fitted
+    /// region forces the frame to hold.
+    @State private var position: MapCameraPosition
+
+    init(plan: TripPlan) {
+        self.plan = plan
+        _position = State(initialValue: .region(Self.region(for: plan)))
+    }
+
     private var days: [[Site]] {
         plan.days.map { $0.stops.map(\.site) }.filter { !$0.isEmpty }
     }
     private var allSites: [Site] { days.flatMap { $0 } }
 
-    /// A region that holds every stop with a little air around it. A single stop gets a
-    /// sensible default span rather than an infinite zoom.
-    private var region: MKCoordinateRegion {
-        let coords = allSites.map(\.coordinate)
+    /// A region that holds every stop with air around it, so the numbered pins never crowd
+    /// the edges. A single stop gets a sensible default span rather than an infinite zoom.
+    static func region(for plan: TripPlan) -> MKCoordinateRegion {
+        let coords = plan.days.flatMap { $0.stops }.map(\.site.coordinate)
         guard let first = coords.first else {
             return MKCoordinateRegion(center: plan.origin,
                                       span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
@@ -407,15 +483,17 @@ private struct TripMapView: View {
         }
         let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2,
                                             longitude: (minLon + maxLon) / 2)
+        // 1.6× the extent leaves margin for the 22 pt pins; the floor keeps a tight
+        // cluster of city-centre stops from zooming to street level.
         let span = MKCoordinateSpan(
-            latitudeDelta: max((maxLat - minLat) * 1.4, 0.01),
-            longitudeDelta: max((maxLon - minLon) * 1.4, 0.01))
+            latitudeDelta: max((maxLat - minLat) * 1.6, 0.02),
+            longitudeDelta: max((maxLon - minLon) * 1.6, 0.02))
         return MKCoordinateRegion(center: center, span: span)
     }
 
     var body: some View {
         let gold = Color(hex: "#C9A84C")
-        return Map(initialPosition: .region(region)) {
+        return Map(position: $position) {
             ForEach(Array(days.enumerated()), id: \.offset) { _, dayStops in
                 MapPolyline(coordinates: dayStops.map(\.coordinate))
                     .stroke(gold.opacity(0.8), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
@@ -437,5 +515,10 @@ private struct TripMapView: View {
             }
         }
         .mapStyle(.standard(elevation: .flat, emphasis: .muted))
+        // The plan rebuilds twice — estimate then routed — and can change stops when the
+        // days or interests change. Re-fit whenever the set of places moves.
+        .onChange(of: allSites.map(\.id)) { _, _ in
+            position = .region(Self.region(for: plan))
+        }
     }
 }
