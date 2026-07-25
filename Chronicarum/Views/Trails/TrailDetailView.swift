@@ -8,6 +8,7 @@ struct TrailDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var position: MapCameraPosition = .automatic
+    @State private var showPlan = false
 
     private let gold = Color(hex: "#C9A84C")
     private var colour: Color { Color(hex: trail.activity.colour) }
@@ -31,6 +32,22 @@ struct TrailDetailView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
+                        // Composing a day around the route is a walking idea — a cycle day
+                        // is a different shape of thing, so this offers it for walks only.
+                        if trail.activity == .walk {
+                            Button {
+                                showPlan = true
+                            } label: {
+                                Label("Plan a day's walk along this", systemImage: "figure.walk")
+                                    .font(.subheadline.weight(.semibold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(gold, in: RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(Color(red: 0.09, green: 0.08, blue: 0.07))
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         if let start {
                             Button {
                                 openInMaps(to: start)
@@ -39,8 +56,8 @@ struct TrailDetailView: View {
                                     .font(.subheadline.weight(.semibold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
-                                    .background(gold, in: RoundedRectangle(cornerRadius: 12))
-                                    .foregroundStyle(Color(red: 0.09, green: 0.08, blue: 0.07))
+                                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(.primary)
                             }
                             .buttonStyle(.plain)
                         }
@@ -56,6 +73,9 @@ struct TrailDetailView: View {
                 }
             }
             .onAppear { frameRoute() }
+            .fullScreenCover(isPresented: $showPlan) {
+                TrailPlanView(trail: trail)
+            }
         }
     }
 

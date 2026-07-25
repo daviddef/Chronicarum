@@ -1235,13 +1235,13 @@ Timetables. The estimate assumes services run as scheduled, and the caveat says 
 a Sunday bus and a Tuesday bus are not the same bus and nothing in the app knows which one
 you are standing at.
 
-## The outdoors — trails, walks, bike rides (browser shipped; planner-composition still to come)
+## The outdoors — trails, walks, bike rides (browser + trail-anchored planning shipped)
 
-Requested; sourcing researched (below), and the **first slice is built** — a browser for the
-named national and international walks and rides near you, drawn on a map with a nearest-first
-list and a route-and-length detail. Great Britain first. What is still ahead is the
-*planner-composition* — folding a stretch of a trail into a day of heritage stops — which the
-research always framed as the harder, more interesting half.
+Requested; sourcing researched (below), and built across two slices: a **browser** for the
+named walks and rides near you (build 27), and **trail-anchored planning** — a day built
+around a stretch of a path, stopping at the heritage it passes (build 28). Great Britain
+first. The composition the research kept pointing at now exists in one of its two directions;
+the other, and richer trail data, are what remain (see "Still to come").
 
 ### What shipped (build 27)
 
@@ -1263,16 +1263,36 @@ precision-5 encoded polyline decoded in Swift. Two new home cards, *Out for a wa
 two wheels*, open [`TrailsView`](Chronicarum/Views/Trails/TrailsView.swift). ODbL attribution
 rides on every surface a trail appears on.
 
-### Still to come: the planner composes rather than lists
+### The planner composes rather than lists (build 28)
 
-The browser answers "what named routes are near me?" The harder, more interesting half is
-still ahead: **not** "here is the South West Coast Path" — a map already does that — but *"a
+The browser answered "what named routes are near me?" This is the half the research kept
+pointing at: **not** "here is the South West Coast Path" — a map already does that — but *"a
 day on foot that strings together the castle, the two churches, and a stretch of the coast
-path between them."* That is the point-and-line hybrid the catalogue has never been able to
-express, and it is where `TripPlanner` has to learn that a trail is *followed*, not routed
-between: you don't re-route across its nodes, you walk along it. Also deferred, because the
-data does not yet carry it: ascent profile, surface, difficulty, and direction. The build 27
-model has length and shape; the rest is the next extraction pass.
+path between them."* From a walking trail's detail, **Plan a day's walk along this** builds
+exactly that: it walks a day-length stretch of the route from wherever you are, and numbers
+the heritage the corridor passes, in order along the path.
+
+[`TrailPlanner`](Chronicarum/Models/TrailPlan.swift) is its own planner, not folded into
+`TripPlanner`, because the semantics invert: a trail is *followed*, not routed between — the
+spine is the line and a stop is something you *pass*, sorted by how far along you are. Three
+pieces do the work:
+
+- **Ordering the route.** OSM stages arrive in no order and either orientation, so a greedy
+  chain attaches whichever remaining stage starts nearest an open end, flipping as needed.
+  Verified on the West Highland Way: ten scattered stages become one continuous 154 km line
+  with no vertex jumping more than ~2 km to the next.
+- **The stretch is capped by *time on foot*, not the trail's length** — 60% of the day walking
+  at an easy 4.5 km/h, 40% left for the stops — so a day on the 1,132 km coast path is a day,
+  not a death march. It starts at the point nearest you and walks forward.
+- **Sites along the corridor**, within 1.2 km of the walked stretch, bounding-box-filtered out
+  of 258k before the exact test, ordered by distance-along, the same parent/child and
+  sensitivity rules the trip planner uses, trimmed to fit the hours.
+
+**Still to come — the other direction, and richer data.** The reverse composition — a normal
+heritage day that happens to *fold in* a trail as the connective leg between two stops that
+both sit on it — is not built; this slice makes the trail the spine, not the connector. And
+the data still carries only length and shape: ascent profile, surface, and difficulty are the
+next extraction pass, as is a printable PDF for a trail walk and coverage beyond Great Britain.
 
 ### The sourcing research (July 2026)
 
