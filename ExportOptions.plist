@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- App Store Connect export options for TestFlight builds. Kept in-repo so a cleared
+     scratchpad can't lose it mid-ship. Not under the app's source path, so it is never
+     bundled. See scripts/README.md "Shipping to TestFlight". -->
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>teamID</key>
+    <string>L9SAXP2E2W</string>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>destination</key>
+    <string>export</string>
+</dict>
+</plist>

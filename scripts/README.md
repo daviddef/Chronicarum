@@ -77,3 +77,25 @@ python3 fetch_trails.py     # OSM route relations (Overpass) → trails.json
   MB) so re-runs while tuning filters don't re-query. Delete it to force a fresh pull.
 - Geometry is simplified (Ramer–Douglas–Peucker) and stored as precision-5 encoded
   polylines; the whole file is ~200 KB, small enough to bundle without LFS.
+
+## Shipping to TestFlight
+
+Bump `CURRENT_PROJECT_VERSION` in `project.yml`, then:
+
+```sh
+xcodegen generate
+xcodebuild -project Chronicarum.xcodeproj -scheme Chronicarum -configuration Release \
+  -destination generic/platform=iOS -archivePath build/Chronicarum.xcarchive archive
+xcodebuild -exportArchive -archivePath build/Chronicarum.xcarchive \
+  -exportOptionsPlist ExportOptions.plist -exportPath build/export      # retry on Apple 504
+xcrun altool --upload-app -f build/export/Chronicarum.ipa -t ios \
+  --apiKey 9K9486HSDF --apiIssuer 69a6de8c-a266-47e3-e053-5b8c7c11a4d1
+```
+
+- `ExportOptions.plist` lives in the repo root (team `L9SAXP2E2W`, app-store-connect method).
+- The API key is `~/.appstoreconnect/private_keys/AuthKey_9K9486HSDF.p8`; the **issuer** is
+  `69a6de8c-a266-47e3-e053-5b8c7c11a4d1`. Do **not** confuse the issuer with the
+  provisioning-profile UUID `0a202525-…`: passing that to `--apiIssuer` gives a persistent
+  401 "credentials invalid" even though the key parses.
+- Export sometimes fails with a transient Apple 504 — retry the `-exportArchive` step a few
+  times before treating it as a real failure.
