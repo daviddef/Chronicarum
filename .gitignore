@@ -31,3 +31,7 @@ fastlane/screenshots/**/*.png
 # Committing both would add ~68 MB per import commit to store the same data twice.
 # Rebuild it before running an import:  python3 scripts/build_columnar.py --expand
 Chronicarum/Resources/bulk_sites.json
+
+# Cached raw Overpass response for the trail import (68 MB). Regenerated on demand;
+# trails.json — the small columnar output — is what ships and is committed.
+scripts/.trails_raw_cache.json

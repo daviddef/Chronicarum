@@ -1235,34 +1235,44 @@ Timetables. The estimate assumes services run as scheduled, and the caveat says 
 a Sunday bus and a Tuesday bus are not the same bus and nothing in the app knows which one
 you are standing at.
 
-## The outdoors — trails, walks, bike rides (sourcing researched, build pending)
+## The outdoors — trails, walks, bike rides (browser shipped; planner-composition still to come)
 
-Requested; the data-sourcing and licensing is now researched (see below), the build is the
-next chunk of work rather than parked indefinitely. Every intent the app plans today is a set of *points*
-— places you stand in front of. There is a whole category it cannot express: the *line* you
-travel along for its own sake. A coast path, a canal towpath, a forest MTB loop, a
-long-distance walking trail, a Sunday cycle route. The "outdoor type" wants a route, not a
-list of monuments near one.
+Requested; sourcing researched (below), and the **first slice is built** — a browser for the
+named national and international walks and rides near you, drawn on a map with a nearest-first
+list and a route-and-length detail. Great Britain first. What is still ahead is the
+*planner-composition* — folding a stretch of a trail into a day of heritage stops — which the
+research always framed as the harder, more interesting half.
 
-This is a genuinely different data model, which is why it is parked rather than bolted on:
+### What shipped (build 27)
 
-- **The unit is a polyline, not a pin.** A trail has a length, an ascent profile, a
-  difficulty, a surface, and a direction — none of which the `Site` model or the
-  significance/duration/theme derivations have any place for.
-- **The sources are different.** OSM relations (`route=hiking|bicycle|foot`) are the obvious
-  candidate and are enormous — but that is the ODbL share-alike problem the roadmap has
-  already walked away from once, so it needs the same licence scrutiny the heritage
-  registers got. National trail registries (National Trails in England, the GR network in
-  France, Rail Trails Australia) may be cleaner per-country, exactly as the heritage
-  registers were.
-- **The planner would compose rather than route.** The interesting version is not "here is
-  the South West Coast Path" — a map already does that — but "a day on foot that strings
-  together the castle, the two churches and a stretch of the coast path between them",
-  which is the point-and-line hybrid nothing here can currently express.
+432 GB national/international routes — 180 walks, 252 rides — pulled from OSM by
+[`scripts/fetch_trails.py`](scripts/fetch_trails.py), simplified and stored as one small
+columnar `trails.json` (204 KB, no LFS). The stage-merge in that script is the load-bearing
+trick: OSM keeps the "South West Coast Path" as a superroute parent with no geometry of its
+own plus 55 child stages, so a naïve pull gives 55 fragments called *"…(Section 28: Coverack
+to Helford)"* and no whole path. The script recovers the shared base name and rebuilds the
+route as one multi-segment trail — each stage its own polyline, so an out-of-order section
+never draws a line jumping across the map. Verified: South West Coast Path comes back as one
+1,132 km / 55-segment trail, the Pennine Way as 429 km, the West Highland Way starting exactly
+at Milngavie.
 
-When it comes, it fits the intent screen naturally — a seventh card, *Out for a walk* or
-*On two wheels* — but the work is a data and modelling project of its own, not a filter
-tweak.
+Modelled as [`Trail`](Chronicarum/Models/Trail.swift), its own polyline record — not a bent
+`Site` — with a representative pin, a nearest-*path* distance for the near-you sort (a
+long-distance path passes near a hundred places its midpoint is nowhere near), and a
+precision-5 encoded polyline decoded in Swift. Two new home cards, *Out for a walk* and *On
+two wheels*, open [`TrailsView`](Chronicarum/Views/Trails/TrailsView.swift). ODbL attribution
+rides on every surface a trail appears on.
+
+### Still to come: the planner composes rather than lists
+
+The browser answers "what named routes are near me?" The harder, more interesting half is
+still ahead: **not** "here is the South West Coast Path" — a map already does that — but *"a
+day on foot that strings together the castle, the two churches, and a stretch of the coast
+path between them."* That is the point-and-line hybrid the catalogue has never been able to
+express, and it is where `TripPlanner` has to learn that a trail is *followed*, not routed
+between: you don't re-route across its nodes, you walk along it. Also deferred, because the
+data does not yet carry it: ascent profile, surface, difficulty, and direction. The build 27
+model has length and shape; the rest is the next extraction pass.
 
 ### The sourcing research (July 2026)
 

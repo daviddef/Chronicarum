@@ -53,3 +53,27 @@ afterwards, from the site's own coordinates. See "Whose country is this" in ROAD
   date map to `Era.unknown` ("Undated") rather than a guess.
 - Bulk sites are `tier: 2`, below the featured 3–5, so the significance filter doubles
   as a featured-only switch.
+
+## The outdoor layer — trails, walks, bike rides
+
+`fetch_trails.py` is self-contained and needs no scratchpad edit — run it and it writes
+`Chronicarum/Resources/trails.json` directly.
+
+```sh
+python3 fetch_trails.py     # OSM route relations (Overpass) → trails.json
+```
+
+- **Source:** OpenStreetMap route relations via the Overpass API, **ODbL**. The extracted
+  geometry is a Derivative Database, so it ships in its own file (a collective database kept
+  separate from the heritage catalogue) and the app shows `TrailData.attribution` wherever a
+  trail appears. This script IS the "means of creating" ODbL asks us to offer on request.
+- **Scope:** national and international named routes only — `network` in `iwn`/`nwn` (walk)
+  and `icn`/`ncn` (bike). Local footpaths run to millions; the network tier is the
+  significance filter all over again. Pilot bbox is Great Britain — edit `BBOX` to extend.
+- **The stage-merge is the point.** OSM splits a long route into a superroute parent (no
+  geometry of its own) plus per-stage children. `base_name()` recovers the shared path name
+  so the stages rebuild into one multi-segment trail, each stage kept as its own polyline.
+- The raw Overpass response is cached at `scripts/.trails_raw_cache.json` (git-ignored, ~68
+  MB) so re-runs while tuning filters don't re-query. Delete it to force a fresh pull.
+- Geometry is simplified (Ramer–Douglas–Peucker) and stored as precision-5 encoded
+  polylines; the whole file is ~200 KB, small enough to bundle without LFS.

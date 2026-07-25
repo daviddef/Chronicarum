@@ -14,6 +14,8 @@ struct HomeView: View {
     @State private var request: PlanRequest?
     @State private var showSearch = false
     @State private var counts: [String: Int] = [:]
+    @State private var showTrails = false
+    @State private var trailsActivity: TrailActivity?
 
     private let ink = Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255)
     private let gold = Color(hex: "#C9A84C")
@@ -84,7 +86,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, 4)
 
-                    // ── The seven kinds of day ───────────────────────────
+                    // ── The kinds of day, then the two outdoor routes ────
                     LazyVGrid(columns: columns, spacing: 10) {
                         ForEach(DayIntent.all) { option in
                             Button { open(intent: option) } label: {
@@ -92,6 +94,8 @@ struct HomeView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        trailTile(.walk, title: "Out for a walk", count: counts["trail.walk"])
+                        trailTile(.bike, title: "On two wheels", count: counts["trail.bike"])
                     }
 
                     // ── Saved plans ──────────────────────────────────────
@@ -127,6 +131,20 @@ struct HomeView: View {
                 focus.set(coordinate, name: name)
             }
         }
+        .fullScreenCover(isPresented: $showTrails) {
+            TrailsView(activity: trailsActivity)
+        }
+    }
+
+    /// A tile for the outdoor layer — walks or rides near you, opening the trails browser.
+    private func trailTile(_ activity: TrailActivity, title: String, count: Int?) -> some View {
+        Button {
+            trailsActivity = activity
+            showTrails = true
+        } label: {
+            TrailCard(activity: activity, title: title, count: count)
+        }
+        .buttonStyle(.plain)
     }
 
     /// A titled list of trips — Saved or Recent — each reopening on tap and starrable.
@@ -189,11 +207,70 @@ struct HomeView: View {
                         result[intent.id, default: 0] += 1
                     }
                 }
+                // The outdoor layer counts on its own terms: a trail is "near you" if its
+                // path passes within reach, not if its midpoint does. Cheap over ~400 rows.
+                result["trail.walk"] = TrailData.near(here, activity: .walk,
+                                                      radiusKm: 120, limit: 999).count
+                result["trail.bike"] = TrailData.near(here, activity: .bike,
+                                                      radiusKm: 120, limit: 999).count
                 continuation.resume(returning: result)
             }
         }
         guard !Task.isCancelled else { return }
         counts = computed
+    }
+}
+
+/// A tile for a kind of outdoor route, and how many pass near you. Mirrors `IntentCard` so
+/// the grid reads as one set.
+struct TrailCard: View {
+    let activity: TrailActivity
+    let title: String
+    var count: Int? = nil
+
+    private var colour: Color { Color(hex: activity.colour) }
+
+    private var countLabel: String? {
+        guard let count else { return nil }
+        return count == 0 ? "—" : "\(count)"
+    }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: activity.icon)
+                .font(.system(size: 22, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(height: 28)
+
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let countLabel {
+                Text(countLabel)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(.white.opacity(0.18), in: Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 12)
+        .frame(minHeight: 104)
+        .background(
+            LinearGradient(colors: [colour, colour.opacity(0.72)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+        )
     }
 }
 
