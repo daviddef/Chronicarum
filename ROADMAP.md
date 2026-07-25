@@ -1235,9 +1235,10 @@ Timetables. The estimate assumes services run as scheduled, and the caveat says 
 a Sunday bus and a Tuesday bus are not the same bus and nothing in the app knows which one
 you are standing at.
 
-## Later: the outdoors — trails, walks, bike rides
+## The outdoors — trails, walks, bike rides (sourcing researched, build pending)
 
-Requested but explicitly **not now**. Every intent the app plans today is a set of *points*
+Requested; the data-sourcing and licensing is now researched (see below), the build is the
+next chunk of work rather than parked indefinitely. Every intent the app plans today is a set of *points*
 — places you stand in front of. There is a whole category it cannot express: the *line* you
 travel along for its own sake. A coast path, a canal towpath, a forest MTB loop, a
 long-distance walking trail, a Sunday cycle route. The "outdoor type" wants a route, not a
@@ -1262,6 +1263,66 @@ This is a genuinely different data model, which is why it is parked rather than 
 When it comes, it fits the intent screen naturally — a seventh card, *Out for a walk* or
 *On two wheels* — but the work is a data and modelling project of its own, not a filter
 tweak.
+
+### The sourcing research (July 2026)
+
+Done now, ahead of the build, because the whole thing is gated on one question the heritage
+work already taught us to ask first: **what can we actually licence?**
+
+**The licence verdict is better than feared — ODbL does not force the app open.** The fear
+in the note above was that leaning on OpenStreetMap route relations would drag in the same
+share-alike problem that ruled the Croatia register out. It turns out ODbL draws a line
+exactly where we need it. It distinguishes a **Produced Work** — a rendered map, a printed
+itinerary, a screenshot — from a **Derivative Database** — data you publish *for others to
+extract*. Share-alike bites only on the second. Displaying a trail on Chronicarum's map or
+in a PDF is a Produced Work: *"You can license a Produced Work under any terms you like"*
+([OSMF Legal FAQ](https://osmfoundation.org/wiki/Licence/Licence_and_Legal_FAQ)). The
+catalogue, the code, the heritage data — none of it is infected by showing an OSM trail.
+
+The one real obligation: the *extracted trail geometry itself*, shipped inside the app, is a
+Derivative Database, so it must be **attributed to OpenStreetMap and offered under ODbL on
+request** — satisfiable by keeping the trails as a *separate* bundled dataset (a "collective
+database", not merged into the heritage catalogue) and offering the Overpass query that
+regenerates it. That is a world away from "open-source your app", and it is a bargain we can
+take. Attribution string on any surface that shows one: *"Trail data © OpenStreetMap
+contributors, ODbL"* linking to `openstreetmap.org/copyright`.
+
+**Sources, ranked, with the licence that governs each:**
+
+| Source | Covers | Licence | Verdict |
+|---|---|---|---|
+| [OSM route relations](https://wiki.openstreetmap.org/wiki/Relation:route) (`route=hiking\|foot\|bicycle\|mtb`) | Global, everything | ODbL | **The backbone.** Even [AllTrails derives from it](https://towardsdatascience.com/planning-the-perfect-hike-with-networkx-and-openstreetmap-2fbeaded3cc6/). Attribution + offer-on-request, no app-wide share-alike. |
+| [USGS National Digital Trails](https://www.usgs.gov/national-digital-trails/data) + [NPS Public Trail Centerlines](https://public-nps.opendata.arcgis.com/) | United States | **Public domain** (US federal) | **Prefer over OSM inside the US** — no attribution, no share-alike at all. |
+| [EuroVelo](https://pro.eurovelo.com/news/2024-10-09_eurovelo-gpx-tracks-go-open-data) | European cycle network | ODbL (opened 2024) | Clean, but largely already in OSM as `network=icn` relations. |
+| [Pacific Crest Trail](https://www.pcta.org/discover-the-trail/maps/pct-data/) and similar official releases | Individual named trails | CC-BY-4.0 (varies) | Case by case; attribution only. |
+| [OS OpenData](https://www.ordnancesurvey.co.uk/products/open-data) | Great Britain base map | OGL | **Does not include rights of way / footpaths** — so OSM stays the UK trail source, not OS. |
+| AllTrails, Komoot, Strava, Outdooractive, Gaia GPS | Global, curated | Proprietary | **Ruled out**, same bar that ruled out the Croatia register — no redistribution. |
+
+So the plan is **OSM route relations as the global spine, with US federal public-domain data
+swapped in for the States** to shed even the attribution burden there.
+
+**How OSM structures it, and where the first cut should stop.** Routes carry a network tier
+— hiking `lwn→rwn→nwn→iwn` (local to international), cycling `lcn→rcn→ncn→icn` — and long
+routes are split into stages joined by a `superroute` parent. That hierarchy is the
+significance tier all over again: **start at national and international named routes only**
+(`nwn`/`iwn`, `ncn`/`icn`) — a few thousand high-signal paths worldwide, pulled with one
+[Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API) query — not every local
+footpath, which runs to millions and would drown the signal exactly as the unfiltered
+heritage import did. And the `superroute`→stage structure is a gift: **a long-distance path's
+stages map straight onto days of a plan.**
+
+**The data model, resolved.** A `Trail` is its own record, not a bent `Site`: name, activity
+(walk / hike / bike / MTB), network tier, `length_km`, ascent, a **representative point**
+(trailhead, or midpoint) so it can still drop a pin on the same map, and the **polyline** for
+the route line and the PDF day-map that build 26 just added. The planner treats it
+differently from a bag of points — you *follow* a trail, you don't re-route between its
+nodes — which is the point-and-line hybrid the note above wanted: *"a day on foot that
+strings together the castle, the two churches and a stretch of the coast path between them."*
+
+**Next step when the build starts:** pick a pilot region with dense named routes (the South
+West Coast Path corridor, or a EuroVelo stretch), write the Overpass extraction for
+`nwn`/`iwn`/`ncn`/`icn` relations, decide bundled-columnar (like the sites) vs on-demand
+fetch, and teach `TripPlanner` the follow-don't-route distinction.
 
 ## Open question: institutional sites
 
