@@ -16,6 +16,8 @@ struct TrailsView: View {
     @State private var activity: TrailActivity?
     @State private var selected: Trail?
     @State private var position: MapCameraPosition = .automatic
+    @State private var trails: [Trail] = []
+    @State private var loading = true
 
     private let gold = Color(hex: "#C9A84C")
 
@@ -27,10 +29,6 @@ struct TrailsView: View {
         focus.coordinate ?? mapVM.userLocation ?? mapVM.visibleRegion.center
     }
 
-    private var trails: [Trail] {
-        TrailData.near(origin, activity: activity, radiusKm: 150, limit: 40)
-    }
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -40,7 +38,11 @@ struct TrailsView: View {
 
                 filterBar
 
-                if trails.isEmpty {
+                if loading {
+                    Spacer()
+                    ProgressView().frame(maxWidth: .infinity)
+                    Spacer()
+                } else if trails.isEmpty {
                     emptyState
                 } else {
                     List(trails) { trail in
@@ -58,8 +60,8 @@ struct TrailsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .onAppear { frameOnTrails() }
-            .onChange(of: activity) { _, _ in frameOnTrails() }
+            .task { await load() }
+            .onChange(of: activity) { _, _ in Task { await load() } }
             .sheet(item: $selected) { trail in
                 TrailDetailView(trail: trail)
                     .presentationDetents([.medium, .large])
@@ -121,7 +123,8 @@ struct TrailsView: View {
                 .foregroundStyle(.secondary)
             Text("No national trails within 150 km")
                 .font(.headline)
-            Text("The outdoor layer currently covers Great Britain. More regions to come.")
+            Text("The outdoor layer covers Europe, the United States, and Australia so far. "
+                 + "More regions to come.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -129,6 +132,21 @@ struct TrailsView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Find the nearby trails off the main thread — the near-you scan touches every vertex
+    /// of ~10k routes, too much to run on each render.
+    private func load() async {
+        loading = true
+        let o = origin, act = activity
+        let found = await withCheckedContinuation { (cont: CheckedContinuation<[Trail], Never>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                cont.resume(returning: TrailData.near(o, activity: act, radiusKm: 150, limit: 40))
+            }
+        }
+        trails = found
+        loading = false
+        frameOnTrails()
     }
 
     /// Frame the map on the trails near the origin, falling back to the origin itself.

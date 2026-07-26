@@ -69,12 +69,17 @@ python3 fetch_trails.py     # OSM route relations (Overpass) → trails.json
   trail appears. This script IS the "means of creating" ODbL asks us to offer on request.
 - **Scope:** national and international named routes only — `network` in `iwn`/`nwn` (walk)
   and `icn`/`ncn` (bike). Local footpaths run to millions; the network tier is the
-  significance filter all over again. Pilot bbox is Great Britain — edit `BBOX` to extend.
+  significance filter all over again.
+- **Coverage** is the `REGIONS` dict — Europe, the contiguous US, and Australia/NZ, one
+  bounding box each (a planet-wide query times out). Add a box to widen. Overlaps are fine,
+  deduplicated by relation id; `OVERPASS_ENDPOINTS` lists a fallback for when one 504s.
 - **The stage-merge is the point.** OSM splits a long route into a superroute parent (no
   geometry of its own) plus per-stage children. `base_name()` recovers the shared path name
   so the stages rebuild into one multi-segment trail, each stage kept as its own polyline.
-- The raw Overpass response is cached at `scripts/.trails_raw_cache.json` (git-ignored, ~68
-  MB) so re-runs while tuning filters don't re-query. Delete it to force a fresh pull.
+  Across regions, `cluster_stages()` first splits a shared *generic* name into
+  geographically-separate routes so "Coastal Path" in two countries never fuses into one.
+- Each region's raw Overpass response is cached at `scripts/.trails_cache_<region>.json`
+  (git-ignored, large) so re-runs don't re-query. Delete one to refresh that region.
 - Geometry is simplified (Ramer–Douglas–Peucker) and stored as precision-5 encoded
   polylines; the whole file is ~200 KB, small enough to bundle without LFS.
 

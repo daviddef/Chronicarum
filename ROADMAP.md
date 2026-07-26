@@ -1237,11 +1237,32 @@ you are standing at.
 
 ## The outdoors — trails, walks, bike rides (browser + trail-anchored planning shipped)
 
-Requested; sourcing researched (below), and built across two slices: a **browser** for the
-named walks and rides near you (build 27), and **trail-anchored planning** — a day built
-around a stretch of a path, stopping at the heritage it passes (build 28). Great Britain
-first. The composition the research kept pointing at now exists in one of its two directions;
-the other, and richer trail data, are what remain (see "Still to come").
+Requested; sourcing researched (below), and built across three slices: a **browser** for the
+named walks and rides near you (build 27), **trail-anchored planning** — a day built around a
+stretch of a path, stopping at the heritage it passes (build 28), and **coverage** across
+Europe, the contiguous US, and Australia/New Zealand (build 29). The composition the research
+kept pointing at now exists in one of its two directions; the other, and richer trail data,
+are what remain (see "Still to come").
+
+### Coverage: Europe, the US, Australia (build 29)
+
+GB's 432 routes became **9,933** (7,063 walks, 2,870 rides, 3.8 MB) by querying nine regional
+bounding boxes and merging — a single planet-wide Overpass query times out, so the boxes are
+run separately, cached per region, deduplicated by relation id, and reassembled by name.
+Recognisable everywhere it reaches: the Appalachian Trail, the Camino de Santiago, GR 10, Via
+Alpina, Kungsleden, the Heysen Trail, the EuroVelo network. The nordic box 504'd on the
+primary Overpass endpoint mid-run and fell through to a second (kumi.systems) without losing
+the region — the reason the fetch carries a fallback list.
+
+Going wider surfaced a merge hazard GB never had: a *generic* name — "Coastal Path", "E1" —
+belongs to unrelated routes a continent apart, and the build-27 name-merge would have fused
+them into one impossible trail. So stages are now **geographically clustered** before merging
+(single-link on endpoints, 60 km threshold): stages that are actually near each other are one
+route, a bigger jump starts another. The trade is that a long international route with real
+gaps in OSM (EuroVelo 13, the E1) imports as several fragments — deduplicated by name in the
+near-you list so a route never appears twice, each fragment still a real, walkable stretch.
+The US still *should* prefer public-domain USGS/NPS data over OSM to shed even attribution;
+until that pipeline exists, ODbL covers it and the attribution already shows.
 
 ### What shipped (build 27)
 
@@ -1290,9 +1311,10 @@ pieces do the work:
 
 **Still to come — the other direction, and richer data.** The reverse composition — a normal
 heritage day that happens to *fold in* a trail as the connective leg between two stops that
-both sit on it — is not built; this slice makes the trail the spine, not the connector. And
-the data still carries only length and shape: ascent profile, surface, and difficulty are the
-next extraction pass, as is a printable PDF for a trail walk and coverage beyond Great Britain.
+both sit on it — is not built; this slice makes the trail the spine, not the connector. The
+data still carries only length and shape: ascent profile, surface, and difficulty are the
+next extraction pass, as is a printable PDF for a trail walk. And two coverage jobs remain —
+the public-domain USGS/NPS swap for the US, and regions beyond Europe/US/Oceania.
 
 ### The sourcing research (July 2026)
 

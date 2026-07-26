@@ -89,17 +89,23 @@ enum TrailData {
 
     /// Trails whose path passes within `radiusKm` of a point, nearest first. Trails are big,
     /// so the default radius is generous.
+    ///
+    /// Deduplicated by name: a long international route with gaps in OSM (EuroVelo 13, the E1)
+    /// is imported as several geographic fragments, and a near-you list that showed the same
+    /// name three times would read as a bug. The nearest fragment of each route wins.
     static func near(_ c: CLLocationCoordinate2D,
                      activity: TrailActivity? = nil,
                      radiusKm: Double = 120,
                      limit: Int = 40) -> [Trail] {
-        all
+        var seen = Set<String>()
+        return all
             .filter { activity == nil || $0.activity == activity }
             .map { (trail: $0, d: $0.nearestDistanceKm(from: c)) }
             .filter { $0.d <= radiusKm }
             .sorted { $0.d < $1.d }
+            .compactMap { seen.insert($0.trail.name).inserted ? $0.trail : nil }
             .prefix(limit)
-            .map(\.trail)
+            .map { $0 }
     }
 
     private static func load() -> [Trail] {
