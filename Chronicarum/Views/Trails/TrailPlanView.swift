@@ -14,6 +14,7 @@ struct TrailPlanView: View {
     @State private var walk: TrailWalk?
     @State private var position: MapCameraPosition = .automatic
     @State private var selectedSite: Site?
+    @State private var pdfURL: URL?
 
     private let gold = Color(hex: "#C9A84C")
     private let ink = Color(red: 0.09, green: 0.08, blue: 0.07)
@@ -40,6 +41,11 @@ struct TrailPlanView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Done") { dismiss() } }
+                if let pdfURL {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ShareLink(item: pdfURL) { Image(systemName: "square.and.arrow.up") }
+                    }
+                }
             }
             .sheet(item: $selectedSite) { site in
                 SiteDetailView(site: site)
@@ -167,6 +173,15 @@ struct TrailPlanView: View {
             }
         }
         walk = result
+
+        // Render the shareable PDF up front, off the main thread, so the share button has a
+        // real file the moment it appears (the map snapshot inside is itself async).
+        let url = await withCheckedContinuation { (cont: CheckedContinuation<URL?, Never>) in
+            DispatchQueue.global(qos: .utility).async {
+                cont.resume(returning: ItineraryPDF.writeTemporaryFile(result))
+            }
+        }
+        pdfURL = url
     }
 
     private func frame(_ walk: TrailWalk) {

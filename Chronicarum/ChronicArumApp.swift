@@ -52,6 +52,17 @@ struct ChronicArumApp: App {
         let url = URL.documentsDirectory.appendingPathComponent("sample.pdf")
         try? data.write(to: url)
         NSLog("[sample-pdf] wrote \(data.count) bytes to \(url.path)")
+
+        // Also render a trail-walk PDF for the nearest walking trail, so the trail-walk
+        // layout can be checked headlessly the same way.
+        if let trail = TrailData.near(origin, activity: .walk, radiusKm: 200, limit: 1).first {
+            let walk = TrailPlanner.plan(trail: trail, from: origin)
+            let walkData = ItineraryPDF.render(walk, placeName: nil)
+            let walkURL = URL.documentsDirectory.appendingPathComponent("trailwalk.pdf")
+            try? walkData.write(to: walkURL)
+            NSLog("[sample-pdf] wrote trail walk (\(walk.trail.name), \(walk.stops.count) stops) "
+                  + "\(walkData.count) bytes to \(walkURL.path)")
+        }
     }
 #endif
 }

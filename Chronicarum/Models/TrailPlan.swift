@@ -44,11 +44,12 @@ struct TrailWalk {
 enum TrailPlanner {
     /// Sites nearer than this to the route count as "on the walk".
     private static let corridorKm = 1.2
-    /// A gentle walking day, and the split between moving and stopping. 60% of the hours go
-    /// under your feet, leaving 40% for the places you stop at.
+    /// A gentle walking day, and the split between moving and stopping. Half the hours go
+    /// under your feet, half to the places you stop at — a 17 km march leaves only time for a
+    /// single long visit, and a day on a trail should be able to breathe at more than one.
     private static let defaultHours = 6.0
     private static let walkSpeedKmh = 4.5
-    private static let walkFraction = 0.6
+    private static let walkFraction = 0.5
     private static let maxStops = 8
     /// Worth stopping for — below this the walk fills with railings and gate piers.
     private static let significanceFloor = 25
@@ -63,14 +64,25 @@ enum TrailPlanner {
         // trail is far away, that is simply its beginning.
         let startIdx = nearestIndex(on: full, to: origin)
 
-        // Walk forward until the walking-time budget is spent. The stretch is capped by time
-        // on foot, not by the trail's full length — a day is a day.
+        // The stretch is capped by time on foot, not the trail's full length — a day is a day.
         let walkTargetKm = min(trail.km, walkSpeedKmh * hoursPerDay * walkFraction)
-        let (path, stretchKm) = stretch(of: full, from: startIdx, targetKm: walkTargetKm)
+
+        // Which way to walk from the start matters: the nearest point on a trail is often
+        // where it clips a town, and walking *away* from the town spends the day in empty
+        // country. So build the stretch in both directions, and keep whichever passes more
+        // heritage — the Cotswold Way from Bath should head into Bath, not out to the hills.
+        let forward = stretch(of: full, from: startIdx, targetKm: walkTargetKm, forward: true)
+        let backward = stretch(of: full, from: startIdx, targetKm: walkTargetKm, forward: false)
+        let options = [forward, backward].map { candidate -> (path: [CLLocationCoordinate2D], km: Double, stops: [TrailStopAlong]) in
+            (candidate.path, candidate.km, sitesAlong(candidate.path, catalogue: catalogue))
+        }
+        let chosen = options.max { rank($0.stops) < rank($1.stops) } ?? options[0]
+        let path = chosen.path
+        let stretchKm = chosen.km
 
         let walkingMinutes = Int((stretchKm / walkSpeedKmh * 60).rounded())
 
-        var stops = sitesAlong(path, catalogue: catalogue)
+        var stops = chosen.stops
 
         // Keep the walk inside the day: if the visits overflow the remaining hours, drop the
         // least significant until they fit — order along the path is preserved.
@@ -150,22 +162,32 @@ enum TrailPlanner {
         return idx
     }
 
-    /// From a start index, take points forward until `targetKm` is covered. If the tail is
-    /// too short, extend backward so a walk started near the end still fills a day.
+    /// Ranks a candidate stretch: more stops first, then more total significance. The empty
+    /// walk always loses to any walk that passes something.
+    private static func rank(_ stops: [TrailStopAlong]) -> (Int, Int) {
+        (stops.count, stops.reduce(0) { $0 + $1.site.significance })
+    }
+
+    /// From a start index, cover `targetKm` weighted in one direction — forward first (then
+    /// back-filling if the tail is short), or backward first. Running it both ways lets the
+    /// planner keep whichever direction is worth walking.
     private static func stretch(of path: [CLLocationCoordinate2D],
                                 from start: Int,
-                                targetKm: Double) -> ([CLLocationCoordinate2D], Double) {
+                                targetKm: Double,
+                                forward: Bool) -> (path: [CLLocationCoordinate2D], km: Double) {
         guard path.count >= 2 else { return (path, 0) }
-        var end = start, km = 0.0
-        while end + 1 < path.count, km < targetKm {
-            km += Trail.haversineKm(path[end], path[end + 1])
-            end += 1
+        var begin = start, end = start, km = 0.0
+        func extendEnd() -> Bool {
+            guard end + 1 < path.count else { return false }
+            km += Trail.haversineKm(path[end], path[end + 1]); end += 1; return true
         }
-        var begin = start
-        while begin > 0, km < targetKm {
-            km += Trail.haversineKm(path[begin - 1], path[begin])
-            begin -= 1
+        func extendBegin() -> Bool {
+            guard begin > 0 else { return false }
+            km += Trail.haversineKm(path[begin - 1], path[begin]); begin -= 1; return true
         }
+        let (primary, secondary) = forward ? (extendEnd, extendBegin) : (extendBegin, extendEnd)
+        while km < targetKm, primary() {}
+        while km < targetKm, secondary() {}
         return (Array(path[begin...end]), km)
     }
 

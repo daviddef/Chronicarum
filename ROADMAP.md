@@ -1346,9 +1346,27 @@ was to (a) floor the cap so no previously-passing stage does extra work, (b) bou
 input with a uniform pre-decimation, and (c) downsample an over-long result in one O(n) pass
 instead of re-running RDP. Fast and correct.
 
-**Still to come.** Ascent, surface and difficulty (a second extraction pass), a printable PDF
-built *from* a trail walk rather than a heritage day, the public-domain USGS/NPS swap for the
-US, and regions beyond Europe/US/Oceania.
+### A trail walk you can fold into a pocket (build 32)
+
+The trail-anchored day is now printable, the same illustrated A4 the itinerary produces:
+`ItineraryPDF.render(_ walk:)` draws an ink header band (trail name in serif, the walk in
+three numbers), an `MKMapSnapshotter` map with the stretch traced bold and the stops numbered
+along it, then the heritage in order — "3.4 km in", the photograph, era and theme chips — and
+the ODbL attribution on the footer. A share button in `TrailPlanView` renders it up front so
+the system sheet has a real file the instant it appears. Verified by headless render: the
+Thames Path from central London prints the river bending east through the Tower of London to
+the Royal Observatory at Greenwich.
+
+Building it exposed — and fixed — a planner weakness worth its own line. The nearest point on
+a trail is often where it *clips* a town, and the planner walked blindly forward from there,
+which on the Cotswold Way from Bath meant a day marching *out* into empty hills with zero
+heritage. `TrailPlanner` now builds the stretch in **both directions** and keeps whichever
+passes more (the Thames walk correctly heads into the city, not out of it). And the
+walking/stopping split was rebalanced from 60/40 to half-and-half: a 17 km march left room for
+a single long visit, and a day on a trail should breathe at more than one.
+
+**Still to come.** Ascent, surface and difficulty (a second extraction pass), the
+public-domain USGS/NPS swap for the US, and regions beyond Europe/US/Oceania.
 
 ### The sourcing research (July 2026)
 

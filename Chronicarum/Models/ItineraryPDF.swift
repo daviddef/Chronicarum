@@ -66,7 +66,11 @@ enum ItineraryPDF {
     /// document is designed to look right with none of them — every stop falls back to a
     /// block of its era's colour.
     private static func photographs(for plan: TripPlan, limit: Int) -> [String: UIImage] {
-        let wanted = plan.days.flatMap(\.stops).map(\.site)
+        photographs(for: plan.days.flatMap(\.stops).map(\.site), limit: limit)
+    }
+
+    private static func photographs(for sites: [Site], limit: Int) -> [String: UIImage] {
+        let wanted = sites
             .filter { $0.imageURL() != nil }
             .prefix(limit)
         guard !wanted.isEmpty else { return [:] }
@@ -474,6 +478,219 @@ enum ItineraryPDF {
         string.draw(with: CGRect(x: margin, y: pageSize.height - margin - height + 4,
                                  width: contentWidth, height: height),
                     options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+    }
+
+    // MARK: - Trail walk
+
+    private static let trailGreen = UIColor(hex: "#2E9E5B")
+
+    /// A day's walk along a trail, as its own printable page: the stretch drawn over the map,
+    /// the heritage you pass numbered along it. Same visual language as the itinerary — it is
+    /// the same kind of artefact, a walk you fold into a pocket.
+    static func render(_ walk: TrailWalk, placeName: String?) -> Data {
+        let photos = photographs(for: walk.stops.map(\.site), limit: 16)
+        let map = walkMap(walk)
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize))
+
+        return renderer.pdfData { context in
+            context.beginPage()
+            var y = drawWalkHeader(context, walk: walk)
+
+            func walkFooter() {
+                gold.withAlphaComponent(0.5).setFill()
+                UIBezierPath(rect: CGRect(x: margin, y: pageSize.height - margin - 26,
+                                          width: contentWidth, height: 0.7)).fill()
+                let text = "Walking times are estimated at an easy 4.5 km/h and opening hours "
+                    + "are not known for any site — check before you set out. "
+                    + TrailData.attribution + "."
+                NSAttributedString(string: text, attributes: Style.footnote)
+                    .draw(with: CGRect(x: margin, y: pageSize.height - margin - 22,
+                                       width: contentWidth, height: 26),
+                          options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+            }
+            func ensureRoom(for height: CGFloat) {
+                if y + height > pageSize.height - margin - 30 {
+                    walkFooter(); context.beginPage(); y = margin
+                }
+            }
+
+            // The map of the walk.
+            if let map {
+                let mapHeight: CGFloat = 210
+                ensureRoom(for: mapHeight + 12)
+                let rect = CGRect(x: margin, y: y, width: contentWidth, height: mapHeight)
+                context.cgContext.saveGState()
+                UIBezierPath(roundedRect: rect, cornerRadius: 8).addClip()
+                map.draw(in: rect)
+                context.cgContext.restoreGState()
+                UIColor(white: 0, alpha: 0.12).setStroke()
+                let border = UIBezierPath(roundedRect: rect, cornerRadius: 8)
+                border.lineWidth = 1; border.stroke()
+                y += mapHeight + 16
+            }
+
+            if walk.stops.isEmpty {
+                let msg = "A \(walk.summary). Nothing notable is catalogued right beside this "
+                    + "stretch — the walk is the thing here."
+                let s = NSAttributedString(string: msg, attributes: Style.stopDetail)
+                s.draw(with: CGRect(x: margin, y: y, width: contentWidth, height: 40),
+                       options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+            }
+
+            for (index, stop) in walk.stops.enumerated() {
+                let rowHeight: CGFloat = 62
+                ensureRoom(for: rowHeight + 8)
+                let top = y
+                let site = stop.site
+
+                let thumb = CGRect(x: margin, y: top, width: 78, height: rowHeight)
+                context.cgContext.saveGState()
+                UIBezierPath(roundedRect: thumb, cornerRadius: 5).addClip()
+                if let image = photos[site.id] {
+                    image.draw(in: aspectFill(image.size, in: thumb))
+                } else {
+                    UIColor(hex: site.era.color).setFill(); UIBezierPath(rect: thumb).fill()
+                }
+                context.cgContext.restoreGState()
+
+                let disc = CGRect(x: margin + 62, y: top - 6, width: 22, height: 22)
+                gold.setFill(); UIBezierPath(ovalIn: disc).fill()
+                let number = NSAttributedString(string: "\(index + 1)", attributes: Style.stopNumber)
+                let ns = number.size()
+                number.draw(at: CGPoint(x: disc.midX - ns.width / 2, y: disc.midY - ns.height / 2))
+
+                let textX = margin + 92
+                let textWidth = contentWidth - 92
+                var ty = top
+
+                let along = stop.distanceAlongKm < 1
+                    ? "\(Int(stop.distanceAlongKm * 1000)) m in"
+                    : String(format: "%.1f km in", stop.distanceAlongKm)
+                NSAttributedString(string: along.uppercased(), attributes: Style.leg)
+                    .draw(at: CGPoint(x: textX, y: ty)); ty += 12
+
+                let name = NSAttributedString(string: site.name, attributes: Style.stopName)
+                let nameRect = name.boundingRect(with: CGSize(width: textWidth, height: 34),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+                name.draw(with: CGRect(x: textX, y: ty, width: textWidth, height: nameRect.height),
+                          options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+                ty += min(nameRect.height, 30) + 2
+
+                var detail: [String] = []
+                if let d = site.visitDurationLabel { detail.append(d) }
+                if !site.location.isEmpty { detail.append(site.location) }
+                if !detail.isEmpty {
+                    NSAttributedString(string: detail.joined(separator: " · "), attributes: Style.stopDetail)
+                        .draw(at: CGPoint(x: textX, y: ty)); ty += 12
+                }
+                var chipX = textX
+                if site.era != .unknown {
+                    chipX = drawChip(site.era.displayName, fill: UIColor(hex: site.era.color),
+                                     at: CGPoint(x: chipX, y: ty))
+                }
+                if let theme = site.themes.components.first {
+                    _ = drawChip(theme.label, fill: gold.darkened(), at: CGPoint(x: chipX, y: ty))
+                }
+                y = top + rowHeight + 10
+            }
+
+            walkFooter()
+        }
+    }
+
+    /// The header band: eyebrow, trail name, and the walk in three numbers.
+    private static func drawWalkHeader(_ context: UIGraphicsPDFRendererContext,
+                                       walk: TrailWalk) -> CGFloat {
+        let bandH: CGFloat = 168
+        ink.setFill()
+        UIBezierPath(rect: CGRect(x: 0, y: 0, width: pageSize.width, height: bandH)).fill()
+
+        gold.setFill()
+        UIBezierPath(rect: CGRect(x: margin, y: 34, width: 54, height: 3)).fill()
+        NSAttributedString(string: "A DAY'S WALK",
+                           attributes: Style.attributes(size: 10, weight: .bold, color: gold))
+            .draw(at: CGPoint(x: margin, y: 44))
+
+        let title = NSAttributedString(string: walk.trail.name,
+                                       attributes: Style.attributes(size: 26, weight: .bold,
+                                                                    design: .serif, color: .white))
+        let tRect = title.boundingRect(with: CGSize(width: contentWidth, height: 80),
+            options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        title.draw(with: CGRect(x: margin, y: 62, width: contentWidth, height: tRect.height),
+                   options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+
+        let stretch = walk.stretchKm >= 10 ? "\(Int(walk.stretchKm.rounded())) km"
+                                           : String(format: "%.1f km", walk.stretchKm)
+        let hours = String(format: "%.1fh", Double(walk.totalMinutes) / 60)
+        let stats: [(String, String)] = [
+            (stretch, "ON FOOT"),
+            (walk.stops.count == 1 ? "1" : "\(walk.stops.count)", "STOPS"),
+            (hours, "IN TOTAL"),
+        ]
+        var x = margin
+        for (value, label) in stats {
+            NSAttributedString(string: value, attributes: Style.statValue)
+                .draw(at: CGPoint(x: x, y: bandH - 46))
+            NSAttributedString(string: label, attributes: Style.statLabel)
+                .draw(at: CGPoint(x: x, y: bandH - 20))
+            x += 130
+        }
+        return bandH + 16
+    }
+
+    /// A snapshot of the walk with the full route faint, the walked stretch bold, and the
+    /// stops numbered — the same map that's on screen, sized for the page.
+    private static func walkMap(_ walk: TrailWalk) -> UIImage? {
+        guard !walk.path.isEmpty else { return nil }
+        let options = MKMapSnapshotter.Options()
+        options.region = region(fitting: walk.path)
+        options.size = CGSize(width: contentWidth, height: 210)
+        options.pointOfInterestFilter = .excludingAll
+
+        var result: UIImage?
+        let group = DispatchGroup(); group.enter()
+        MKMapSnapshotter(options: options).start(with: .global()) { snapshot, _ in
+            defer { group.leave() }
+            guard let snapshot else { return }
+            result = UIGraphicsImageRenderer(size: options.size).image { _ in
+                snapshot.image.draw(at: .zero)
+                stroke(walk.fullPath.map { snapshot.point(for: $0) },
+                       colour: trailGreen.withAlphaComponent(0.3), width: 2)
+                stroke(walk.path.map { snapshot.point(for: $0) }, colour: trailGreen, width: 3.5)
+                for (i, stop) in walk.stops.enumerated() {
+                    let c = snapshot.point(for: stop.site.coordinate)
+                    let r: CGFloat = 11
+                    let disc = CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
+                    gold.setFill(); UIBezierPath(ovalIn: disc).fill()
+                    UIColor.white.setStroke()
+                    let ring = UIBezierPath(ovalIn: disc); ring.lineWidth = 1.5; ring.stroke()
+                    let n = NSAttributedString(string: "\(i + 1)", attributes: [
+                        .font: UIFont.systemFont(ofSize: 12, weight: .bold), .foregroundColor: ink])
+                    let s = n.size()
+                    n.draw(at: CGPoint(x: c.x - s.width / 2, y: c.y - s.height / 2))
+                }
+            }
+        }
+        _ = group.wait(timeout: .now() + 15)
+        return result
+    }
+
+    private static func stroke(_ points: [CGPoint], colour: UIColor, width: CGFloat) {
+        guard points.count > 1 else { return }
+        let path = UIBezierPath()
+        path.move(to: points[0])
+        for p in points.dropFirst() { path.addLine(to: p) }
+        colour.setStroke()
+        path.lineWidth = width; path.lineJoinStyle = .round; path.lineCapStyle = .round
+        path.stroke()
+    }
+
+    static func writeTemporaryFile(_ walk: TrailWalk) -> URL? {
+        let data = render(walk, placeName: nil)
+        let safe = walk.trail.name.replacingOccurrences(of: "/", with: "-")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("Chronicarum — \(safe).pdf")
+        return (try? data.write(to: url, options: .atomic)) == nil ? nil : url
     }
 
     /// Written to a temp file so it can be shared with a sensible filename rather than
