@@ -51,7 +51,10 @@ REGIONS = {
     "nordic":          (54.5, 4.0, 71.5, 31.6),
     "se_europe":       (34.5, 19.0, 48.6, 30.2),  # Greece, E Balkans, Romania, Bulgaria
     "usa":             (24.0, -125.0, 49.5, -66.5),
+    "canada":          (49.0, -141.0, 70.0, -52.0),   # overlaps the US top edge; dedup by id
     "australia_nz":    (-48.0, 112.0, -9.5, 179.5),
+    "japan":           (24.0, 122.0, 46.0, 146.0),
+    "south_africa":    (-35.0, 16.0, -22.0, 33.5),
 }
 
 # route -> our activity bucket. Walking and cycling only; horse/ski/canoe routes are real

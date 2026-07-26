@@ -1383,13 +1383,30 @@ at load — the South West Coast Path's OSM-wiki link is dropped while the Thame
 where present; a trail with no recorded climb simply doesn't mention climb, rather than
 claiming zero.
 
-**A known gap:** ascent lands on only 6% because the famous long paths tag it on the
-superroute *parent*, which carries no geometry and so was dropped at import (the merge rebuilds
-from the child stages). Recovering parent-only tags — fetching the parents and reading their
-tags without their geometry — is the obvious next lift for ascent coverage.
+**A gap investigated and closed off.** Ascent lands on only 6%, and the first guess was that
+the famous long paths tag it on the superroute *parent* (dropped at import for having no
+geometry) — so recovering parent tags looked like an easy lift. **Measured, it isn't:** across
+Britain, France and central Europe, ascent sits on **595 stages and exactly 1 geometry-less
+parent**, and not one of the GB flagships — Pennine Way, West Highland Way, South West Coast
+Path, Cotswold Way — carries an ascent tag at all. 6% is simply what OSM has tagged, and it is
+tagged on the stages the merge already sums. Parent recovery would gain a single trail, so it
+was not built — the hypothesis is recorded here as tested and rejected rather than pending.
 
-**Still to come.** Parent-tag recovery for ascent, the public-domain USGS/NPS swap for the
-US, and regions beyond Europe/US/Oceania.
+### Wider still: Canada, East Asia (build 34)
+
+Three more regional boxes — Canada, Japan, South Africa — took the layer to **10,299 trails**.
+Canada added 86 (the Trans Canada Trail, the International Appalachian Trail); the Japan box,
+drawn wide, also caught the Korean peninsula and brought 278 between them (the Baekdudaegan
+ridge, the Nakdong River cycle path). South Africa returned **2** — OSM simply has almost no
+national-route tagging there — so it stays in the query for when the data catches up, but the
+coverage line honestly reads "Europe, North America, East Asia, and Australia". Japan 504'd on
+the primary Overpass endpoint and, again, the second endpoint carried it.
+
+**Still to come.** The public-domain USGS/NPS swap for the US (sheds ODbL attribution where
+federal data is cleaner), and the regions still thin or blank — South America, most of Africa,
+South and South-East Asia — which is as much about OSM's own coverage as about our boxes.
+Elevation, if it is ever worth it, needs a DEM sampled along each route — a heavier pipeline
+than reading a tag.
 
 ### The sourcing research (July 2026)
 

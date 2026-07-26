@@ -123,8 +123,8 @@ struct TrailsView: View {
                 .foregroundStyle(.secondary)
             Text("No national trails within 150 km")
                 .font(.headline)
-            Text("The outdoor layer covers Europe, the United States, and Australia so far. "
-                 + "More regions to come.")
+            Text("The outdoor layer covers Europe, North America, East Asia, and Australia so "
+                 + "far. More regions to come.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
