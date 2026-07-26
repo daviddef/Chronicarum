@@ -27,10 +27,19 @@ struct TrailDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         header
                         stats
-                        Text("\(trail.networkLabel) · \(trail.activity.title). Sourced from "
-                             + "OpenStreetMap; check the route on the ground before setting out.")
+                        Text("\(trail.networkLabel) · \(trail.activity.title)\(trail.isLoop ? " · A loop" : ""). "
+                             + "Sourced from OpenStreetMap; check the route on the ground before "
+                             + "setting out.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+
+                        if let website = trail.website {
+                            Link(destination: website) {
+                                Label("Official route page", systemImage: "safari")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(colour)
+                            }
+                        }
 
                         // Composing a day around the route is a walking idea — a cycle day
                         // is a different shape of thing, so this offers it for walks only.
@@ -112,13 +121,21 @@ struct TrailDetailView: View {
         }
     }
 
+    /// Length always; climb only where OSM records it; then the day estimate. A missing
+    /// figure is left out rather than shown as zero.
+    private var statItems: [(String, String)] {
+        var items = [(trail.lengthLabel, "length")]
+        if trail.ascentM > 0 { items.append(("\(trail.ascentM.formatted()) m", "of climb")) }
+        items.append((trail.dayEstimate == 1 ? "1 day" : "\(trail.dayEstimate) days", "at an easy pace"))
+        return items
+    }
+
     private var stats: some View {
         HStack(spacing: 0) {
-            stat(trail.lengthLabel, "length")
-            Divider().frame(height: 34)
-            stat(trail.dayEstimate == 1 ? "1 day" : "\(trail.dayEstimate) days", "at an easy pace")
-            Divider().frame(height: 34)
-            stat(trail.activity.title, trail.isInternational ? "international" : "national")
+            ForEach(Array(statItems.enumerated()), id: \.offset) { i, item in
+                if i > 0 { Divider().frame(height: 34) }
+                stat(item.0, item.1)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)

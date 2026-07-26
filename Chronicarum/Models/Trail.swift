@@ -38,6 +38,15 @@ struct Trail: Identifiable {
     /// that cannot be near a point with four comparisons, before any per-vertex scan.
     let minLat: Double, maxLat: Double, minLon: Double, maxLon: Double
 
+    /// Metres of climb, where OSM records it (0 = not recorded — shown as absent, not zero).
+    let ascentM: Int
+    /// The route's official page, where OSM has one.
+    let website: URL?
+    /// A there-and-back / circular route rather than point-to-point, where tagged.
+    let isLoop: Bool
+
+    var ascentLabel: String? { ascentM > 0 ? "\(ascentM.formatted()) m of climb" : nil }
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -132,9 +141,15 @@ enum TrailData {
               let polys = cols["poly"] as? [String]
         else { return [] }
 
+        // Metadata columns are newer; tolerate their absence so an older bundle still loads.
+        let ascents = cols["ascent"] as? [Int] ?? Array(repeating: 0, count: ids.count)
+        let urls    = cols["url"]    as? [String] ?? Array(repeating: "", count: ids.count)
+        let loops   = cols["loop"]   as? [Int] ?? Array(repeating: 0, count: ids.count)
+
         let count = ids.count
         guard [names.count, acts.count, tiers.count, kms.count,
-               lats.count, lons.count, polys.count].allSatisfy({ $0 == count }) else {
+               lats.count, lons.count, polys.count,
+               ascents.count, urls.count, loops.count].allSatisfy({ $0 == count }) else {
             assertionFailure("trails.json has ragged columns — rebuild it")
             return []
         }
@@ -162,9 +177,22 @@ enum TrailData {
                 latitude: lats[i],
                 longitude: lons[i],
                 segments: segments,
-                minLat: loLat, maxLat: hiLat, minLon: loLon, maxLon: hiLon))
+                minLat: loLat, maxLat: hiLat, minLon: loLon, maxLon: hiLon,
+                ascentM: ascents[i],
+                website: officialWebsite(urls[i]),
+                isLoop: loops[i] == 1))
         }
         return trails
+    }
+
+    /// An OSM `website` tag is only shown as the route's *official page* if it actually is
+    /// one — a link to the OpenStreetMap wiki or a Wikipedia article is reference material,
+    /// not the operator's site, and mislabelling it "official" would be worse than absent.
+    private static func officialWebsite(_ raw: String) -> URL? {
+        guard !raw.isEmpty, let url = URL(string: raw),
+              let host = url.host?.lowercased() else { return nil }
+        let meta = ["openstreetmap.org", "wikipedia.org", "wikimedia.org", "wikidata.org"]
+        return meta.contains(where: host.contains) ? nil : url
     }
 
     /// Decode a Google-algorithm encoded polyline (precision 5) — the compact form the

@@ -121,6 +121,19 @@ def fetch():
     return {"elements": list(by_id.values())}
 
 
+def parse_int(value):
+    """OSM numeric tags are free text — '1050', '1,050 m', '1050m'. Pull the leading number,
+    or 0 when there isn't a sensible one."""
+    if not value:
+        return 0
+    digits = "".join(c for c in str(value).split(".")[0] if c.isdigit())
+    try:
+        n = int(digits)
+    except ValueError:
+        return 0
+    return n if 0 < n < 100000 else 0   # guard against a mis-tagged metre-of-string
+
+
 def haversine_km(a, b):
     R = 6371.0
     lat1, lon1, lat2, lon2 = map(math.radians, (a[0], a[1], b[0], b[1]))
@@ -275,8 +288,11 @@ def build():
     elements = raw.get("elements", [])
     print(f"  {len(elements)} route relations returned", file=sys.stderr)
 
-    # First pass: one segment per qualifying relation.
-    segments = []   # (base, activity, tier, km, simplified_points, rel_id)
+    # First pass: one segment per qualifying relation, with the useful relation-level tags
+    # OSM carries directly — ascent (metres of climb), an official website, and whether the
+    # route is a loop. Coverage varies (website ~42%, roundtrip ~17%, ascent ~7%) but every
+    # value is real and free — it is already in the response we fetched for the geometry.
+    segments = []
     for rel in elements:
         tags = rel.get("tags", {})
         name = tags.get("name", "").strip()
@@ -290,14 +306,18 @@ def build():
         km = polyline_length_km(pts)
         if km <= 0:
             continue
-        segments.append((base_name(name), activity, network, km,
-                         simplify(pts, RDP_EPSILON_DEG), rel["id"]))
+        segments.append({
+            "base": base_name(name), "activity": activity, "tier": network,
+            "km": km, "poly": simplify(pts, RDP_EPSILON_DEG), "id": rel["id"],
+            "ascent": parse_int(tags.get("ascent")),
+            "website": (tags.get("website") or tags.get("url") or "").strip(),
+            "roundtrip": tags.get("roundtrip") == "yes",
+        })
 
     # Second pass: gather stages that share a base name + activity.
     groups = {}
-    for base, activity, network, km, simplified, rel_id in segments:
-        groups.setdefault((base, activity), []).append(
-            {"tier": network, "km": km, "poly": simplified, "id": rel_id})
+    for s in segments:
+        groups.setdefault((s["base"], s["activity"]), []).append(s)
 
     # Third pass: split each name-group into geographically-connected clusters, then emit one
     # trail per cluster. Within Great Britain a shared name meant one route; across a
@@ -314,6 +334,12 @@ def build():
             mid = point_at_half_length(longest["poly"])
             tier = max((s["tier"] for s in cluster),
                        key=lambda t: TIER_RANK.get(t, 0))
+            # Total climb is the sum over the stages that carry it; the website and the
+            # loop flag are route properties, taken from the longest stage (falling back to
+            # any stage that has one). 0 / "" mean "not recorded", which the app shows as
+            # simply absent rather than as a claim.
+            ascent = sum(s["ascent"] for s in cluster)
+            website = longest["website"] or next((s["website"] for s in cluster if s["website"]), "")
             trails.append({
                 "id": f"trail/{longest['id']}",
                 "name": base,
@@ -324,11 +350,15 @@ def build():
                 "lon": round(mid[1], 6),
                 # Segments joined by ';' — safe, below the encoded-polyline alphabet (63+).
                 "poly": ";".join(encode_polyline(s["poly"]) for s in cluster),
+                "ascent": ascent,
+                "url": website,
+                "loop": 1 if longest["roundtrip"] else 0,
             })
     trails.sort(key=lambda t: -t["km"])
 
     columns = {k: [t[k] for t in trails]
-               for k in ("id", "name", "activity", "tier", "km", "lat", "lon", "poly")}
+               for k in ("id", "name", "activity", "tier", "km", "lat", "lon", "poly",
+                         "ascent", "url", "loop")}
     with open(OUT, "w") as f:
         json.dump(columns, f, ensure_ascii=False, separators=(",", ":"))
 

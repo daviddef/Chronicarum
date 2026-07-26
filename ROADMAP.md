@@ -1365,8 +1365,31 @@ passes more (the Thames walk correctly heads into the city, not out of it). And 
 walking/stopping split was rebalanced from 60/40 to half-and-half: a 17 km march left room for
 a single long visit, and a day on a trail should breathe at more than one.
 
-**Still to come.** Ascent, surface and difficulty (a second extraction pass), the
-public-domain USGS/NPS swap for the US, and regions beyond Europe/US/Oceania.
+### Richer trail data, from tags we already had (build 33)
+
+The "second extraction pass" turned out to need no new query at all: OSM carries route
+metadata on the relation itself, and it was already sitting in the cached responses. A probe
+across 16,752 relations found what was worth taking and what wasn't — **website ~42%**,
+roundtrip ~17%, **ascent ~7%** (sparse but real: 1,050 m, 660 m), against `sac_scale` at 1.5%
+and often mis-tagged ("1"), and `description` at 19% but frequently an internal stage label
+rather than prose. So three fields were extracted — **metres of climb, an official route
+page, and whether it's a loop** — and difficulty and description were left out as too sparse
+or too noisy to show honestly.
+
+The website is only labelled *official* when it is one: a `website` tag pointing at the OSM
+wiki or a Wikipedia article is reference material, not the operator's site, and is filtered
+at load — the South West Coast Path's OSM-wiki link is dropped while the Thames Path's
+`nationaltrail.co.uk` and the Camino del Cid's own site are kept. Every figure is shown only
+where present; a trail with no recorded climb simply doesn't mention climb, rather than
+claiming zero.
+
+**A known gap:** ascent lands on only 6% because the famous long paths tag it on the
+superroute *parent*, which carries no geometry and so was dropped at import (the merge rebuilds
+from the child stages). Recovering parent-only tags — fetching the parents and reading their
+tags without their geometry — is the obvious next lift for ascent coverage.
+
+**Still to come.** Parent-tag recovery for ascent, the public-domain USGS/NPS swap for the
+US, and regions beyond Europe/US/Oceania.
 
 ### The sourcing research (July 2026)
 
