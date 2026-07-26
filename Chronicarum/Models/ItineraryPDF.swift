@@ -113,7 +113,10 @@ enum ItineraryPDF {
 
         for day in plan.days where !day.stops.isEmpty {
             var coords = day.stops.map(\.site.coordinate)
-            if day.returnMinutes != nil { coords.append(plan.origin) }
+            // A looping day closes back on the first stop, matching the on-screen route.
+            if day.returnMinutes != nil, let first = day.stops.first {
+                coords.append(first.site.coordinate)
+            }
 
             let options = MKMapSnapshotter.Options()
             options.region = region(fitting: coords)
@@ -162,7 +165,9 @@ enum ItineraryPDF {
             snapshot.image.draw(at: .zero)
 
             var points = day.stops.map { snapshot.point(for: $0.site.coordinate) }
-            if day.returnMinutes != nil { points.append(snapshot.point(for: origin)) }
+            if day.returnMinutes != nil, let first = day.stops.first {
+                points.append(snapshot.point(for: first.site.coordinate))
+            }
 
             // The route line.
             if points.count > 1 {

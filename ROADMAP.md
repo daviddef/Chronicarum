@@ -1468,6 +1468,64 @@ West Coast Path corridor, or a EuroVelo stretch), write the Overpass extraction 
 `nwn`/`iwn`/`ncn`/`icn` relations, decide bundled-columnar (like the sites) vs on-demand
 fetch, and teach `TripPlanner` the follow-don't-route distinction.
 
+## "With the kids" — the things kids actually want (sourcing researched)
+
+Reported from a real user, in Brisbane: *"With the kids says 10 places, but I don't see any
+parks, playgrounds, beaches — all the things kids actually want."* Correct, and it is a data
+gap, not a filter bug. The "With the kids" intent searches the **heritage catalogue** —
+castles, museums, ruins — and there is no other kind of place in it. A four-year-old does not
+want a scheduled monument; they want a playground and a beach. None of that has ever been in
+the app.
+
+### What's actually mappable — a Brisbane probe
+
+The same source the trails came from answers this too. An Overpass probe of inner-metro
+Brisbane, by tag:
+
+| tag | total | named | verdict |
+|---|--:|--:|---|
+| `leisure=playground` | 1,101 | 82 | **keep all** — a playground is a destination whether or not it's named |
+| `leisure=park` | 2,117 | 1,575 | keep named |
+| `leisure=swimming_pool` | 3,521 | 14 | **noise** — 3,500 are backyard pools; keep only named public ones |
+| `leisure=garden` | 1,069 | 58 | **noise** — private residential gardens; keep only botanical/named |
+| `tourism=picnic_site` | 229 | 10 | keep named |
+| `leisure=nature_reserve` | 68 | 61 | keep named |
+| `tourism=attraction` | 64 | 64 | keep |
+| `natural=beach` | 12* | 2 | keep named (*inland box; the real ones are bayside) |
+| `leisure=water_park` | 3 | 2 | keep all (Chermside Waterpark) |
+| `tourism=zoo` | 2 | 1 | keep all (Lone Pine Koala Sanctuary) |
+| `tourism=aquarium` / `theme_park` | 0 | — | none here — they're up on the Gold Coast |
+
+**The lesson is the same one the heritage import taught, in a new place: the raw layer is a
+mix of genuine destinations and private noise.** Playgrounds, named parks, the koala
+sanctuary, the water park are gold; the 3,521 "swimming pools" are overwhelmingly someone's
+backyard, and the 1,069 "gardens" are front lawns. A naïve pull would bury a real destination
+under a thousand private plots — exactly the failure the trail work's `network` tier and the
+catalogue's significance floor exist to prevent.
+
+### The plan (not built yet)
+
+- **Source & licence:** OpenStreetMap `leisure`/`tourism`/`natural` POIs, ODbL — the same
+  collective-database, Produced-Work, attributed-on-request footing as the trails, so the
+  licence question is already answered.
+- **A curation rule per category, not one blanket filter.** Keep *all* of the destinations
+  that are kid-places by their very type (playground, water_park, zoo, aquarium, theme_park);
+  keep the *named* ones where the type is broad (park, nature_reserve, beach, picnic_site,
+  attraction); and hard-filter the two noisy tags — swimming pools to named public baths,
+  gardens to botanical — or drop them.
+- **A "family richness" score to rank**, the kids' analogue of significance: a playground
+  *inside* a named park with toilets, water, shade and a fence (toddler-safe) outranks a bare
+  pocket park, read from OSM sub-tags (`playground=*`, `toilets`, `drinking_water`, `bbq`,
+  `shade`, `fenced`) and containment.
+- **Model fit:** these are points, like sites, so the cleanest path is a **family POI layer**
+  scored for kid-appeal and wired into the "With the kids" (and "A day outdoors") intents, so
+  a day can string a castle *and* a playground *and* the beach — not a parallel silo the
+  planner can't see. New `SiteType`s (park, playground, beach, pool, wildlife) plus a
+  `family` theme is the likely shape.
+- **A visit-duration and open-air truth these carry that heritage doesn't:** a playground is
+  ~45 minutes, a beach an afternoon, and all of it is genuinely outdoors — so this layer also
+  quietly improves "A day outdoors", which today leans on heritage proxies.
+
 ## Open question: institutional sites
 
 The US register carries categories that are arguably distressing and are currently **not**

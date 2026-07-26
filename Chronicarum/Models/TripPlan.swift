@@ -500,10 +500,14 @@ enum TripPlanner {
             // A there-and-back day returns you to where you began. Only worth doing when
             // it is a walk — nobody wants a "drive 40 min back to the start" line — so it
             // rides on the walking modes, which is exactly when it is asked for (a step
-            // goal). The return is the walk from the last stop home.
+            // goal). The loop closes back on the *first stop*, not on where you happened to
+            // be standing when you asked: the day is a circuit of the places, so "back to the
+            // start" means stop 1, and the map reads as a clean loop rather than a spur out
+            // to your current location and back.
             var returnMinutes: Int? = nil
-            if loopBack, let last = dayStops.last {
-                let backKm = last.site.approxDistanceKm(from: origin)
+            if loopBack, let last = dayStops.last, let first = dayStops.first,
+               last.site.id != first.site.id {
+                let backKm = last.site.approxDistanceKm(from: first.site.coordinate)
                 returnMinutes = TravelMode.walking.estimatedMinutes(overKm: backKm)
             }
             built.append(PlannedDay(index: dayIndex, stops: dayStops,

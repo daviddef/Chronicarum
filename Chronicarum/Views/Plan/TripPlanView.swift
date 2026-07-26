@@ -158,14 +158,14 @@ struct TripPlanView: View {
                                 }
                             }
 
-                            // A there-and-back walk closes the loop home.
+                            // A there-and-back walk closes the loop on the first stop.
                             if let returnMinutes = day.returnMinutes {
                                 HStack(spacing: 12) {
                                     Image(systemName: "figure.walk")
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                         .frame(width: 34)
-                                    Text("Back to where you started")
+                                    Text("Loop back to the start")
                                         .font(.subheadline.weight(.medium))
                                     Spacer(minLength: 0)
                                     Text("\(returnMinutes)m")
@@ -587,9 +587,10 @@ private struct TripMapView: View {
                 result.append(DayLeg(id: "\(day.index)-\(i)", coords: [from, stop.site.coordinate], isTrail: false))
             }
         }
-        if day.returnMinutes != nil, let last = day.stops.last {
+        // The loop closes back on the first stop, so the circuit reads 1 → … → n → 1.
+        if day.returnMinutes != nil, let last = day.stops.last, let first = day.stops.first {
             result.append(DayLeg(id: "\(day.index)-ret",
-                                 coords: [last.site.coordinate, plan.origin], isTrail: false))
+                                 coords: [last.site.coordinate, first.site.coordinate], isTrail: false))
         }
         return result
     }
