@@ -34,9 +34,19 @@ struct Trail: Identifiable {
     /// One polyline per stage. Kept as separate segments so an out-of-order section never
     /// draws a line jumping across the map to the next.
     let segments: [[CLLocationCoordinate2D]]
+    /// Bounding box of the whole route, computed once at load. Lets a caller reject a trail
+    /// that cannot be near a point with four comparisons, before any per-vertex scan.
+    let minLat: Double, maxLat: Double, minLon: Double, maxLon: Double
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    /// True if any part of the route could lie within `padDeg` of the box — a cheap gate.
+    func mayReach(minLat lo: Double, maxLat hi: Double,
+                  minLon lw: Double, maxLon he: Double, padDeg: Double) -> Bool {
+        maxLat >= lo - padDeg && minLat <= hi + padDeg
+            && maxLon >= lw - padDeg && minLon <= he + padDeg
     }
 
     var isInternational: Bool { tier == "iwn" || tier == "icn" }
@@ -136,6 +146,13 @@ enum TrailData {
                 .split(separator: ";", omittingEmptySubsequences: true)
                 .map { decodePolyline(String($0)) }
                 .filter { !$0.isEmpty }
+            var loLat = lats[i], hiLat = lats[i], loLon = lons[i], hiLon = lons[i]
+            for seg in segments {
+                for p in seg {
+                    loLat = min(loLat, p.latitude); hiLat = max(hiLat, p.latitude)
+                    loLon = min(loLon, p.longitude); hiLon = max(hiLon, p.longitude)
+                }
+            }
             trails.append(Trail(
                 id: ids[i],
                 name: names[i],
@@ -144,7 +161,8 @@ enum TrailData {
                 km: kms[i],
                 latitude: lats[i],
                 longitude: lons[i],
-                segments: segments))
+                segments: segments,
+                minLat: loLat, maxLat: hiLat, minLon: loLon, maxLon: hiLon))
         }
         return trails
     }

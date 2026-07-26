@@ -296,7 +296,14 @@ enum ItineraryPDF {
                     case .transit: verb = "by transport"
                     case .driving, .any: verb = "drive"
                     }
-                    let legText = "\(stop.travelMinutes) min \(verb)"
+                    // A walked leg that follows a named path says so, in place of the bare
+                    // minutes — the reverse composition, carried onto the printed page.
+                    let legText: String
+                    if let trail = stop.trailLeg {
+                        legText = "\(String(format: "%.1f", trail.alongKm)) km along the \(trail.trailName)"
+                    } else {
+                        legText = "\(stop.travelMinutes) min \(verb)"
+                    }
                     let leg = NSAttributedString(string: legText.uppercased(), attributes: Style.leg)
                     leg.draw(at: CGPoint(x: textX, y: ty))
                     ty += 12

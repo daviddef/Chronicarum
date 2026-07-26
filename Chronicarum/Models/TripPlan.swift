@@ -118,6 +118,19 @@ enum TravelMode: String, CaseIterable, Identifiable {
 }
 
 /// A single stop in a day: somewhere to go, and how long it takes to get there.
+/// A walked leg that turns out to follow a named trail — the reverse composition: an
+/// ordinary heritage day discovering it is walking along the coast path between two of its
+/// own stops. Nil on every leg that isn't, which is most of them, so a plan with no trail
+/// underfoot is byte-for-byte what it was before this existed.
+struct TrailLeg {
+    let trailName: String
+    /// The trail's own geometry between the two stops, so the leg draws as it really goes
+    /// rather than as a straight line.
+    let coordinates: [CLLocationCoordinate2D]
+    /// Distance along the trail between the stops — the "walk 3.2 km along the …" figure.
+    let alongKm: Double
+}
+
 struct PlannedStop: Identifiable {
     let site: Site
     /// Travel minutes from the previous stop (or from the trip's start, for the first).
@@ -141,6 +154,8 @@ struct PlannedStop: Identifiable {
     /// getting there needs a ferry the planner knows nothing about. The leg keeps its
     /// straight-line estimate, which would otherwise present a sea crossing as a drive.
     var noRoadRoute: Bool = false
+    /// Set by `TrailComposer` when this walked leg follows a named trail.
+    var trailLeg: TrailLeg? = nil
 
     var id: String { site.id }
 }
@@ -495,7 +510,10 @@ enum TripPlanner {
                                     date: dayDate, returnMinutes: returnMinutes))
         }
 
-        return TripPlan(days: built, origin: origin, themes: themes,
-                        startDate: startDate, mode: mode, relaxedTier: relaxedTier)
+        let plan = TripPlan(days: built, origin: origin, themes: themes,
+                            startDate: startDate, mode: mode, relaxedTier: relaxedTier)
+        // Reverse composition: notice where a walked leg follows a named trail. Additive —
+        // it only annotates, and returns the plan untouched when nothing is underfoot.
+        return TrailComposer.enrich(plan)
     }
 }

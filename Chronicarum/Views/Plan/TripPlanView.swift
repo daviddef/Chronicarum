@@ -493,6 +493,15 @@ private struct PlannedStopRow: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(1)
+
+                // The reverse composition, said out loud: this walked leg follows a path.
+                if let trail = stop.trailLeg {
+                    Label("Along the \(trail.trailName) · \(String(format: "%.1f", trail.alongKm)) km",
+                          systemImage: "figure.walk")
+                        .font(.caption2.weight(.medium))
+                        .foregroundColor(Color(hex: "#2E9E5B"))
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -558,11 +567,31 @@ private struct TripMapView: View {
 
     /// The line to draw for a day, closed back to the origin when the day loops home so the
     /// there-and-back walk reads as a loop rather than a line stopping in the middle.
-    private func route(for day: PlannedDay) -> [CLLocationCoordinate2D] {
-        var coords = day.stops.map(\.site.coordinate)
-        guard !coords.isEmpty else { return coords }
-        if day.returnMinutes != nil { coords.append(plan.origin) }
-        return coords
+    /// One drawable leg of a day: straight between two stops, or — where the reverse
+    /// composition found one — the actual geometry of a trail the leg follows.
+    private struct DayLeg: Identifiable {
+        let id: String
+        let coords: [CLLocationCoordinate2D]
+        let isTrail: Bool
+    }
+
+    private func legs(for day: PlannedDay) -> [DayLeg] {
+        var result: [DayLeg] = []
+        var prev: CLLocationCoordinate2D?
+        for (i, stop) in day.stops.enumerated() {
+            defer { prev = stop.site.coordinate }
+            guard let from = prev else { continue }   // no line into the first stop
+            if let trail = stop.trailLeg {
+                result.append(DayLeg(id: "\(day.index)-\(i)", coords: trail.coordinates, isTrail: true))
+            } else {
+                result.append(DayLeg(id: "\(day.index)-\(i)", coords: [from, stop.site.coordinate], isTrail: false))
+            }
+        }
+        if day.returnMinutes != nil, let last = day.stops.last {
+            result.append(DayLeg(id: "\(day.index)-ret",
+                                 coords: [last.site.coordinate, plan.origin], isTrail: false))
+        }
+        return result
     }
 
     /// A region that holds every stop with air around it, so the numbered pins never crowd
@@ -591,10 +620,15 @@ private struct TripMapView: View {
 
     var body: some View {
         let gold = Color(hex: "#C9A84C")
+        let trailGreen = Color(hex: "#2E9E5B")
         return Map(position: $position) {
             ForEach(plan.days) { day in
-                MapPolyline(coordinates: route(for: day))
-                    .stroke(gold.opacity(0.8), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                ForEach(legs(for: day)) { leg in
+                    MapPolyline(coordinates: leg.coords)
+                        .stroke(leg.isTrail ? trailGreen : gold.opacity(0.8),
+                                style: StrokeStyle(lineWidth: leg.isTrail ? 3.5 : 2.5,
+                                                   lineCap: .round, lineJoin: .round))
+                }
             }
             // Numbered continuously across the trip, so the pins read in the order you'd
             // do them. `enumerated` keeps the index stable rather than mutating a captured

@@ -26,6 +26,7 @@
 		442DE1FB430012F71E0D0259 /* TrailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913B49EDB6DAEA56883FD299 /* TrailsView.swift */; };
 		44E60501A59F9918002BF766 /* OpeningPattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = 490E6A73385E51BC23C07148 /* OpeningPattern.swift */; };
 		50ADEE7ACE31BFCF904012B0 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C5FC4B65D5C0E32EDC0759 /* SplashView.swift */; };
+		50DF8AB749ED2E81226936E9 /* TrailComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50464F107F87229C5E9A398A /* TrailComposer.swift */; };
 		544B66564EE72FCF3F3BD20F /* MapFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769AD962F594322CDA0274 /* MapFilterView.swift */; };
 		5C647BE4B0D9E7D072855CAE /* merimee_history.json in Resources */ = {isa = PBXBuildFile; fileRef = B43CE8B5F5585283B332BAAD /* merimee_history.json */; };
 		5E776AD641F7BC9E03189BD7 /* TripPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */; };
@@ -84,6 +85,7 @@
 		4508BC39D0EDB1D9E79F9F46 /* AppFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFocus.swift; sourceTree = "<group>"; };
 		490E6A73385E51BC23C07148 /* OpeningPattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningPattern.swift; sourceTree = "<group>"; };
 		4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterSheetView.swift; sourceTree = "<group>"; };
+		50464F107F87229C5E9A398A /* TrailComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailComposer.swift; sourceTree = "<group>"; };
 		5AB186FC00439FF284794EAF /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
 		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
 		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
@@ -286,6 +288,7 @@
 				BAA2C1E3FA04D4125019FD3C /* Theme.swift */,
 				33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */,
 				3492F1D7CC9FEF6765EE379D /* Trail.swift */,
+				50464F107F87229C5E9A398A /* TrailComposer.swift */,
 				0270AF8C8A4B53AC653D0A65 /* TrailPlan.swift */,
 				1E96263CF7E67D0B7CB336A0 /* TripPlan.swift */,
 				A26B76309F8494021C50CC55 /* WikipediaExtract.swift */,
@@ -438,6 +441,7 @@
 				01707DD0B2D1B1B8DF7C689E /* Theme.swift in Sources */,
 				D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */,
 				937D77C1F8F78208891BF78F /* Trail.swift in Sources */,
+				50DF8AB749ED2E81226936E9 /* TrailComposer.swift in Sources */,
 				369C3A3500973D4FE6143B89 /* TrailDetailView.swift in Sources */,
 				861D37DE790F9221FD7BEB28 /* TrailPlan.swift in Sources */,
 				C408BFA3DAE95E5A9D6AD3BB /* TrailPlanView.swift in Sources */,
@@ -504,7 +508,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -589,7 +593,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_NS_ASSERTIONS = NO;

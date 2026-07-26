@@ -1237,12 +1237,13 @@ you are standing at.
 
 ## The outdoors — trails, walks, bike rides (browser + trail-anchored planning shipped)
 
-Requested; sourcing researched (below), and built across three slices: a **browser** for the
+Requested; sourcing researched (below), and built across four slices: a **browser** for the
 named walks and rides near you (build 27), **trail-anchored planning** — a day built around a
-stretch of a path, stopping at the heritage it passes (build 28), and **coverage** across
-Europe, the contiguous US, and Australia/New Zealand (build 29). The composition the research
-kept pointing at now exists in one of its two directions; the other, and richer trail data,
-are what remain (see "Still to come").
+stretch of a path, stopping at the heritage it passes (build 28), **coverage** across Europe,
+the contiguous US, and Australia/New Zealand (build 29), and the **reverse composition** — an
+ordinary heritage day noticing where it already walks along a trail (build 30). Both
+directions of the point-and-line hybrid the research pointed at now exist; richer trail data
+is what remains (see "Still to come").
 
 ### Coverage: Europe, the US, Australia (build 29)
 
@@ -1309,12 +1310,31 @@ pieces do the work:
   of 258k before the exact test, ordered by distance-along, the same parent/child and
   sensitivity rules the trip planner uses, trimmed to fit the hours.
 
-**Still to come — the other direction, and richer data.** The reverse composition — a normal
-heritage day that happens to *fold in* a trail as the connective leg between two stops that
-both sit on it — is not built; this slice makes the trail the spine, not the connector. The
-data still carries only length and shape: ascent profile, surface, and difficulty are the
-next extraction pass, as is a printable PDF for a trail walk. And two coverage jobs remain —
-the public-domain USGS/NPS swap for the US, and regions beyond Europe/US/Oceania.
+### The reverse composition — a trail underfoot (build 30)
+
+The other direction, now built. Slice 28 made the trail the spine; this notices where an
+*ordinary heritage day* is already walking along one. [`TrailComposer`](Chronicarum/Models/TrailComposer.swift)
+runs at the end of `TripPlanner.plan` and, for each *walked* leg, checks whether both its
+stops sit within 500 m of the same named path and the path doesn't wander to connect them; if
+so the leg becomes "walk 1.4 km along the Thames Path", drawn in the trail's own geometry —
+the river as it really bends — rather than a straight line, on the plan map, in the list, and
+in the PDF.
+
+Purely additive, and it defends the shipping planner three ways: it returns the plan
+untouched the moment a day has no walked leg (every driving plan pays one array scan and
+leaves), a per-trail bounding box rejects far routes in four comparisons before any geometry
+is touched, and a leg is only claimed when following the path is no more than ~2.5× the
+straight walk. Validated on real data: 79 heritage sites (Cutty Sark, Somerset House, Kew
+Palace, Greenwich) sit within 500 m of the Thames Path, so a London walking day that strings
+two of them together now says so.
+
+**Still to come.** Two things this slice surfaced or left: the geometry is coarse for very
+long single-stage paths (the `MAX_POINTS` cap left the Thames Path at 67 vertices over 300 km,
+so the corridor match misses sites between them) — a length-aware simplification pass would
+help both planners, and the first attempt was a performance trap worth doing carefully.
+Beyond that: ascent, surface and difficulty (a second extraction pass), a printable PDF built
+*from* a trail walk rather than a heritage day, the public-domain USGS/NPS swap for the US,
+and regions beyond Europe/US/Oceania.
 
 ### The sourcing research (July 2026)
 
