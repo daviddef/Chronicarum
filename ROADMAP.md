@@ -1505,12 +1505,25 @@ plan and looking at it:
   heritage day of three castles is deliberately left alone). The day now reads: a playground
   down the road, the museum, Lone Pine, and two local parks — verified on the printed page.
 
+### Coverage: all of Australia (build 37)
+
+SEQ's one box became eight metros — Sydney, Melbourne (split in two: the whole-city box 504'd
+both endpoints, dense as it is), Perth, Adelaide, Canberra, Hobart, Darwin — taking the layer
+to **30,963 family places** nationwide (20,425 parks, 10,024 playgrounds, the beaches, the zoos)
+at 2.9 MB. The `fetch_family.py` structure now mirrors the trails': a `REGIONS` dict, per-region
+caching, a fallback endpoint, dedup by id. The playground-from-park naming was grid-indexed so
+it stays O(n) at national scale rather than parks × playgrounds.
+
+Also tidied the near-duplicate that build 36 flagged: `dedupe_near()` drops the same place
+mapped twice — a park and its own named sub-area a few metres apart — keeping the higher-scored,
+which trimmed ~6,000 redundant rows. "Biami Yumba" now resolves to the park plus its playground,
+not two parks.
+
 ### Still to come
 
-Coverage beyond South East Queensland (the extraction is one bbox — widen `BBOX` or add
-regions as the trails did), a near-duplicate tidy ("Biami Yumba" and "Biami Yumba Park" can
-both land), and richer per-place detail (a playground's equipment, a beach's patrol flags)
-which OSM sometimes carries.
+Coverage beyond Australia (the UK, Europe and US metros are the obvious next markets, added the
+same way), and richer per-place detail (a playground's equipment, a beach's patrol flags) which
+OSM sometimes carries.
 
 ### What's actually mappable — a Brisbane probe
 

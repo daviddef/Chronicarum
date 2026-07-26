@@ -30,8 +30,22 @@ OVERPASS_ENDPOINTS = [
     "https://overpass.kumi.systems/api/interpreter",
 ]
 
-# South East Queensland: Brisbane, Moreton Bay, the Gold Coast. (south, west, north, east)
-BBOX = (-28.30, 152.60, -26.90, 153.60)
+# Metro bounding boxes (south, west, north, east). Family POIs are dense — a whole-country
+# query times out — so coverage is city-by-city where the people are. Overlaps are fine,
+# deduplicated by id. Add a box to widen.
+REGIONS = {
+    # Australia
+    "seq":       (-28.30, 152.60, -26.90, 153.60),  # Brisbane + Gold Coast + Sunshine edge
+    "sydney":    (-34.20, 150.45, -33.50, 151.40),
+    # Melbourne split in two — the whole-metro box is dense enough to 504 both endpoints.
+    "melbourne_w": (-38.25, 144.30, -37.50, 144.95),
+    "melbourne_e": (-38.25, 144.95, -37.50, 145.60),
+    "perth":     (-32.60, 115.55, -31.55, 116.25),
+    "adelaide":  (-35.40, 138.30, -34.60, 138.95),
+    "canberra":  (-35.55, 148.90, -35.05, 149.30),
+    "hobart":    (-43.10, 147.05, -42.65, 147.60),
+    "darwin":    (-12.55, 130.80, -12.30, 131.10),
+}
 
 # Each category: (osm_key, osm_value) -> (SiteType, base significance, visit minutes, keep-rule).
 # keep-rule "all" = a destination by type; "named" = only if it carries a name.
@@ -60,36 +74,47 @@ THEME_MARITIME = 1 << 6
 PLAYGROUND_NAME_RADIUS_KM = 0.4   # name an unnamed playground from a park this close
 
 
-def query():
+def query(bbox):
     keys = {}
     for (k, v) in CATEGORIES:
         keys.setdefault(k, []).append(v)
-    s, w, n, e = BBOX
+    s, w, n, e = bbox
     parts = []
     for k, vs in keys.items():
         parts.append(f'nwr["{k}"~"^({"|".join(vs)})$"]({s},{w},{n},{e});')
     return f"[out:json][timeout:180];\n(\n  " + "\n  ".join(parts) + "\n);\nout center tags;"
 
 
-def fetch():
-    cache = os.path.join(SCRIPTS, ".family_cache.json")
+def fetch_region(name, bbox):
+    cache = os.path.join(SCRIPTS, f".family_cache_{name}.json")
     if os.path.exists(cache):
-        print("using cached response (delete scripts/.family_cache.json to refresh)", file=sys.stderr)
+        print(f"  {name}: cached", file=sys.stderr)
         return json.load(open(cache)).get("elements", [])
-    data = urllib.parse.urlencode({"data": query()}).encode()
-    for attempt, ep in enumerate(OVERPASS_ENDPOINTS):
+    data = urllib.parse.urlencode({"data": query(bbox)}).encode()
+    for ep in OVERPASS_ENDPOINTS:
         try:
-            print(f"querying {ep.split('/')[2]}…", file=sys.stderr)
+            print(f"  {name}: querying {ep.split('/')[2]}…", file=sys.stderr)
             req = urllib.request.Request(ep, data=data,
                                          headers={"User-Agent": "Chronicarum/family (ODbL import)"})
             with urllib.request.urlopen(req, timeout=240) as resp:
                 raw = json.load(resp)
             json.dump(raw, open(cache, "w"))
+            print(f"  {name}: {len(raw.get('elements', []))} features", file=sys.stderr)
             return raw.get("elements", [])
         except Exception as exc:
-            print(f"  {ep.split('/')[2]} failed ({exc})", file=sys.stderr)
+            print(f"  {name}: {ep.split('/')[2]} failed ({exc})", file=sys.stderr)
             time.sleep(5)
     return []
+
+
+def fetch():
+    by_id = {}
+    for name, bbox in REGIONS.items():
+        for el in fetch_region(name, bbox):
+            by_id[f"{el['type'][0]}{el['id']}"] = el   # dedup across overlapping boxes
+        time.sleep(2)
+    print(f"  merged: {len(by_id)} unique features across {len(REGIONS)} regions", file=sys.stderr)
+    return list(by_id.values())
 
 
 def haversine_km(a, b):
@@ -131,21 +156,26 @@ def build():
     elements = fetch()
     print(f"  {len(elements)} raw features", file=sys.stderr)
 
-    # First pass: named parks, for naming the many unnamed playgrounds by the park they sit in.
-    named_parks = []
+    # First pass: named parks, indexed into a ~1 km grid so naming a playground checks only
+    # the parks in its own cell and the eight around it — O(n), not parks × playgrounds, which
+    # at national scale would be hundreds of millions of comparisons.
+    park_grid = {}
     for el in elements:
         t = el.get("tags", {})
         if t.get("leisure") == "park" and t.get("name"):
             la, lo = coord(el)
             if la is not None:
-                named_parks.append((la, lo, t["name"]))
+                park_grid.setdefault((round(la, 2), round(lo, 2)), []).append((la, lo, t["name"]))
 
     def nearest_park_name(la, lo):
         best, name = PLAYGROUND_NAME_RADIUS_KM, None
-        for pla, plo, pn in named_parks:
-            d = haversine_km((la, lo), (pla, plo))
-            if d < best:
-                best, name = d, pn
+        cla, clo = round(la, 2), round(lo, 2)
+        for dla in (-0.01, 0, 0.01):
+            for dlo in (-0.01, 0, 0.01):
+                for pla, plo, pn in park_grid.get((round(cla + dla, 2), round(clo + dlo, 2)), []):
+                    d = haversine_km((la, lo), (pla, plo))
+                    if d < best:
+                        best, name = d, pn
         return name
 
     seen = set()
@@ -193,6 +223,7 @@ def build():
         })
 
     rows.sort(key=lambda r: -r["sig"])
+    rows = dedupe_near(rows)
     columns = {k: [r[k] for r in rows]
                for k in ("id", "name", "lat", "lon", "type", "sig", "dur", "th", "desc")}
     with open(OUT, "w") as f:
@@ -203,6 +234,37 @@ def build():
     size = os.path.getsize(OUT) / 1024
     print(f"wrote {len(rows)} family places -> {OUT} ({size:.0f} KB)", file=sys.stderr)
     print("  " + ", ".join(f"{k}:{v}" for k, v in by.most_common()), file=sys.stderr)
+
+
+def dedupe_near(rows):
+    """Drop near-duplicates: the same place mapped twice — "Biami Yumba" and "Biami Yumba
+    Park" a few metres apart. Rows arrive sorted by score, so the first (best) survives and
+    a later one with the same base name within 200 m is dropped. Grid-indexed to stay O(n)."""
+    def base(n):
+        n = n.lower().strip()
+        for suf in (" park", " playground", " reserve", " gardens", " oval", " parkland"):
+            if n.endswith(suf):
+                n = n[: -len(suf)].strip()
+        return n
+    kept, grid = [], {}
+    for r in rows:
+        bn, la, lo = base(r["name"]), r["lat"], r["lon"]
+        cla, clo = round(la, 2), round(lo, 2)
+        dup = False
+        for dla in (-0.01, 0, 0.01):
+            for dlo in (-0.01, 0, 0.01):
+                for (kla, klo, kbn) in grid.get((round(cla + dla, 2), round(clo + dlo, 2)), []):
+                    if kbn == bn and haversine_km((la, lo), (kla, klo)) < 0.2:
+                        dup = True
+                        break
+                if dup:
+                    break
+            if dup:
+                break
+        if not dup:
+            kept.append(r)
+            grid.setdefault((cla, clo), []).append((la, lo, bn))
+    return kept
 
 
 def describe(sitetype, tags):

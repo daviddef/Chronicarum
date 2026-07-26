@@ -39,3 +39,4 @@ scripts/.trails_cache_*.json
 
 # Cached Overpass response for the family import.
 scripts/.family_cache.json
+scripts/.family_cache_*.json
