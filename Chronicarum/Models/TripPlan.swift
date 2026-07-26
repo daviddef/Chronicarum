@@ -339,7 +339,7 @@ enum TripPlanner {
     /// returns exactly 1 — the first plan (and the tests) stay deterministic; only when the
     /// user asks for another does anything move. The amplitude is deliberately modest: a
     /// genuinely top site should still usually win, so variants are *different*, not *worse*.
-    private static func jitter(_ id: String, _ variant: Int, amplitude: Double = 0.18) -> Double {
+    private static func jitter(_ id: String, _ variant: Int, amplitude: Double = 0.32) -> Double {
         guard variant != 0 else { return 1.0 }
         var h: UInt64 = 1469598103934665603            // FNV-1a over id + variant
         for byte in id.utf8 { h = (h ^ UInt64(byte)) &* 1099511628211 }

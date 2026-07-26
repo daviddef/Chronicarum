@@ -62,6 +62,19 @@ REGIONS = {
     "bristol":   (51.40, -2.74, 51.52, -2.48),
     "cardiff":   (51.44, -3.26, 51.55, -3.08),
     "dublin":    (53.28, -6.44, 53.44, -6.04),
+    # Continental Europe — the heritage catalogue's strongest markets. Paris and Berlin split.
+    "paris_w":   (48.80, 2.18, 48.91, 2.35),
+    "paris_e":   (48.80, 2.35, 48.91, 2.52),
+    "rome":      (41.80, 12.40, 41.99, 12.60),
+    "barcelona": (41.34, 2.09, 41.47, 2.24),
+    "madrid":    (40.35, -3.79, 40.51, -3.62),
+    "berlin_w":  (52.45, 13.18, 52.58, 13.41),
+    "berlin_e":  (52.45, 13.41, 52.58, 13.62),
+    "amsterdam": (52.31, 4.81, 52.43, 4.99),
+    "vienna":    (48.16, 16.30, 48.29, 16.46),
+    "munich":    (48.08, 11.47, 48.21, 11.66),
+    "milan":     (45.40, 9.10, 45.53, 9.26),
+    "lisbon":    (38.69, -9.23, 38.80, -9.08),
 }
 
 # Each category: (osm_key, osm_value) -> (SiteType, base significance, visit minutes, keep-rule).

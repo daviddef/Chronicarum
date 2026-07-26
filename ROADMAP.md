@@ -1530,20 +1530,37 @@ both endpoints repeatedly; a 20-minute back-off and finer splits recovered all b
 The lesson logged for next time: extend one metro batch at a time, and don't chase the last box
 against an overloaded server.
 
+### Coverage: continental Europe (build 39)
+
+Nine more metros — Paris (west), Rome, Barcelona, Berlin, Amsterdam, Vienna, Milan, Lisbon —
+took the layer to **48,446 places** at 4.5 MB. Overpass was overloaded for a second night-time
+stretch and 504'd persistently even after a fifteen-minute cool-down, so Paris-east, Madrid and
+Munich (plus the two outer-London fringes) didn't land. Rather than retry-storm an already
+struggling public server, the run stopped there and the gaps are logged for a quieter hour.
+**The rule this reinforces: one metro batch, a real back-off, and accept partial rather than
+hammer.**
+
 ### Still to come
 
-The two outer-London fringes, then Europe and US metros (same pattern), and richer per-place
-detail (a playground's equipment, a beach's patrol flags) which OSM sometimes carries.
+The Europe gaps (Paris-east, Madrid, Munich, outer London), then US metros, and richer
+per-place detail (a playground's equipment, a beach's patrol flags) which OSM sometimes carries.
 
 ## "Try another" — a different plan on demand (build 38)
 
 Asked for from the step-goal day but wanted everywhere: *"if I've done that route, generate a
 new and different one."* The planner was deterministic — same request, same day — so every plan
 now carries a **variant** seed, and a *Try another route* button at the foot of the plan bumps
-it. The seed drives a small, stable per-site jitter (`±18%`, [`TripPlanner.jitter`](Chronicarum/Models/TripPlan.swift))
+it. The seed drives a stable per-site jitter ([`TripPlanner.jitter`](Chronicarum/Models/TripPlan.swift))
 applied to both the anchor choice and the fill scoring, so comparable places trade rank and the
 day comes back different — a museum leads instead of the abbey, a different castle anchors — but
-still good, because the amplitude is modest enough that a genuinely top site usually still wins.
+still good, because the amplitude is bounded enough that a genuinely top site usually still wins.
+
+The amplitude was **tuned against a real render, not guessed**: at ±18% a Bath day barely
+moved — variant 1 came back *identical* to variant 0, because a handful of dominant sites (Roman
+Baths, Royal Crescent, the Abbey) are too far ahead for a gentle nudge to reorder. At ±32% every
+variant is distinct — one drops the Abbey and reaches Bristol Temple Meads, another brings in the
+Herschel Museum — while the three or four unmissable sites still anchor every version. Verified
+by writing the stops of variants 0–2 to a file from the headless render and reading them back.
 
 Two properties make it safe: **variant 0 returns exactly 1**, so the first plan (and every test)
 stays deterministic and only moves when asked; and the jitter is a hash of site id + variant, so

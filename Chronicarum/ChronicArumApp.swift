@@ -64,6 +64,18 @@ struct ChronicArumApp: App {
                   + "\(walkData.count) bytes to \(walkURL.path)")
         }
 
+        // Verify "Try another": three variants of the same request should differ.
+        var report = ""
+        for v in 0...2 {
+            let p = TripPlanner.plan(from: origin, themes: [], days: 1,
+                                     tier: .worthATrip, variant: v)
+            report += "variant \(v): "
+                + p.days.flatMap(\.stops).map(\.site.name).joined(separator: ", ") + "\n"
+        }
+        try? report.write(to: URL.documentsDirectory.appendingPathComponent("variants.txt"),
+                          atomically: true, encoding: .utf8)
+        NSLog("[sample-pdf] variants:\n\(report)")
+
         // A "With the kids" plan, to check the family layer flows into a real day.
         if let kids = DayIntent.all.first(where: { $0.id == "kids" }) {
             let kidsPlan = TripPlanner.plan(from: origin, themes: kids.themes, days: 1,
