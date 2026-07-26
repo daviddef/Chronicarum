@@ -1552,11 +1552,18 @@ fight it* — the delayed retry succeeded where the retry-storm failed.
 
 The family layer now spans **Australia, the UK & Ireland, continental Europe, and the US**.
 
+### Tidied and completed (build 41)
+
+LA-west landed once split in two (the whole-box query 504'd), so the US is complete — 46 metros
+across four continents, **58,634 places**. And the fast-food play areas are swept: a name +
+operator + brand filter drops "McDonald's PlayPlace" and its unnamed siblings, so a kids' day is
+never routed to a drive-through. The family layer is, for its covered markets, done and clean.
+
 ### Still to come
 
-LA-west (the one straggler), other continents as they're asked for, and richer per-place detail
-(a playground's equipment, a beach's patrol flags) which OSM sometimes carries. A little noise
-to sweep when convenient — a few "McDonald's PlayPlace" fast-food play areas tag as playgrounds.
+Other continents as they're asked for (Asia, South America, New Zealand — OSM coverage there is
+thinner), and richer per-place detail (a playground's equipment, a beach's patrol flags) which
+OSM sometimes carries but the import doesn't yet read.
 
 ## "Try another" — a different plan on demand (build 38)
 

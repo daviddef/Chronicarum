@@ -78,7 +78,8 @@ REGIONS = {
     # United States — dense metros split. Queued for a quieter Overpass window.
     "nyc_man":   (40.70, -74.02, 40.82, -73.91),
     "nyc_bkln":  (40.57, -74.04, 40.74, -73.85),
-    "la_w":      (33.95, -118.55, 34.10, -118.35),
+    "la_w1":     (33.95, -118.55, 34.10, -118.45),   # split; the whole west box 504s
+    "la_w2":     (33.95, -118.45, 34.10, -118.35),
     "la_e":      (33.95, -118.35, 34.15, -118.15),
     "chicago":   (41.80, -87.75, 41.98, -87.58),
     "sf":        (37.70, -122.52, 37.82, -122.38),
@@ -112,6 +113,11 @@ THEME_GARDENS  = 1 << 9
 THEME_MARITIME = 1 << 6
 
 PLAYGROUND_NAME_RADIUS_KM = 0.4   # name an unnamed playground from a park this close
+
+# Fast-food indoor play areas tag as playgrounds but aren't a destination. Matched against
+# name + operator + brand, so "McDonald's PlayPlace" and its unnamed siblings both go.
+FASTFOOD = ("mcdonald", "playplace", "play place", "burger king", "hungry jack", "kfc",
+            "chick-fil", "chipotle", "wendy")
 
 
 def query(bbox):
@@ -233,6 +239,11 @@ def build():
         sitetype, base, dur, rule = matched
         la, lo = coord(el)
         if la is None:
+            continue
+
+        # Fast-food indoor play areas map as playgrounds but are not a day out — drop them.
+        blob = (t.get("name", "") + " " + t.get("operator", "") + " " + t.get("brand", "")).lower()
+        if any(m in blob for m in FASTFOOD):
             continue
 
         name = (t.get("name") or "").strip()
