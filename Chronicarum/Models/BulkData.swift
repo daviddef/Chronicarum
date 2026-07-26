@@ -92,8 +92,9 @@ enum BulkSite {
 }
 
 extension SiteData {
-    /// The full catalogue: curated featured sites first, then the bulk import.
-    static let all: [Site] = featuredWithPhotos + bulk
+    /// The full catalogue: curated featured sites first, then the bulk import, then the
+    /// family layer (playgrounds, parks, beaches) so the planner can reach all of it at once.
+    static let all: [Site] = featuredWithPhotos + bulk + family
 
     /// The hand-authored sites are written in Swift and carry no Wikidata id, so they
     /// have no photo of their own. The import records the Commons image of each bulk

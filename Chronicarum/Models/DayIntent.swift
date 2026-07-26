@@ -142,14 +142,17 @@ struct DayIntent: Identifiable, Hashable {
         DayIntent(
             id: "kids",
             title: "With the kids",
-            blurb: "Castles to climb, ruins to run around, things to look at.",
+            blurb: "Playgrounds, beaches, the zoo — and castles to climb.",
             icon: "figure.and.child.holdinghands",
-            themes: [.castles, .museums, .gardens, .archaeology],
-            types: [.castle, .museum, .ruin], tier: .worthALook, mode: .any,
+            themes: [.family, .castles, .museums, .gardens, .archaeology],
+            // The family types are the point; the heritage ones ride along so a day can be a
+            // playground, the koala sanctuary, *and* a castle to climb.
+            types: SiteType.family.union([.castle, .museum, .ruin]),
+            tier: .worthALook, mode: .any,
             stepTarget: nil,
-            caveat: "Nothing in the catalogue says what's good with children. This is a "
-                  + "guess from the kind of place it is — a castle usually beats a "
-                  + "parish church on a wet Tuesday.",
+            caveat: "Playgrounds, parks and beaches come from OpenStreetMap; the "
+                  + "castles-and-museums half is a guess from the kind of place it is. Check "
+                  + "opening times for anything ticketed before you set out.",
             colour: "#E0912F"),
 
         DayIntent(

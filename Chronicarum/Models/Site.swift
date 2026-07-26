@@ -65,6 +65,19 @@ enum SiteType: String, Codable, CaseIterable {
     /// known from the source data — most World Heritage sites arrive this way.
     case heritage    = "heritage"
 
+    // The family layer: places a child actually wants, imported from OpenStreetMap. Not
+    // heritage — a playground has no era — but first-class sites so the planner can string
+    // one into a day beside a castle. See ROADMAP "'With the kids'".
+    case playground  = "playground"
+    case park        = "park"
+    case beach       = "beach"
+    case wildlife    = "wildlife"    // zoo, aquarium, wildlife/petting farm
+    case waterplay   = "waterplay"   // water park, public pool, splash pad
+    case themepark   = "themepark"
+
+    /// The family types, for intents and filters that want "the kid stuff".
+    static let family: Set<SiteType> = [.playground, .park, .beach, .wildlife, .waterplay, .themepark]
+
     var displayName: String {
         switch self {
         case .wonder:      return "Wonder"
@@ -79,6 +92,12 @@ enum SiteType: String, Codable, CaseIterable {
         case .monument:    return "Monument"
         case .ruin:        return "Ruin"
         case .heritage:    return "Heritage Site"
+        case .playground:  return "Playground"
+        case .park:        return "Park"
+        case .beach:       return "Beach"
+        case .wildlife:    return "Wildlife"
+        case .waterplay:   return "Water Play"
+        case .themepark:   return "Theme Park"
         }
     }
 
@@ -96,6 +115,12 @@ enum SiteType: String, Codable, CaseIterable {
         case .monument:    return "figure.stand"
         case .ruin:        return "building.columns.circle"
         case .heritage:    return "mappin.and.ellipse"
+        case .playground:  return "figure.and.child.holdinghands"
+        case .park:        return "tree"
+        case .beach:       return "beach.umbrella"
+        case .wildlife:    return "pawprint"
+        case .waterplay:   return "drop"
+        case .themepark:   return "sparkles"
         }
     }
 
@@ -116,6 +141,12 @@ enum SiteType: String, Codable, CaseIterable {
         case .monument:    return "🗿"
         case .ruin:        return "🧱"
         case .heritage:    return "📍"
+        case .playground:  return "🛝"
+        case .park:        return "🌳"
+        case .beach:       return "🏖"
+        case .wildlife:    return "🐨"
+        case .waterplay:   return "💦"
+        case .themepark:   return "🎢"
         }
     }
 }
@@ -350,6 +381,8 @@ enum DataSource: String, Codable, CaseIterable {
     case saHeritageRegister = "sahr"
     case merimee            = "merimee"
     case nrhp               = "nrhp"
+    /// The family layer — playgrounds, parks, beaches — imported from OpenStreetMap.
+    case openStreetMap      = "osm"
 
     /// Shown under the description, e.g. "South Australian Heritage Places · CC BY 3.0 AU".
     var credit: String {
@@ -359,6 +392,7 @@ enum DataSource: String, Codable, CaseIterable {
         // Public domain under 17 U.S.C. §105, so this credit is owed to nobody. It is
         // here because the register did the work and the line costs nothing.
         case .nrhp:               "National Register of Historic Places · National Park Service"
+        case .openStreetMap:      "© OpenStreetMap contributors · ODbL"
         }
     }
 
@@ -371,6 +405,8 @@ enum DataSource: String, Codable, CaseIterable {
             URL(string: "https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/")
         case .nrhp:
             URL(string: "https://www.nps.gov/subjects/nationalregister/index.htm")
+        case .openStreetMap:
+            URL(string: "https://www.openstreetmap.org/copyright")
         }
     }
 }

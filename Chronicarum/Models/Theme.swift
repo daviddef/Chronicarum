@@ -36,12 +36,15 @@ struct Theme: OptionSet, Hashable {
     static let monuments        = Theme(rawValue: 1 << 13)
     static let townscape        = Theme(rawValue: 1 << 14)
     static let grandEngineering = Theme(rawValue: 1 << 15)
+    /// Places for children — playgrounds, beaches, parks, the zoo. Carried by the family
+    /// layer so "With the kids" can ask for it directly.
+    static let family           = Theme(rawValue: 1 << 16)
 
     /// Presentation order — roughly "what people ask for most" rather than bit order.
     static let all: [Theme] = [
         .castles, .roman, .sacred, .prehistoric, .grandHouses, .archaeology, .military,
         .maritime, .industrial, .museums, .gardens, .monuments, .townscape, .civic,
-        .rural, .grandEngineering,
+        .rural, .grandEngineering, .family,
     ]
 
     var label: String {
@@ -62,6 +65,7 @@ struct Theme: OptionSet, Hashable {
         case .monuments:        "Monuments & memorials"
         case .townscape:        "Old towns & streets"
         case .grandEngineering: "Bridges & engineering"
+        case .family:           "For the kids"
         default:                "Other"
         }
     }
@@ -84,6 +88,7 @@ struct Theme: OptionSet, Hashable {
         case .monuments:        "🗽"
         case .townscape:        "🏘"
         case .grandEngineering: "🌉"
+        case .family:           "🛝"
         default:                "📍"
         }
     }

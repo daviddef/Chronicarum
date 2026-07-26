@@ -1468,14 +1468,49 @@ West Coast Path corridor, or a EuroVelo stretch), write the Overpass extraction 
 `nwn`/`iwn`/`ncn`/`icn` relations, decide bundled-columnar (like the sites) vs on-demand
 fetch, and teach `TripPlanner` the follow-don't-route distinction.
 
-## "With the kids" — the things kids actually want (sourcing researched)
+## "With the kids" — the things kids actually want (shipped, build 36)
 
 Reported from a real user, in Brisbane: *"With the kids says 10 places, but I don't see any
-parks, playgrounds, beaches — all the things kids actually want."* Correct, and it is a data
-gap, not a filter bug. The "With the kids" intent searches the **heritage catalogue** —
-castles, museums, ruins — and there is no other kind of place in it. A four-year-old does not
-want a scheduled monument; they want a playground and a beach. None of that has ever been in
+parks, playgrounds, beaches — all the things kids actually want."* Correct, and it was a data
+gap, not a filter bug. The "With the kids" intent searched the **heritage catalogue** —
+castles, museums, ruins — and there was no other kind of place in it. A four-year-old does not
+want a scheduled monument; they want a playground and a beach. None of that had ever been in
 the app.
+
+### What shipped (build 36)
+
+A **family layer**: 8,067 kid places across South East Queensland — 3,001 playgrounds, 4,970
+named parks, the beaches, the Gold Coast theme parks, Lone Pine and Currumbin — extracted from
+OSM by [`scripts/fetch_family.py`](scripts/fetch_family.py) into a 755 KB `family.json`, and
+folded into the catalogue as ordinary `Site`s with six new family `SiteType`s (playground,
+park, beach, wildlife, waterplay, themepark), a `family` theme, and an OSM `dataSource` so the
+ODbL attribution shows on every one. Because they're real sites, the planner reaches them with
+no special case: "With the kids" now leads with `SiteType.family` and the `.family` theme, and
+"A day outdoors" picks up parks and beaches through the `.gardens`/`.maritime` themes they also
+carry.
+
+Two things made it actually *good*, not just present, both found by rendering a real Brisbane
+plan and looking at it:
+
+- **Per-category curation over one blanket filter.** Playgrounds, water parks, zoos and theme
+  parks are kept wholesale (a destination by type); parks, beaches and reserves only when
+  named; and the two noise tags are dropped — the probe's 3,521 "swimming pools" (backyards)
+  and 1,069 "gardens" (front lawns) never make it in. Unnamed playgrounds (most of them) are
+  named from the park they sit in — 79% got a real name that way.
+- **Scores compressed and a same-type penalty added, because the first render was wrong.** At
+  the natural 30–90 spread the day came back as *two koala parks 40 minutes apart and no
+  swings* — significance-first selection front-loading far big-ticket attractions. Compressing
+  family scores to 46–76 lets a nearby playground out-score a distant zoo once the distance
+  penalty bites, and a family-only same-type penalty stops "two zoos in a row" (a themed
+  heritage day of three castles is deliberately left alone). The day now reads: a playground
+  down the road, the museum, Lone Pine, and two local parks — verified on the printed page.
+
+### Still to come
+
+Coverage beyond South East Queensland (the extraction is one bbox — widen `BBOX` or add
+regions as the trails did), a near-duplicate tidy ("Biami Yumba" and "Biami Yumba Park" can
+both land), and richer per-place detail (a playground's equipment, a beach's patrol flags)
+which OSM sometimes carries.
 
 ### What's actually mappable — a Brisbane probe
 

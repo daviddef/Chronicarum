@@ -63,6 +63,16 @@ struct ChronicArumApp: App {
             NSLog("[sample-pdf] wrote trail walk (\(walk.trail.name), \(walk.stops.count) stops) "
                   + "\(walkData.count) bytes to \(walkURL.path)")
         }
+
+        // A "With the kids" plan, to check the family layer flows into a real day.
+        if let kids = DayIntent.all.first(where: { $0.id == "kids" }) {
+            let kidsPlan = TripPlanner.plan(from: origin, themes: kids.themes, days: 1,
+                                            mode: kids.mode, tier: kids.tier, types: kids.types)
+            let names = kidsPlan.days.flatMap(\.stops).map { "\($0.site.type.rawValue):\($0.site.name)" }
+            NSLog("[sample-pdf] kids plan: \(names.joined(separator: " | "))")
+            let kidsData = ItineraryPDF.render(kidsPlan, placeName: "With the kids")
+            try? kidsData.write(to: URL.documentsDirectory.appendingPathComponent("kids.pdf"))
+        }
     }
 #endif
 }

@@ -36,3 +36,6 @@ Chronicarum/Resources/bulk_sites.json
 # demand; trails.json — the small columnar output — is what ships and is committed.
 scripts/.trails_raw_cache.json
 scripts/.trails_cache_*.json
+
+# Cached Overpass response for the family import.
+scripts/.family_cache.json

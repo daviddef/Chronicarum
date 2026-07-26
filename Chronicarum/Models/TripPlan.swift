@@ -435,6 +435,7 @@ enum TripPlanner {
             var here = origin
             var stops: [PlannedStop] = []
             var lastTheme: Theme = []
+            var lastType: SiteType? = nil
 
             // Anchor first. Choosing purely by value-per-minute defers the expensive
             // flagship indefinitely — it put the Historical Complex of Split, the best
@@ -461,6 +462,7 @@ enum TripPlanner {
             budget -= Double(anchorTravel + anchor.visitMinutes)
             here = anchor.coordinate
             lastTheme = anchor.themes
+            lastType = anchor.type
 
             let floor = max(25.0, 0.4 * Double(anchor.significance))
 
@@ -479,8 +481,15 @@ enum TripPlanner {
                     // of two comparable ones.
                     let variety = lastTheme.isEmpty || site.themes.intersection(lastTheme).isEmpty
                         ? 1.0 : 0.75
-                    let value = Double(site.significance) * variety * closureFactor(site)
-                        - 0.5 * Double(travel)
+                    // A day with the kids does not want two zoos in a row, or two beaches —
+                    // for the family types, repeating the last kind of place is discouraged so
+                    // a playground, the koala park and the beach beat three playgrounds. Left
+                    // to the family types on purpose: a themed heritage day (three castles) is
+                    // a perfectly good thing and must not be penalised.
+                    let sameFamilyType = lastType == site.type && SiteType.family.contains(site.type)
+                    let repeatPenalty = sameFamilyType ? 0.55 : 1.0
+                    let value = Double(site.significance) * variety * repeatPenalty
+                        * closureFactor(site) - 0.5 * Double(travel)
 
                     if best == nil || value > best!.value {
                         best = (site, travel, value)
@@ -494,6 +503,7 @@ enum TripPlanner {
                 budget -= Double(pick.travel + pick.site.visitMinutes)
                 here = pick.site.coordinate
                 lastTheme = pick.site.themes
+                lastType = pick.site.type
             }
 
             let dayStops = ordered(stops.map(\.site), from: origin, mode: mode)

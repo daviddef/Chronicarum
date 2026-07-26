@@ -104,3 +104,25 @@ xcrun altool --upload-app -f build/export/Chronicarum.ipa -t ios \
   401 "credentials invalid" even though the key parses.
 - Export sometimes fails with a transient Apple 504 — retry the `-exportArchive` step a few
   times before treating it as a real failure.
+
+## The family layer — playgrounds, parks, beaches
+
+`fetch_family.py` writes `Chronicarum/Resources/family.json` directly; run it and rebuild.
+
+```sh
+python3 fetch_family.py     # OSM leisure/tourism/natural POIs (Overpass) → family.json
+```
+
+- **Source:** OpenStreetMap `leisure`/`tourism`/`natural` POIs, **ODbL** — folded into the
+  catalogue at load ([`FamilyData.swift`](../Chronicarum/Models/FamilyData.swift)) as `Site`s
+  stamped `dataSource: .openStreetMap`, so attribution shows on each. Kept as its own bundled
+  file (a collective database), like the trails.
+- **Per-category curation, not one filter** (`CATEGORIES`): playgrounds/water parks/zoos/theme
+  parks kept wholesale; parks/beaches/reserves only when named; noisy `swimming_pool` (backyard
+  pools) and `garden` (front lawns) dropped. Unnamed playgrounds are named from the park they
+  sit within.
+- **Significance is a family-richness score** (`score()`), deliberately compressed into a
+  narrow band so a nearby playground can out-score a distant zoo — otherwise a kids' day
+  becomes two far big-ticket attractions and no swings. Pilot region is South East Queensland;
+  edit `BBOX`.
+- Cached at `scripts/.family_cache.json` (git-ignored). Delete to refresh.
