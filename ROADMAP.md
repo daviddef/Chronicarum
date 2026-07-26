@@ -1540,10 +1540,23 @@ struggling public server, the run stopped there and the gaps are logged for a qu
 **The rule this reinforces: one metro batch, a real back-off, and accept partial rather than
 hammer.**
 
+### Coverage: Europe completed, and the US (build 40)
+
+The back-off paid off. A ninety-minute cool-down let Overpass recover, and the retry filled
+**every** Europe gap (Paris-east, Madrid, Munich, both outer-London fringes) and brought in the
+US — New York, Los Angeles, Chicago, San Francisco, Boston, Washington, Seattle — for **58,338
+places** at 5.3 MB. Only LA-west 504'd this time, the single remaining gap. Real destinations
+throughout: Central Park Zoo and the Tisch Children's Zoo in Manhattan, Farm-in-the-Zoo in
+Chicago, playgrounds by the hundred per city. The lesson held: *wait for the server, don't
+fight it* — the delayed retry succeeded where the retry-storm failed.
+
+The family layer now spans **Australia, the UK & Ireland, continental Europe, and the US**.
+
 ### Still to come
 
-The Europe gaps (Paris-east, Madrid, Munich, outer London), then US metros, and richer
-per-place detail (a playground's equipment, a beach's patrol flags) which OSM sometimes carries.
+LA-west (the one straggler), other continents as they're asked for, and richer per-place detail
+(a playground's equipment, a beach's patrol flags) which OSM sometimes carries. A little noise
+to sweep when convenient — a few "McDonald's PlayPlace" fast-food play areas tag as playgrounds.
 
 ## "Try another" — a different plan on demand (build 38)
 

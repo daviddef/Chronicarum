@@ -75,6 +75,16 @@ REGIONS = {
     "munich":    (48.08, 11.47, 48.21, 11.66),
     "milan":     (45.40, 9.10, 45.53, 9.26),
     "lisbon":    (38.69, -9.23, 38.80, -9.08),
+    # United States — dense metros split. Queued for a quieter Overpass window.
+    "nyc_man":   (40.70, -74.02, 40.82, -73.91),
+    "nyc_bkln":  (40.57, -74.04, 40.74, -73.85),
+    "la_w":      (33.95, -118.55, 34.10, -118.35),
+    "la_e":      (33.95, -118.35, 34.15, -118.15),
+    "chicago":   (41.80, -87.75, 41.98, -87.58),
+    "sf":        (37.70, -122.52, 37.82, -122.38),
+    "boston":    (42.29, -71.15, 42.41, -71.02),
+    "washdc":    (38.82, -77.12, 38.99, -76.91),
+    "seattle":   (47.50, -122.44, 47.73, -122.24),
 }
 
 # Each category: (osm_key, osm_value) -> (SiteType, base significance, visit minutes, keep-rule).
