@@ -1328,13 +1328,27 @@ straight walk. Validated on real data: 79 heritage sites (Cutty Sark, Somerset H
 Palace, Greenwich) sit within 500 m of the Thames Path, so a London walking day that strings
 two of them together now says so.
 
-**Still to come.** Two things this slice surfaced or left: the geometry is coarse for very
-long single-stage paths (the `MAX_POINTS` cap left the Thames Path at 67 vertices over 300 km,
-so the corridor match misses sites between them) — a length-aware simplification pass would
-help both planners, and the first attempt was a performance trap worth doing carefully.
-Beyond that: ascent, surface and difficulty (a second extraction pass), a printable PDF built
-*from* a trail walk rather than a heritage day, the public-domain USGS/NPS swap for the US,
-and regions beyond Europe/US/Oceania.
+### Finer geometry lifts every trail slice (build 31)
+
+The composition surfaced a resolution problem: the flat `MAX_POINTS = 90` cap collapsed a
+long single-stage path to a handful of points — the Thames Path was **67 vertices over 300
+km**, ~4.7 km apart, so the 500 m corridor match sailed straight past most of what the path
+runs beside. Simplification is now **length-aware**: ~1 point / 400 m, floored at 90 (so
+nothing that fit before does any extra work) and ceilinged at 500 per stage. The Thames Path
+holds **501** vertices now, and the sites its corridor catches went from **79 to 314** —
+better composer legs, better trail-anchored plans, truer lines on the map, all from one data
+pass. 3.8 MB → 6.3 MB, still no LFS.
+
+Getting there took two tries, and the wrong one is worth recording. The first attempt capped
+*short* stages lower than before, which forced the RDP simplifier to re-run — O(n²) each
+time — on stages that had been fine; it ground for nine minutes and wrote nothing. The fix
+was to (a) floor the cap so no previously-passing stage does extra work, (b) bound RDP's
+input with a uniform pre-decimation, and (c) downsample an over-long result in one O(n) pass
+instead of re-running RDP. Fast and correct.
+
+**Still to come.** Ascent, surface and difficulty (a second extraction pass), a printable PDF
+built *from* a trail walk rather than a heritage day, the public-domain USGS/NPS swap for the
+US, and regions beyond Europe/US/Oceania.
 
 ### The sourcing research (July 2026)
 

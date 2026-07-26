@@ -62,7 +62,10 @@ KEEP_NETWORK = {"iwn", "nwn", "icn", "ncn"}
 
 MIN_KM, MAX_KM = 2.0, 5000.0
 RDP_EPSILON_DEG = 0.0006   # ~65 m; enough to hold the shape of a long path cheaply.
-MAX_POINTS = 90            # cap per trail so one monster relation can't bloat the bundle.
+MIN_POINTS = 90            # floor per stage — never coarser than the flat cap this replaced.
+MAX_POINTS = 500           # ceiling per stage so one monster relation can't bloat the bundle.
+MAX_RAW = 4000             # bound RDP's input: it is O(n^2) worst case and raw stages of a
+                           # long path can carry many thousands of nodes.
 CLUSTER_GAP_KM = 60.0      # stages of one route are near each other; a bigger jump is a
                            # different route that happens to share a (generic) name.
 
@@ -170,11 +173,24 @@ def perpendicular_distance(p, a, b):
 
 
 def simplify(pts, eps):
+    # 1. Bound RDP's input — it is O(n^2) worst case, and a 300 km stage can arrive with
+    #    thousands of nodes. A uniform stride keeps the shape and keeps the cost predictable.
+    if len(pts) > MAX_RAW:
+        step = len(pts) // MAX_RAW + 1
+        pts = pts[::step] + [pts[-1]]
     out = rdp(pts, eps)
-    # Hard cap: if still too many points, widen epsilon until it fits.
-    while len(out) > MAX_POINTS:
-        eps *= 1.6
-        out = rdp(pts, eps)
+    # 2. Length-aware ceiling — roughly a point every 400 m — floored at MIN_POINTS so a
+    #    short stage keeps exactly what it kept before (no regression, no extra work) and a
+    #    long single-stage path like the Thames Path holds its shape instead of collapsing to
+    #    a few dozen points. When RDP kept more than the cap, downsample uniformly rather than
+    #    re-running RDP: an O(n) pass over an already-simplified line, not another O(n^2).
+    cap = max(MIN_POINTS, min(MAX_POINTS, int(polyline_length_km(pts) * 2.5)))
+    if len(out) > cap:
+        stride = len(out) / cap
+        kept = [out[int(i * stride)] for i in range(cap)]
+        if kept[-1] != out[-1]:
+            kept.append(out[-1])
+        out = kept
     return out
 
 
