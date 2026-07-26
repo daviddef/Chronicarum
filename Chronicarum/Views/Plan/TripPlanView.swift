@@ -47,6 +47,8 @@ struct TripPlanView: View {
     @State private var plan: TripPlan?
     @State private var isBuilding = false
     @State private var pdfURL: URL?
+    /// Bumped by "Try another" to reshuffle the same request into a different day.
+    @State private var variant = 0
     /// One sheet at a time. Two separate `.sheet` modifiers on the same view present
     /// unreliably — the location picker silently refused to open beside the site sheet —
     /// so both go through a single enum-driven presentation.
@@ -264,6 +266,21 @@ struct TripPlanView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+
+                    // Not the plan you fancy? The same request reshuffled into a different
+                    // day — works for every kind of day, not just the step goal.
+                    Section {
+                        Button {
+                            variant += 1
+                        } label: {
+                            Label(isBuilding ? "Finding another…" : "Try another route",
+                                  systemImage: "shuffle")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .disabled(isBuilding)
+                        .tint(Color(hex: "#C9A84C"))
+                    }
                 } else if plan != nil {
                     Section {
                         // With the tier now relaxing to fill the days, a genuinely empty
@@ -314,7 +331,7 @@ struct TripPlanView: View {
                 days = initialDays
                 mode = initialMode
             }
-            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)|\(lunchMinutes)|\(effectiveOrigin.latitude),\(effectiveOrigin.longitude)") {
+            .task(id: "\(days)|\(startDate.timeIntervalSinceReferenceDate)|\(mode.rawValue)|\(lunchMinutes)|\(effectiveOrigin.latitude),\(effectiveOrigin.longitude)|\(variant)") {
                 await rebuild()
             }
             .sheet(item: $activeSheet) { sheet in
@@ -413,6 +430,7 @@ struct TripPlanView: View {
         // A drawn region is its own boundary; otherwise the mode decides how far is
         // reachable, which is the difference between a walkable day and a fantasy.
         let requestedRadius: Double? = confinedTo == nil ? nil : radiusKm
+        let requestedVariant = variant
         let built: TripPlan = await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 continuation.resume(returning:
@@ -424,6 +442,7 @@ struct TripPlanView: View {
                                      tier: requestedTier,
                                      types: requestedTypes,
                                      radiusKm: requestedRadius,
+                                     variant: requestedVariant,
                                      catalogue: catalogue))
             }
         }

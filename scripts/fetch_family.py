@@ -45,6 +45,23 @@ REGIONS = {
     "canberra":  (-35.55, 148.90, -35.05, 149.30),
     "hobart":    (-43.10, 147.05, -42.65, 147.60),
     "darwin":    (-12.55, 130.80, -12.30, 131.10),
+    # UK & Ireland. Central London is so dense it 504s even quartered, so the two northern
+    # quadrants are split again into east/west eighths; the southern halves came back whole.
+    "london_nww": (51.48, -0.52, 51.70, -0.32),
+    "london_nwe": (51.48, -0.32, 51.70, -0.11),
+    "london_new": (51.48, -0.11, 51.70, 0.10),
+    "london_nee": (51.48, 0.10, 51.70, 0.30),
+    "london_sw": (51.28, -0.52, 51.48, -0.11),
+    "london_se": (51.28, -0.11, 51.48, 0.30),
+    "manchester":(53.34, -2.42, 53.56, -2.10),
+    "birmingham":(52.38, -2.05, 52.58, -1.75),
+    "leeds":     (53.72, -1.68, 53.88, -1.42),
+    "liverpool": (53.34, -3.05, 53.48, -2.85),
+    "glasgow":   (55.78, -4.40, 55.93, -4.10),
+    "edinburgh": (55.88, -3.36, 56.00, -3.04),
+    "bristol":   (51.40, -2.74, 51.52, -2.48),
+    "cardiff":   (51.44, -3.26, 51.55, -3.08),
+    "dublin":    (53.28, -6.44, 53.44, -6.04),
 }
 
 # Each category: (osm_key, osm_value) -> (SiteType, base significance, visit minutes, keep-rule).

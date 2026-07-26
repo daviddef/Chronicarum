@@ -1519,11 +1519,36 @@ mapped twice — a park and its own named sub-area a few metres apart — keepin
 which trimmed ~6,000 redundant rows. "Biami Yumba" now resolves to the park plus its playground,
 not two parks.
 
+### Coverage: the UK & Ireland (build 38)
+
+Fourteen more metros — London (quartered, then the two northern quadrants split again into
+eighths because central London 504s even quartered), Manchester, Birmingham, Leeds, Liverpool,
+Glasgow, Edinburgh, Bristol, Cardiff, Dublin — took the layer to **40,180 places** (24,408
+parks, 15,170 playgrounds) at 3.7 MB. Overpass was under real load this run and threw 504s on
+both endpoints repeatedly; a 20-minute back-off and finer splits recovered all but the two
+*outer* London fringes (far NW/NE suburbs), which are the top-up when the servers are quieter.
+The lesson logged for next time: extend one metro batch at a time, and don't chase the last box
+against an overloaded server.
+
 ### Still to come
 
-Coverage beyond Australia (the UK, Europe and US metros are the obvious next markets, added the
-same way), and richer per-place detail (a playground's equipment, a beach's patrol flags) which
-OSM sometimes carries.
+The two outer-London fringes, then Europe and US metros (same pattern), and richer per-place
+detail (a playground's equipment, a beach's patrol flags) which OSM sometimes carries.
+
+## "Try another" — a different plan on demand (build 38)
+
+Asked for from the step-goal day but wanted everywhere: *"if I've done that route, generate a
+new and different one."* The planner was deterministic — same request, same day — so every plan
+now carries a **variant** seed, and a *Try another route* button at the foot of the plan bumps
+it. The seed drives a small, stable per-site jitter (`±18%`, [`TripPlanner.jitter`](Chronicarum/Models/TripPlan.swift))
+applied to both the anchor choice and the fill scoring, so comparable places trade rank and the
+day comes back different — a museum leads instead of the abbey, a different castle anchors — but
+still good, because the amplitude is modest enough that a genuinely top site usually still wins.
+
+Two properties make it safe: **variant 0 returns exactly 1**, so the first plan (and every test)
+stays deterministic and only moves when asked; and the jitter is a hash of site id + variant, so
+"another" is reproducible rather than random — the same tap gives the same alternative, and it
+works for all seven kinds of day, not just the step goal.
 
 ### What's actually mappable — a Brisbane probe
 

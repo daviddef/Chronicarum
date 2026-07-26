@@ -334,6 +334,20 @@ enum TripPlanner {
         return result
     }
 
+    /// A stable multiplier in `[1-amplitude, 1+amplitude]` from a site id and the variant, so
+    /// "try another" reshuffles the near-ties into a different but equally good day. Variant 0
+    /// returns exactly 1 — the first plan (and the tests) stay deterministic; only when the
+    /// user asks for another does anything move. The amplitude is deliberately modest: a
+    /// genuinely top site should still usually win, so variants are *different*, not *worse*.
+    private static func jitter(_ id: String, _ variant: Int, amplitude: Double = 0.18) -> Double {
+        guard variant != 0 else { return 1.0 }
+        var h: UInt64 = 1469598103934665603            // FNV-1a over id + variant
+        for byte in id.utf8 { h = (h ^ UInt64(byte)) &* 1099511628211 }
+        for byte in "#\(variant)".utf8 { h = (h ^ UInt64(byte)) &* 1099511628211 }
+        let unit = Double(h % 10_000) / 10_000         // [0, 1)
+        return 1 + (unit * 2 - 1) * amplitude
+    }
+
     static func plan(from origin: CLLocationCoordinate2D,
                      themes: Theme,
                      days: Int,
@@ -345,6 +359,7 @@ enum TripPlanner {
                      tier: SignificanceTier = .worthALook,
                      types: Set<SiteType> = [],
                      radiusKm: Double? = nil,
+                     variant: Int = 0,
                      catalogue: [Site] = SiteData.all) -> TripPlan {
 
         // The mode decides how far is worth considering unless a caller has drawn its own
@@ -451,8 +466,8 @@ enum TripPlanner {
                     return Double(travel + site.visitMinutes) <= budget
                 })
                 .max(by: { a, b in
-                    a.detourScore(from: origin) * closureFactor(a)
-                        < b.detourScore(from: origin) * closureFactor(b)
+                    a.detourScore(from: origin) * closureFactor(a) * jitter(a.id, variant)
+                        < b.detourScore(from: origin) * closureFactor(b) * jitter(b.id, variant)
                 }) else { break }
 
             let anchorTravel = mode.estimatedMinutes(overKm: anchor.approxDistanceKm(from: here))
@@ -489,7 +504,7 @@ enum TripPlanner {
                     let sameFamilyType = lastType == site.type && SiteType.family.contains(site.type)
                     let repeatPenalty = sameFamilyType ? 0.55 : 1.0
                     let value = Double(site.significance) * variety * repeatPenalty
-                        * closureFactor(site) - 0.5 * Double(travel)
+                        * closureFactor(site) * jitter(site.id, variant) - 0.5 * Double(travel)
 
                     if best == nil || value > best!.value {
                         best = (site, travel, value)
