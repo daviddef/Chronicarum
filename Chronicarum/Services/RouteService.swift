@@ -75,6 +75,28 @@ enum TripRouteRefiner {
     /// on a leg the planner intended to drive, it means there is no road.
     private static let noRoadRouteThresholdKm = 2.0
 
+    /// A filler stop the straight-line planner thought was local, but real routing reveals is a
+    /// long way round, is dropped rather than shown as if it were next door. This is the
+    /// Senj→Krk case: the cathedral is 26 km across the channel — inside the 30 km "stay local"
+    /// cap as the crow flies — but a ~70-minute drive north to the bridge and back. The planner
+    /// can't see that without a road graph; this pass can, so it's where the promise is kept.
+    ///
+    /// The signal is the discrepancy, not the absolute time: a leg whose measured road time far
+    /// exceeds what its straight-line distance implies is a detour around water or a peninsula,
+    /// not a local hop. A genuinely local 30 km drive on an open road is left alone. Short legs
+    /// are exempt — the ratio is all noise down there.
+    private static let detourFactor = 1.5
+    private static let detourFloorMinutes = 30
+
+    private static func isLongDetour(measured: Int, mode: TravelMode,
+                                     straightLineKm km: Double) -> Bool {
+        guard measured >= detourFloorMinutes else { return false }
+        let parking = mode == .driving ? TripPlanner.parkingMinutes : 0
+        let roadEstimate = Double(mode.estimatedMinutes(overKm: km) - parking)
+        guard roadEstimate > 0 else { return false }
+        return Double(measured) > detourFactor * roadEstimate
+    }
+
     static func refined(_ plan: TripPlan) async -> TripPlan {
         var budget = maxLegs
         var days: [PlannedDay] = []
@@ -87,6 +109,10 @@ enum TripRouteRefiner {
 
             for stop in day.stops {
                 var refinedStop = stop
+                // Once real routing exposes a filler as a long detour, it's dropped. Never the
+                // day's first stop, though: that's the anchor the day was built around, and a
+                // day with its anchor removed is no day at all.
+                let isAnchor = stops.isEmpty
                 if budget > 0 {
                     budget -= 1
                     // Ask MapKit the question this specific leg poses. On an "however's
@@ -109,6 +135,15 @@ enum TripRouteRefiner {
                     }
 
                     if let measured {
+                        // A filler that's really a long way round breaks the day's one
+                        // promise — to stay local — so it's dropped, and the next stop is
+                        // measured from where we actually are rather than from the place we
+                        // never went.
+                        if !isAnchor, !stop.isWalk,
+                           Self.isLongDetour(measured: measured, mode: legMode,
+                                             straightLineKm: stop.site.approxDistanceKm(from: here)) {
+                            continue
+                        }
                         // Parking stays on top of a drive: MapKit times the road, not
                         // finding somewhere to leave the car at the other end. A bus does
                         // not need parking, and neither do your feet.
