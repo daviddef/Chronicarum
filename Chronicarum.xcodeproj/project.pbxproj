@@ -48,6 +48,7 @@
 		B1DB4FB6D1DA79DE0744F31C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */; };
 		B4AAD9AB4CD2A258417E53E9 /* wikipedia_titles.json in Resources */ = {isa = PBXBuildFile; fileRef = 26DFE83499A6D326061043C9 /* wikipedia_titles.json */; };
 		BC0F07EC4F5EEBBBDF8A166C /* PhotoCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */; };
+		BFC2D1654D0DDA89B9BFD0E5 /* LocalPlacesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB1986955ED1CC82D7DBAB6A /* LocalPlacesService.swift */; };
 		C040FE14959616DEDB8725DC /* DayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC10978FDE3DA8EA7CEB35EB /* DayIntent.swift */; };
 		C12F4675C76D1386DF69B11C /* family.json in Resources */ = {isa = PBXBuildFile; fileRef = 64DADA47042C6D2B8BE3684E /* family.json */; };
 		C348B9BFD9460CA8D393B01F /* ChronicArumApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1288A7864863444DEA3835A /* ChronicArumApp.swift */; };
@@ -125,6 +126,7 @@
 		E3A8190A35A64898DCDDEF8D /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
 		E61A31C1037EC8CF3C438DBF /* PhotoCredits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCredits.swift; sourceTree = "<group>"; };
 		E7A71E91437D4B9DE536D8D0 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		EB1986955ED1CC82D7DBAB6A /* LocalPlacesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPlacesService.swift; sourceTree = "<group>"; };
 		EF03E268E066215CE65549FC /* ChapterMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMarkup.swift; sourceTree = "<group>"; };
 		F1288A7864863444DEA3835A /* ChronicArumApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChronicArumApp.swift; sourceTree = "<group>"; };
 		F444ACB8634D2BBEB711DA4B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 				D73170330E1865B973F1BE67 /* Empire.swift */,
 				861209DB6FD00555762AD561 /* FamilyData.swift */,
 				B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */,
+				EB1986955ED1CC82D7DBAB6A /* LocalPlacesService.swift */,
 				FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */,
 				BF26399E32C64942E33F712C /* OfficialWebsite.swift */,
 				490E6A73385E51BC23C07148 /* OpeningPattern.swift */,
@@ -423,6 +426,7 @@
 				CA1E50E3B7D34E8E79EF939D /* FamilyData.swift in Sources */,
 				2E97EC9A4CC045759629748D /* HomeView.swift in Sources */,
 				D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */,
+				BFC2D1654D0DDA89B9BFD0E5 /* LocalPlacesService.swift in Sources */,
 				ED5C4AEE38CC8B7A11E143A4 /* LocationPickerView.swift in Sources */,
 				EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */,
 				1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */,
@@ -516,7 +520,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -601,7 +605,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_NS_ASSERTIONS = NO;

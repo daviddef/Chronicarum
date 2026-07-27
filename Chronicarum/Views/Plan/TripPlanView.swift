@@ -419,7 +419,13 @@ struct TripPlanView: View {
         let requestedDays = days
         let requestedStart = startDate
         let requestedOrigin = effectiveOrigin
-        let catalogue = confinedTo ?? SiteData.all
+        // Where the bundle is thin — a small town, somewhere off the heritage map — fetch the
+        // local places live from OpenStreetMap and fold them in, so the day is built from
+        // what's actually around you rather than from whatever the bundle happens to hold. A
+        // no-op (and instant) where the bundle is already rich or the area is cached.
+        await LocalPlacesService.shared.ensureLoaded(around: requestedOrigin)
+        let local = await LocalPlacesService.shared.sites(around: requestedOrigin)
+        let catalogue = (confinedTo ?? SiteData.all) + local
         let requestedMode = mode
         let requestedTier = tier
         let requestedTypes = types

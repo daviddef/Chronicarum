@@ -27,7 +27,7 @@ struct ChronicArumApp: App {
                 .environmentObject(focus)
                 .environmentObject(recents)
 #if DEBUG
-                .task { Self.renderSamplePDFIfRequested() }
+                .task { await Self.renderSamplePDFIfRequested() }
 #endif
         }
     }
@@ -38,7 +38,7 @@ struct ChronicArumApp: App {
     /// Debug-only, and behind a launch argument rather than always on: the printed document
     /// is the one artefact that cannot be reviewed by reading the code, and driving the UI
     /// to reach it is not always possible. Launch with `-RenderSamplePDF <lat> <lon>`.
-    static func renderSamplePDFIfRequested() {
+    static func renderSamplePDFIfRequested() async {
         let arguments = ProcessInfo.processInfo.arguments
         guard let index = arguments.firstIndex(of: "-RenderSamplePDF"),
               arguments.count > index + 2,
@@ -76,10 +76,15 @@ struct ChronicArumApp: App {
                           atomically: true, encoding: .utf8)
         NSLog("[sample-pdf] variants:\n\(report)")
 
-        // A "With the kids" plan, to check the family layer flows into a real day.
+        // A "With the kids" plan, with on-demand local places folded in, to check a thin
+        // area (Senj) is filled from OpenStreetMap.
+        await LocalPlacesService.shared.ensureLoaded(around: origin)
+        let localSites = await LocalPlacesService.shared.sites(around: origin)
+        NSLog("[sample-pdf] on-demand local places near origin: \(localSites.count)")
         if let kids = DayIntent.all.first(where: { $0.id == "kids" }) {
             let kidsPlan = TripPlanner.plan(from: origin, themes: kids.themes, days: 1,
-                                            mode: kids.mode, tier: kids.tier, types: kids.types)
+                                            mode: kids.mode, tier: kids.tier, types: kids.types,
+                                            catalogue: SiteData.all + localSites)
             let names = kidsPlan.days.flatMap(\.stops).map { "\($0.site.type.rawValue):\($0.site.name)" }
             NSLog("[sample-pdf] kids plan: \(names.joined(separator: " | "))")
             let kidsData = ItineraryPDF.render(kidsPlan, placeName: "With the kids")

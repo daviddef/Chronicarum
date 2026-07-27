@@ -771,14 +771,27 @@ and Frankopan castles, Krk Cathedral, the Velebit botanical garden — and the R
 sprawl is gone. It only bites where places are thin; a dense city always has plenty within
 30 km, so those plans are untouched.
 
-**What it does not fix, and is honest about:** the *content* gap underneath. Senj's own rich
-history isn't in the catalogue (Croatia's national register is licence-locked, Wikidata is thin
-for small towns), there are **zero** family POIs within 50 km (the family layer covers ~46
-metros, not small coastal towns), and the nearest *national* trail is 60 km because the trail
-import kept only national/international routes and dropped the local Velebit paths. So the walk
-is still short and "With the kids" still has no playground *near Senj* — those need broader data
-coverage, not a planner tweak. The staying-local fix stops the app doing the *wrong* thing; the
-data work is what will let it do more of the *right* thing. See "Still to come" below.
+**The content gap underneath — filled on demand (build 43).** Staying local stops the *wrong*
+thing; it doesn't add the *right* thing, because Senj's own places were never in the app —
+Croatia's register is licence-locked, Wikidata is thin for small towns, and the family layer
+covers ~46 metros, not small coastal towns. Bundling every town on Earth isn't feasible, so
+[`LocalPlacesService`](Chronicarum/Models/LocalPlacesService.swift) fetches them **on demand**:
+when a plan is asked for somewhere the bundle is thin — few heritage sites within 12 km, or no
+family places within 15 km — it queries OpenStreetMap for the local historic sites, museums,
+viewpoints, parks, playgrounds and beaches, folds them into the planner, and caches them to
+disk so the next visit is instant and offline. It only reaches for the network where the bundle
+can't build a decent day, which also keeps it off the busy public servers everywhere else.
+
+Verified on Senj: the fetch returned **278 local places** (72 beaches, 84 monuments, 36 ruins,
+viewpoints, museums, the old-town city gate), and "With the kids" went from four inland castles
+to Nehaj, **a beach**, and two local hillforts. The bundle stays the instant offline baseline;
+OSM fills the gaps live. ODbL, attributed, `dataSource: .openStreetMap` like the other OSM
+layers.
+
+**Still limited:** the first plan in a brand-new area waits a few seconds for the fetch (cached
+after), and a genuinely offline device in an uncovered area still falls back to the thin bundle
+— the graceful, honest default. Trails are not yet fetched on demand (still national-only), and
+the Home cards' "near you" counts don't include the on-demand layer yet.
 
 ## Opening hours — the honest answer is that nobody has them
 
