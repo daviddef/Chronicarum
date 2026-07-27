@@ -59,7 +59,14 @@ struct Trail: Identifiable {
     }
 
     var isInternational: Bool { tier == "iwn" || tier == "icn" }
-    var networkLabel: String { isInternational ? "International route" : "National route" }
+    var networkLabel: String {
+        switch tier {
+        case "iwn", "icn": "International route"
+        case "nwn", "ncn": "National route"
+        case "rwn", "rcn": "Regional route"
+        default:           "Local route"
+        }
+    }
 
     var lengthLabel: String {
         km >= 10 ? "\(Int(km.rounded()).formatted()) km" : String(format: "%.1f km", km)
@@ -115,9 +122,10 @@ enum TrailData {
     static func near(_ c: CLLocationCoordinate2D,
                      activity: TrailActivity? = nil,
                      radiusKm: Double = 120,
-                     limit: Int = 40) -> [Trail] {
+                     limit: Int = 40,
+                     including extra: [Trail] = []) -> [Trail] {
         var seen = Set<String>()
-        return all
+        return (all + extra)
             .filter { activity == nil || $0.activity == activity }
             .map { (trail: $0, d: $0.nearestDistanceKm(from: c)) }
             .filter { $0.d <= radiusKm }
@@ -130,8 +138,16 @@ enum TrailData {
     private static func load() -> [Trail] {
         guard let url = Bundle.main.url(forResource: "trails", withExtension: "json"),
               let data = try? Data(contentsOf: url),
-              let cols = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let ids   = cols["id"]   as? [String],
+              let cols = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return [] }
+        return decode(cols)
+    }
+
+    /// Decode the columnar trail form (bundled `trails.json`, or an on-demand fetch that
+    /// builds the same columns) into `Trail`s. Shared so the live layer produces trails
+    /// identical in shape to the bundled ones.
+    static func decode(_ cols: [String: Any]) -> [Trail] {
+        guard let ids   = cols["id"]   as? [String],
               let names = cols["name"] as? [String],
               let acts  = cols["activity"] as? [String],
               let tiers = cols["tier"] as? [String],
@@ -193,6 +209,27 @@ enum TrailData {
               let host = url.host?.lowercased() else { return nil }
         let meta = ["openstreetmap.org", "wikipedia.org", "wikimedia.org", "wikidata.org"]
         return meta.contains(where: host.contains) ? nil : url
+    }
+
+    /// Encode a polyline (precision 5) — the inverse of `decodePolyline`, used to cache
+    /// on-demand trails in the same compact columnar shape the bundle ships.
+    static func encodePolyline(_ points: [CLLocationCoordinate2D]) -> String {
+        var result = "", prevLat = 0, prevLon = 0
+        func emit(_ delta0: Int) {
+            var value = delta0 << 1
+            if value < 0 { value = ~value }
+            while value >= 0x20 {
+                result.unicodeScalars.append(UnicodeScalar(UInt8((0x20 | (value & 0x1f)) + 63)))
+                value >>= 5
+            }
+            result.unicodeScalars.append(UnicodeScalar(UInt8(value + 63)))
+        }
+        for p in points {
+            let iLat = Int((p.latitude * 1e5).rounded()), iLon = Int((p.longitude * 1e5).rounded())
+            emit(iLat - prevLat); emit(iLon - prevLon)
+            prevLat = iLat; prevLon = iLon
+        }
+        return result
     }
 
     /// Decode a Google-algorithm encoded polyline (precision 5) — the compact form the

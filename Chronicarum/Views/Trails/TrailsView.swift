@@ -139,9 +139,14 @@ struct TrailsView: View {
     private func load() async {
         loading = true
         let o = origin, act = activity
+        // Where the bundle has no trail nearby — a small town off the national routes — fetch
+        // the local paths live from OpenStreetMap and fold them into the list.
+        await LocalTrailsService.shared.ensureLoaded(around: o)
+        let local = await LocalTrailsService.shared.trails(around: o)
         let found = await withCheckedContinuation { (cont: CheckedContinuation<[Trail], Never>) in
             DispatchQueue.global(qos: .userInitiated).async {
-                cont.resume(returning: TrailData.near(o, activity: act, radiusKm: 150, limit: 40))
+                cont.resume(returning: TrailData.near(o, activity: act, radiusKm: 150,
+                                                      limit: 40, including: local))
             }
         }
         trails = found

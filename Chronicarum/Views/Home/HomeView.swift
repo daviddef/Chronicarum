@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import MapKit
 
 /// The home tab — search, choose how many days, pick the kind of day, or pick up a recent
 /// plan. Map, Explore and Saved are tabs; this screen is the planning front door.
@@ -12,10 +13,11 @@ struct HomeView: View {
 
     @State private var days = 1
     @State private var request: PlanRequest?
-    @State private var showSearch = false
     @State private var counts: [String: Int] = [:]
     @State private var showTrails = false
     @State private var trailsActivity: TrailActivity?
+    @StateObject private var search = LocationSearch()
+    @FocusState private var searchFocused: Bool
 
     private let ink = Color(red: 0x17 / 255, green: 0x15 / 255, blue: 0x12 / 255)
     private let gold = Color(hex: "#C9A84C")
@@ -48,25 +50,64 @@ struct HomeView: View {
                         .foregroundStyle(gold)
                         .padding(.top, 8)
 
-                    // ── Search a place ───────────────────────────────────
-                    Button { showSearch = true } label: {
+                    // ── Search a place, right here ───────────────────────
+                    VStack(spacing: 6) {
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
-                            Text(focus.name ?? "Search a place").lineLimit(1)
-                            Spacer()
-                            if focus.coordinate != nil {
-                                Button { focus.clear() } label: {
+                                .foregroundStyle(.white.opacity(0.55))
+                            TextField("", text: $search.query,
+                                      prompt: Text(focus.name ?? "Search a place")
+                                        .foregroundColor(.white.opacity(0.55)))
+                                .foregroundStyle(gold)
+                                .focused($searchFocused)
+                                .autocorrectionDisabled()
+                                .submitLabel(.search)
+                            if focus.coordinate != nil || !search.query.isEmpty {
+                                Button { clearSearch() } label: {
                                     Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.white.opacity(0.4))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        .foregroundStyle(focus.name == nil ? .white.opacity(0.55) : gold)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(.white.opacity(0.08), in: Capsule())
+
+                        // Suggestions drop in beneath the field — no second screen.
+                        if searchFocused, !search.results.isEmpty {
+                            VStack(spacing: 0) {
+                                ForEach(Array(search.results.prefix(6).enumerated()),
+                                        id: \.element) { i, result in
+                                    if i > 0 { Divider().overlay(.white.opacity(0.08)) }
+                                    Button { pick(result) } label: {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: "mappin.circle")
+                                                .foregroundStyle(gold)
+                                            VStack(alignment: .leading, spacing: 1) {
+                                                Text(result.title)
+                                                    .foregroundStyle(.white)
+                                                    .lineLimit(1)
+                                                if !result.subtitle.isEmpty {
+                                                    Text(result.subtitle)
+                                                        .font(.caption)
+                                                        .foregroundStyle(.white.opacity(0.5))
+                                                        .lineLimit(1)
+                                                }
+                                            }
+                                            Spacer(minLength: 0)
+                                        }
+                                        .padding(.vertical, 9)
+                                        .padding(.horizontal, 14)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .background(.white.opacity(0.06),
+                                        in: RoundedRectangle(cornerRadius: 14))
+                        }
                     }
-                    .buttonStyle(.plain)
 
                     // ── How long ─────────────────────────────────────────
                     VStack(spacing: 4) {
@@ -126,14 +167,26 @@ struct HomeView: View {
                          intentCaveat: req.intent.caveat,
                          stepTarget: req.intent.stepTarget)
         }
-        .sheet(isPresented: $showSearch) {
-            LocationPickerView { coordinate, name in
-                focus.set(coordinate, name: name)
-            }
-        }
         .fullScreenCover(isPresented: $showTrails) {
             TrailsView(activity: trailsActivity)
         }
+    }
+
+    /// Resolve a tapped suggestion to a coordinate and make it the place everything plans
+    /// around, then fold the suggestions away.
+    private func pick(_ completion: MKLocalSearchCompletion) {
+        MKLocalSearch(request: .init(completion: completion)).start { response, _ in
+            guard let item = response?.mapItems.first else { return }
+            focus.set(item.placemark.coordinate, name: completion.title)
+            search.query = ""
+            searchFocused = false
+        }
+    }
+
+    private func clearSearch() {
+        search.query = ""
+        searchFocused = false
+        focus.clear()
     }
 
     /// A tile for the outdoor layer — walks or rides near you, opening the trails browser.

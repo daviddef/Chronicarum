@@ -58,6 +58,7 @@
 		CB1EFB5FFD4558B16AE7A835 /* RecentTripsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7808203A9311BAB93E851BE1 /* RecentTripsStore.swift */; };
 		CB37764BB63AB2721EAF7EBC /* SiteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1389CCD88C933F622515A48F /* SiteDetailView.swift */; };
 		D153CF865CC94A2201A147A3 /* TimelineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33613D1309BAF0A3B2EFE9B7 /* TimelineData.swift */; };
+		D49C91E51D54169AB41C4AED /* LocalTrailsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53F87F3155DE5C10EF162DCD /* LocalTrailsService.swift */; };
 		D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */; };
 		DBA33C45EA31F59B0B8494DA /* Empire.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73170330E1865B973F1BE67 /* Empire.swift */; };
 		DE48A6733DD22AFC8145C06B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A69AE790D0ED7CCDF8D667 /* PersistenceService.swift */; };
@@ -89,6 +90,7 @@
 		490E6A73385E51BC23C07148 /* OpeningPattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningPattern.swift; sourceTree = "<group>"; };
 		4A0F60F1D3528DB95DA9D821 /* ClusterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterSheetView.swift; sourceTree = "<group>"; };
 		50464F107F87229C5E9A398A /* TrailComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailComposer.swift; sourceTree = "<group>"; };
+		53F87F3155DE5C10EF162DCD /* LocalTrailsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalTrailsService.swift; sourceTree = "<group>"; };
 		5AB186FC00439FF284794EAF /* TripPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanView.swift; sourceTree = "<group>"; };
 		5B769AD962F594322CDA0274 /* MapFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFilterView.swift; sourceTree = "<group>"; };
 		5D077ED9B01BBFC0966CC7DB /* Site.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Site.swift; sourceTree = "<group>"; };
@@ -287,6 +289,7 @@
 				861209DB6FD00555762AD561 /* FamilyData.swift */,
 				B9E7F6536FEFDFDC8021FA5F /* ItineraryPDF.swift */,
 				EB1986955ED1CC82D7DBAB6A /* LocalPlacesService.swift */,
+				53F87F3155DE5C10EF162DCD /* LocalTrailsService.swift */,
 				FB2EC42950024ABF79276AA1 /* MonumentHistory.swift */,
 				BF26399E32C64942E33F712C /* OfficialWebsite.swift */,
 				490E6A73385E51BC23C07148 /* OpeningPattern.swift */,
@@ -427,6 +430,7 @@
 				2E97EC9A4CC045759629748D /* HomeView.swift in Sources */,
 				D75438DA0D16DCAF1D53DA61 /* ItineraryPDF.swift in Sources */,
 				BFC2D1654D0DDA89B9BFD0E5 /* LocalPlacesService.swift in Sources */,
+				D49C91E51D54169AB41C4AED /* LocalTrailsService.swift in Sources */,
 				ED5C4AEE38CC8B7A11E143A4 /* LocationPickerView.swift in Sources */,
 				EC585A794B4DE560A836F4CB /* LocationService.swift in Sources */,
 				1151C00A2B50898B4639BDFC /* MapControlsView.swift in Sources */,
@@ -520,7 +524,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 43;
+				CURRENT_PROJECT_VERSION = 44;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -605,7 +609,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 43;
+				CURRENT_PROJECT_VERSION = 44;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = L9SAXP2E2W;
 				ENABLE_NS_ASSERTIONS = NO;

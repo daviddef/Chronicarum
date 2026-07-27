@@ -788,10 +788,25 @@ to Nehaj, **a beach**, and two local hillforts. The bundle stays the instant off
 OSM fills the gaps live. ODbL, attributed, `dataSource: .openStreetMap` like the other OSM
 layers.
 
-**Still limited:** the first plan in a brand-new area waits a few seconds for the fetch (cached
-after), and a genuinely offline device in an uncovered area still falls back to the thin bundle
-— the graceful, honest default. Trails are not yet fetched on demand (still national-only), and
-the Home cards' "near you" counts don't include the on-demand layer yet.
+**Trails on demand too (build 44).** The same pattern, extended to the line-shaped layer:
+[`LocalTrailsService`](Chronicarum/Models/LocalTrailsService.swift) fetches the *local* routes —
+every network tier, not just national — where the nearest bundled trail is far, assembles and
+simplifies their member geometry into the same columnar shape the bundle ships (verified on
+Senj's real data: "Baška – Hlam", a 5.6 km walk, and the Plato Mjeseca hiking trail come back
+as clean polylines, encode/decode round-tripping to under a metre), and folds them into the
+trails browser. So "Out for a walk" near Senj now finds its local Velebit paths, not routes
+60 km off. Trail network labels gained *Regional* and *Local* to match.
+
+**Still limited:** the first plan/browse in a brand-new area waits a few seconds for the fetch
+(cached after), a genuinely offline device in an uncovered area still falls back to the bundle,
+and the Home cards' "near you" counts don't include the on-demand layer yet.
+
+### Search where you are, not on another screen (build 44)
+
+Small thing, reported and fixed: tapping the home search bar used to push a whole separate
+search screen. It's now a live field on the home screen itself — type and the place suggestions
+drop in beneath it (Apple's on-device `MKLocalSearchCompleter`), tap one and it becomes the
+place everything plans around, with no navigation.
 
 ## Opening hours — the honest answer is that nobody has them
 
