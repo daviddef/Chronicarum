@@ -19,7 +19,37 @@ actor LocalPlacesService {
     /// Cached local sites, keyed by a coarse area cell (~28 km). In memory for the session,
     /// backed by disk so it survives a relaunch and works offline.
     private var byArea: [String: [Site]] = [:]
-    private var inFlight: Set<String> = []
+    /// One in-flight fetch per area, held as an *unstructured* task. This is deliberate and
+    /// load-bearing: the caller (`rebuild()`) runs inside a SwiftUI `.task(id:)` that is
+    /// cancelled the instant the day count, mode or variant changes — which the plan sheet does
+    /// the moment it appears, adopting its defaults. A structured `await` would carry that
+    /// cancellation straight into the network request and kill it within milliseconds, every
+    /// time. Awaiting an unstructured task's `.value` does not, so the fetch runs to completion
+    /// and caches, and the next rebuild finds it ready.
+    private var inFlightTasks: [String: Task<Void, Never>] = [:]
+
+    /// What the last attempt for an area actually did, so the plan screen can say so out loud —
+    /// the difference between "the bundle was already rich here", "we pulled 40 places live", and
+    /// "we couldn't reach OpenStreetMap". Without this the failure modes are indistinguishable
+    /// from the outside, which is exactly why a stuck fetch looked like "nothing changed".
+    enum Outcome: Equatable {
+        case notNeeded          // bundle already covers this area
+        case loaded(Int)        // fetched (or cached) this many local places
+        case failed             // thin here, but couldn't reach a single Overpass mirror
+    }
+    private var outcomeByArea: [String: Outcome] = [:]
+
+    func outcome(around origin: CLLocationCoordinate2D) -> Outcome {
+        outcomeByArea[Self.areaKey(origin)] ?? .notNeeded
+    }
+
+    /// Forget a failed attempt so the next `ensureLoaded` genuinely re-fetches. A failure is
+    /// never cached, so a rebuild would retry anyway — but clearing the recorded outcome keeps
+    /// the "couldn't reach" note from lingering while the retry is in flight.
+    func clearFailure(around origin: CLLocationCoordinate2D) {
+        let key = Self.areaKey(origin)
+        if outcomeByArea[key] == .failed { outcomeByArea[key] = nil }
+    }
 
     private let endpoints = [
         "https://overpass-api.de/api/interpreter",
@@ -44,25 +74,42 @@ actor LocalPlacesService {
     /// immediately when the area is already known or the bundle is rich enough.
     func ensureLoaded(around origin: CLLocationCoordinate2D) async {
         let key = Self.areaKey(origin)
-        if byArea[key] != nil || inFlight.contains(key) { return }
+        if byArea[key] != nil { return }
 
         if let disk = loadFromDisk(key) {
             byArea[key] = disk
+            outcomeByArea[key] = .loaded(disk.count)
             return
         }
         // Only reach for the network where the bundle can't build a decent local day.
         guard Self.bundleIsThin(around: origin) else {
             byArea[key] = []          // remember that we looked and didn't need to
+            outcomeByArea[key] = .notNeeded
             return
         }
-        inFlight.insert(key)
-        defer { inFlight.remove(key) }
-        // A failed fetch returns nil — do NOT cache it, in memory or on disk, so the next
-        // attempt tries again. Caching an empty result on a server hiccup was the bug that
-        // left an area permanently blank once the servers were briefly down.
+        // Coalesce onto one unstructured fetch per area (see `inFlightTasks`), then await it.
+        // Awaiting `.value` hands back the result without forwarding our own cancellation into
+        // the fetch, so a view-task restart mid-fetch no longer blanks the area.
+        let task = inFlightTasks[key] ?? {
+            let created = Task { await performFetch(key: key, origin: origin) }
+            inFlightTasks[key] = created
+            return created
+        }()
+        await task.value
+    }
+
+    /// The actual network fetch, run inside the unstructured task. Actor-isolated, so its writes
+    /// to the caches are safe. A failed fetch returns nil — do NOT cache it, in memory or on
+    /// disk, so the next attempt tries again; caching an empty result on a server hiccup was the
+    /// bug that left an area permanently blank once the servers were briefly down.
+    private func performFetch(key: String, origin: CLLocationCoordinate2D) async {
+        defer { inFlightTasks[key] = nil }
         if let sites = await fetch(around: origin), !sites.isEmpty {
             byArea[key] = sites
             saveToDisk(key, sites)
+            outcomeByArea[key] = .loaded(sites.count)
+        } else {
+            outcomeByArea[key] = .failed
         }
     }
 

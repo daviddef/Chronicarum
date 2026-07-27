@@ -49,6 +49,9 @@ struct TripPlanView: View {
     @State private var pdfURL: URL?
     /// Bumped by "Try another" to reshuffle the same request into a different day.
     @State private var variant = 0
+    /// What the on-demand OSM fetch did for this area — shown to the user so a thin day is
+    /// legible ("we pulled 40 places" vs "couldn't reach OpenStreetMap") rather than a mystery.
+    @State private var localOutcome: LocalPlacesService.Outcome = .notNeeded
     /// One sheet at a time. Two separate `.sheet` modifiers on the same view present
     /// unreliably — the location picker silently refused to open beside the site sheet —
     /// so both go through a single enum-driven presentation.
@@ -257,6 +260,8 @@ struct TripPlanView: View {
                         }
                     }
 
+                    localSourceSection
+
                     Section {
                         Text(plan.travelCaveat
                              + " Opening hours are not known for any site — no heritage "
@@ -296,6 +301,7 @@ struct TripPlanView: View {
                                + "Try drawing wider.")
                             .foregroundColor(.secondary)
                     }
+                    localSourceSection
                 }
             }
             .scrollContentBackground(.hidden)
@@ -348,6 +354,44 @@ struct TripPlanView: View {
             .overlay {
                 if isBuilding { ProgressView().controlSize(.large) }
             }
+        }
+    }
+
+    /// Says where the local places came from, so a thin day is legible rather than a mystery.
+    /// This is the line that turns "it looks the same" into an actual signal: it names whether
+    /// the extra places were pulled live from OpenStreetMap, and if the fetch failed it says so
+    /// and offers to try again rather than silently falling back to the bundle.
+    @ViewBuilder private var localSourceSection: some View {
+        switch localOutcome {
+        case .loaded(let n) where n > 0:
+            Section {
+                Label("Added \(n) nearby \(n == 1 ? "place" : "places") from OpenStreetMap, "
+                      + "on top of the curated sites.",
+                      systemImage: "mappin.and.ellipse")
+                    .font(.caption)
+                    .foregroundColor(Color(hex: "#2E9E5B"))
+            }
+        case .failed:
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Couldn't reach OpenStreetMap just now, so this is only the curated "
+                          + "places — thin in a smaller town. Needs a connection to fill in the "
+                          + "local parks, beaches and paths.",
+                          systemImage: "wifi.exclamationmark")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    Button {
+                        Task { await LocalPlacesService.shared.clearFailure(around: effectiveOrigin); variant += 1 }
+                    } label: {
+                        Label("Try fetching again", systemImage: "arrow.clockwise")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(Color(hex: "#C9A84C"))
+                }
+            }
+        default:
+            EmptyView()
         }
     }
 
@@ -425,6 +469,7 @@ struct TripPlanView: View {
         // no-op (and instant) where the bundle is already rich or the area is cached.
         await LocalPlacesService.shared.ensureLoaded(around: requestedOrigin)
         let local = await LocalPlacesService.shared.sites(around: requestedOrigin)
+        localOutcome = await LocalPlacesService.shared.outcome(around: requestedOrigin)
         let catalogue = (confinedTo ?? SiteData.all) + local
         let requestedMode = mode
         let requestedTier = tier

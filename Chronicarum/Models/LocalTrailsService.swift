@@ -14,7 +14,11 @@ actor LocalTrailsService {
     static let shared = LocalTrailsService()
 
     private var byArea: [String: [Trail]] = [:]
-    private var inFlight: Set<String> = []
+    /// One unstructured in-flight fetch per area — see the twin note in `LocalPlacesService`.
+    /// The caller runs inside a SwiftUI `.task(id:)` that cancels on any control change; a
+    /// structured await would carry that cancellation into the network request and kill it in
+    /// milliseconds. Awaiting an unstructured task's `.value` shields the fetch from that.
+    private var inFlightTasks: [String: Task<Void, Never>] = [:]
 
     private let endpoints = [
         "https://overpass-api.de/api/interpreter",
@@ -30,12 +34,21 @@ actor LocalTrailsService {
 
     func ensureLoaded(around origin: CLLocationCoordinate2D) async {
         let key = Self.areaKey(origin)
-        if byArea[key] != nil || inFlight.contains(key) { return }
+        if byArea[key] != nil { return }
         if let disk = loadFromDisk(key) { byArea[key] = disk; return }
         guard Self.bundleIsThin(around: origin) else { byArea[key] = []; return }
-        inFlight.insert(key)
-        defer { inFlight.remove(key) }
-        // Don't cache a failed fetch (nil) — retry next time rather than blank the area.
+        let task = inFlightTasks[key] ?? {
+            let created = Task { await performFetch(key: key, origin: origin) }
+            inFlightTasks[key] = created
+            return created
+        }()
+        await task.value
+    }
+
+    /// The network fetch, shielded from view-task cancellation by its unstructured task. Don't
+    /// cache a failed fetch (nil) — retry next time rather than blank the area.
+    private func performFetch(key: String, origin: CLLocationCoordinate2D) async {
+        defer { inFlightTasks[key] = nil }
         if let trails = await fetch(around: origin), !trails.isEmpty {
             byArea[key] = trails
             saveToDisk(key, trails)
