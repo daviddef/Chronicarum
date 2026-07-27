@@ -754,6 +754,32 @@ nearest-neighbour.
 - **Anything about you beyond themes.** No pace, no mobility, no "we have children", no
   "we don't drive".
 
+### Staying local — a day around Senj should stay around Senj (build 42)
+
+Reported from Senj, on the Croatian coast, and it exposed a real flaw. Senj has **three**
+heritage sites within walking distance and only two above the quality floor; the next
+worthwhile things are 50–90 km away in Rijeka and Karlovac. The planner, determined to fill
+~8 hours, drove you there — "Deep history" and "With the kids" both became two hours in the car
+past everything Senj actually has. The instinct to pad a day to a full day is wrong when the
+good stuff is sparse: **a short, honest, local day beats a long sprawling one.**
+
+The fix is a `dayReachKm` cap (30 km driving, 18 transit, 6 on foot): after the anchor, a stop
+is only added if it is within that reach of the anchor, and the day simply ends when the local
+cluster is exhausted rather than reaching across the county. Verified against the data: a Senj
+day now draws from **fifteen** sites within 30 km — Nehaj, the Cathedral, the Grižane, Sokolac
+and Frankopan castles, Krk Cathedral, the Velebit botanical garden — and the Rijeka/Karlovac
+sprawl is gone. It only bites where places are thin; a dense city always has plenty within
+30 km, so those plans are untouched.
+
+**What it does not fix, and is honest about:** the *content* gap underneath. Senj's own rich
+history isn't in the catalogue (Croatia's national register is licence-locked, Wikidata is thin
+for small towns), there are **zero** family POIs within 50 km (the family layer covers ~46
+metros, not small coastal towns), and the nearest *national* trail is 60 km because the trail
+import kept only national/international routes and dropped the local Velebit paths. So the walk
+is still short and "With the kids" still has no playground *near Senj* — those need broader data
+coverage, not a planner tweak. The staying-local fix stops the app doing the *wrong* thing; the
+data work is what will let it do more of the *right* thing. See "Still to come" below.
+
 ## Opening hours — the honest answer is that nobody has them
 
 The largest remaining gap turned out not to be a build problem but a sourcing one, and the

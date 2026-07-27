@@ -73,6 +73,20 @@ enum TravelMode: String, CaseIterable, Identifiable {
         }
     }
 
+    /// How far a single day should be allowed to sprawl from its anchor. Much tighter than
+    /// `radiusKm`, which only bounds where the *anchor* may be found. A day "around Senj"
+    /// should stay around Senj: in a place with three things nearby and the next worthwhile
+    /// site 50 km away, the honest answer is a short local day, not two hours in the car to
+    /// pad it out. This only bites where the good stuff is sparse — in a dense city there is
+    /// always plenty within reach, so nothing changes.
+    var dayReachKm: Double {
+        switch self {
+        case .any, .driving: 30
+        case .transit: 18
+        case .walking: 6
+        }
+    }
+
     /// Minutes for one leg, from straight-line kilometres. See the type comment for where
     /// each of these numbers comes from.
     func estimatedMinutes(overKm straightLine: Double) -> Int {
@@ -486,6 +500,10 @@ enum TripPlanner {
 
                 for site in pool where !used.contains(site.id) {
                     guard Double(site.significance) >= floor else { continue }
+                    // Keep the day around its anchor. A far-flung stop is not worth adding
+                    // just to fill the hours — a short local day beats two hours in the car.
+                    guard site.approxDistanceKm(from: anchor.coordinate) <= mode.dayReachKm
+                    else { continue }
                     let travel = mode.estimatedMinutes(overKm: site.approxDistanceKm(from: here))
                     let cost = Double(travel + site.visitMinutes)
                     guard cost <= budget else { continue }
