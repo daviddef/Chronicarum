@@ -18,7 +18,9 @@ actor LocalTrailsService {
 
     private let endpoints = [
         "https://overpass-api.de/api/interpreter",
+        "https://overpass.openstreetmap.fr/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     ]
 
     /// Thin if no bundled trail's path passes within this of the origin.
@@ -33,9 +35,11 @@ actor LocalTrailsService {
         guard Self.bundleIsThin(around: origin) else { byArea[key] = []; return }
         inFlight.insert(key)
         defer { inFlight.remove(key) }
-        let trails = await fetch(around: origin)
-        byArea[key] = trails
-        saveToDisk(key, trails)
+        // Don't cache a failed fetch (nil) — retry next time rather than blank the area.
+        if let trails = await fetch(around: origin), !trails.isEmpty {
+            byArea[key] = trails
+            saveToDisk(key, trails)
+        }
     }
 
     func trails(around origin: CLLocationCoordinate2D) -> [Trail] {
@@ -66,7 +70,8 @@ actor LocalTrailsService {
         guard let data = try? Data(contentsOf: cacheURL(key)),
               let cols = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return nil }
-        return TrailData.decode(cols)
+        let trails = TrailData.decode(cols)
+        return trails.isEmpty ? nil : trails      // empty cache is a stale failure — retry it
     }
 
     private func saveToDisk(_ key: String, _ trails: [Trail]) {
@@ -81,7 +86,7 @@ actor LocalTrailsService {
     private static let activityFor = ["hiking": "walk", "foot": "walk",
                                       "bicycle": "bike", "mtb": "bike"]
 
-    private func fetch(around origin: CLLocationCoordinate2D) async -> [Trail] {
+    private func fetch(around origin: CLLocationCoordinate2D) async -> [Trail]? {
         let dLat = 0.30, dLon = 0.30 / max(0.2, cos(origin.latitude * .pi / 180))
         let bbox = String(format: "%.4f,%.4f,%.4f,%.4f",
                           origin.latitude - dLat, origin.longitude - dLon,
@@ -93,26 +98,37 @@ actor LocalTrailsService {
         );
         out geom 250;
         """
-        guard let raw = await request(query) else { return [] }
+        guard let raw = await request(query) else { return nil }   // nil = fetch failed
         return parse(raw)
     }
 
+    /// Race every mirror; first to answer wins. Returns nil only when all fail.
     private func request(_ query: String) async -> [String: Any]? {
         let body = "data=\(query.addingPercentEncoding(withAllowedCharacters: .urlTrailQueryAllowed) ?? "")"
-        for endpoint in endpoints {
-            guard let url = URL(string: endpoint) else { continue }
-            var req = URLRequest(url: url)
-            req.httpMethod = "POST"
-            req.httpBody = body.data(using: .utf8)
-            req.timeoutInterval = 18
-            req.setValue("Chronicarum/localtrails (ODbL)", forHTTPHeaderField: "User-Agent")
-            if let (data, resp) = try? await URLSession.shared.data(for: req),
-               (resp as? HTTPURLResponse)?.statusCode == 200,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                return json
+        return await withTaskGroup(of: [String: Any]?.self) { group in
+            for endpoint in endpoints {
+                group.addTask { await Self.hit(endpoint, body: body) }
             }
+            for await result in group where result != nil {
+                group.cancelAll()
+                return result
+            }
+            return nil
         }
-        return nil
+    }
+
+    private static func hit(_ endpoint: String, body: String) async -> [String: Any]? {
+        guard let url = URL(string: endpoint) else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.httpBody = body.data(using: .utf8)
+        req.timeoutInterval = 20
+        req.setValue("Chronicarum/localtrails (ODbL)", forHTTPHeaderField: "User-Agent")
+        guard let (data, resp) = try? await URLSession.shared.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return json
     }
 
     // MARK: - Parse geometry

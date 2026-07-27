@@ -23,7 +23,9 @@ actor LocalPlacesService {
 
     private let endpoints = [
         "https://overpass-api.de/api/interpreter",
+        "https://overpass.openstreetmap.fr/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     ]
 
     // "Thin" is about the *local* area, not the county: enough worthwhile heritage within a
@@ -55,9 +57,13 @@ actor LocalPlacesService {
         }
         inFlight.insert(key)
         defer { inFlight.remove(key) }
-        let sites = await fetch(around: origin)
-        byArea[key] = sites
-        saveToDisk(key, sites)
+        // A failed fetch returns nil — do NOT cache it, in memory or on disk, so the next
+        // attempt tries again. Caching an empty result on a server hiccup was the bug that
+        // left an area permanently blank once the servers were briefly down.
+        if let sites = await fetch(around: origin), !sites.isEmpty {
+            byArea[key] = sites
+            saveToDisk(key, sites)
+        }
     }
 
     /// The local sites known for the area around a point — whatever `ensureLoaded` has put in
@@ -102,8 +108,11 @@ actor LocalPlacesService {
     }
 
     private func loadFromDisk(_ key: String) -> [Site]? {
-        guard let data = try? Data(contentsOf: cacheURL(key)) else { return nil }
-        return try? JSONDecoder().decode([Site].self, from: data)
+        guard let data = try? Data(contentsOf: cacheURL(key)),
+              let sites = try? JSONDecoder().decode([Site].self, from: data),
+              !sites.isEmpty            // an empty cache is a stale failure — retry it
+        else { return nil }
+        return sites
     }
 
     private func saveToDisk(_ key: String, _ sites: [Site]) {
@@ -114,7 +123,7 @@ actor LocalPlacesService {
 
     // MARK: - Fetch
 
-    private func fetch(around origin: CLLocationCoordinate2D) async -> [Site] {
+    private func fetch(around origin: CLLocationCoordinate2D) async -> [Site]? {
         // ~35 km box, enough to fill a day's dayReachKm around the origin.
         let dLat = 0.32, dLon = 0.32 / max(0.2, cos(origin.latitude * .pi / 180))
         let s = origin.latitude - dLat, n = origin.latitude + dLat
@@ -130,26 +139,39 @@ actor LocalPlacesService {
         );
         out center tags 500;
         """
-        guard let raw = await request(query) else { return [] }
+        guard let raw = await request(query) else { return nil }   // nil = fetch failed
         return parse(raw, around: origin)
     }
 
+    /// Race every mirror at once and take the first that answers — one slow or 504-ing server
+    /// no longer sinks the whole fetch, which is what left areas blank on a busy night.
+    /// Returns nil only when they all fail (offline, or every mirror down).
     private func request(_ query: String) async -> [String: Any]? {
         let body = "data=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryValueAllowed) ?? "")"
-        for endpoint in endpoints {
-            guard let url = URL(string: endpoint) else { continue }
-            var req = URLRequest(url: url)
-            req.httpMethod = "POST"
-            req.httpBody = body.data(using: .utf8)
-            req.timeoutInterval = 18       // forgiving enough for a real query, still bounded
-            req.setValue("Chronicarum/local (ODbL)", forHTTPHeaderField: "User-Agent")
-            if let (data, resp) = try? await URLSession.shared.data(for: req),
-               (resp as? HTTPURLResponse)?.statusCode == 200,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                return json
+        return await withTaskGroup(of: [String: Any]?.self) { group in
+            for endpoint in endpoints {
+                group.addTask { await Self.hit(endpoint, body: body) }
             }
+            for await result in group where result != nil {
+                group.cancelAll()
+                return result
+            }
+            return nil
         }
-        return nil   // offline, or the servers are busy — the plan falls back to the bundle
+    }
+
+    private static func hit(_ endpoint: String, body: String) async -> [String: Any]? {
+        guard let url = URL(string: endpoint) else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.httpBody = body.data(using: .utf8)
+        req.timeoutInterval = 20
+        req.setValue("Chronicarum/local (ODbL)", forHTTPHeaderField: "User-Agent")
+        guard let (data, resp) = try? await URLSession.shared.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return json
     }
 
     // MARK: - Parse & map

@@ -797,9 +797,21 @@ as clean polylines, encode/decode round-tripping to under a metre), and folds th
 trails browser. So "Out for a walk" near Senj now finds its local Velebit paths, not routes
 60 km off. Trail network labels gained *Regional* and *Local* to match.
 
+**The reliability bug that made it look broken (build 45).** A tester on build 44 saw *no
+change* in Senj, and it wasn't the planner — it was the fetch. Two faults compounded: the code
+tried the Overpass mirrors one at a time, so a single slow/504-ing server (and the public ones
+were down for long stretches) sank the whole fetch; and worse, **a failed fetch was cached as an
+empty result**, so once an area came back blank on a bad server night it stayed blank forever,
+even after the servers recovered. Fixed both: the mirrors are now **raced in parallel** (first
+of four to answer wins, so one slow server can't sink it), a failed fetch is **never cached** —
+in memory or on disk — so the next attempt retries, and an empty cache from before is **treated
+as stale and re-fetched**, which self-heals a device that got stuck. Verified: with the mirrors
+individually flaky, the race still returned Senj's 278 places, and it re-fetched past the old
+empty cache. The lesson, again: never cache a failure as if it were an answer.
+
 **Still limited:** the first plan/browse in a brand-new area waits a few seconds for the fetch
-(cached after), a genuinely offline device in an uncovered area still falls back to the bundle,
-and the Home cards' "near you" counts don't include the on-demand layer yet.
+(cached after), a genuinely offline device (or one where every mirror is down) still falls back
+to the bundle, and the Home cards' "near you" counts don't include the on-demand layer yet.
 
 ### Search where you are, not on another screen (build 44)
 
