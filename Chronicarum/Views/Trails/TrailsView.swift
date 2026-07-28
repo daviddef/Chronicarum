@@ -21,6 +21,12 @@ struct TrailsView: View {
 
     private let gold = Color(hex: "#C9A84C")
 
+    /// How far a browsed trail may be and still count as "near you". Tight on purpose: this is
+    /// the walk-from-here layer, not a survey of the region, so a route an hour's drive away
+    /// has no business on the list. The map draws only the stretch within this window, too, so
+    /// a long route that passes nearby shows where it passes and nothing more.
+    private static let browseRadiusKm = 30.0
+
     init(activity: TrailActivity?) {
         _activity = State(initialValue: activity)
     }
@@ -73,11 +79,13 @@ struct TrailsView: View {
     private var map: some View {
         Map(position: $position) {
             ForEach(trails) { trail in
-                ForEach(Array(trail.segments.enumerated()), id: \.offset) { _, seg in
+                // Draw only the stretch near here, so a long through-route doesn't paint a line
+                // across the map — and the camera, fitting what's drawn, stays on your area.
+                ForEach(Array(trail.localSegments(around: origin, windowKm: Self.browseRadiusKm).enumerated()), id: \.offset) { _, seg in
                     MapPolyline(coordinates: seg)
                         .stroke(Color(hex: trail.activity.colour).opacity(0.85), lineWidth: 3)
                 }
-                Annotation(trail.name, coordinate: trail.coordinate) {
+                Annotation(trail.name, coordinate: trail.nearestPoint(from: origin)) {
                     Button { selected = trail } label: {
                         Image(systemName: trail.activity.icon)
                             .font(.system(size: 12, weight: .bold))
@@ -121,10 +129,12 @@ struct TrailsView: View {
             Image(systemName: "map")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("No national trails within 150 km")
+            Text("No walks or rides within \(Int(Self.browseRadiusKm)) km")
                 .font(.headline)
-            Text("The outdoor layer covers Europe, North America, East Asia, and Australia so "
-                 + "far. More regions to come.")
+            Text("This is the walk-from-here layer. Local paths are fetched live from "
+                 + "OpenStreetMap where the map is thin — a connection helps. National and "
+                 + "international routes come bundled across Europe, North America, East Asia "
+                 + "and Australia, with more regions to come.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -145,8 +155,8 @@ struct TrailsView: View {
         let local = await LocalTrailsService.shared.trails(around: o)
         let found = await withCheckedContinuation { (cont: CheckedContinuation<[Trail], Never>) in
             DispatchQueue.global(qos: .userInitiated).async {
-                cont.resume(returning: TrailData.near(o, activity: act, radiusKm: 150,
-                                                      limit: 40, including: local))
+                cont.resume(returning: TrailData.near(o, activity: act, radiusKm: Self.browseRadiusKm,
+                                                      limit: 25, including: local))
             }
         }
         trails = found

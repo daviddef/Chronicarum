@@ -93,6 +93,44 @@ struct Trail: Identifiable {
         return best
     }
 
+    /// The point on the path closest to `c` — where a long route actually meets your area.
+    /// The stored `coordinate` is the geometric midpoint, which for a 761 km national route is
+    /// somewhere in the middle of the country; pinning there scatters the map. This pins the
+    /// route where it passes you.
+    func nearestPoint(from c: CLLocationCoordinate2D) -> CLLocationCoordinate2D {
+        var best = coordinate
+        var bestD = Double.greatestFiniteMagnitude
+        for segment in segments {
+            for p in segment {
+                let d = Trail.haversineKm(c, p)
+                if d < bestD { bestD = d; best = p }
+            }
+        }
+        return best
+    }
+
+    /// Only the stretch of the path near `c` — each segment reduced to the runs of consecutive
+    /// vertices within `windowKm`, split where it leaves and re-enters. A through-route that
+    /// merely grazes the area then draws as the few kilometres actually here, not as a line
+    /// across three countries — which also lets the map frame itself on your surroundings
+    /// instead of zooming out to hold the whole route.
+    func localSegments(around c: CLLocationCoordinate2D, windowKm: Double) -> [[CLLocationCoordinate2D]] {
+        var runs: [[CLLocationCoordinate2D]] = []
+        for segment in segments {
+            var run: [CLLocationCoordinate2D] = []
+            for p in segment {
+                if Trail.haversineKm(c, p) <= windowKm {
+                    run.append(p)
+                } else if !run.isEmpty {
+                    runs.append(run)
+                    run = []
+                }
+            }
+            if !run.isEmpty { runs.append(run) }
+        }
+        return runs
+    }
+
     static func haversineKm(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> Double {
         let r = 6371.0
         let lat1 = a.latitude * .pi / 180, lat2 = b.latitude * .pi / 180

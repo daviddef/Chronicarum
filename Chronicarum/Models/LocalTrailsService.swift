@@ -27,8 +27,12 @@ actor LocalTrailsService {
         "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     ]
 
-    /// Thin if no bundled trail's path passes within this of the origin.
-    private static let thinRadiusKm = 20.0
+    /// Thin unless a bundled trail that's actually a *local walk option* passes nearby: close,
+    /// and short enough to be a walk rather than a multi-week through-route. A 761 km national
+    /// route grazing Senj is not a walk near Senj, so its presence must not suppress the fetch
+    /// of the real local paths — that was the trails twin of the places-layer thinness bug.
+    private static let thinRadiusKm = 12.0
+    private static let localTrailMaxKm = 40.0
 
     // MARK: - Public
 
@@ -60,7 +64,9 @@ actor LocalTrailsService {
     }
 
     nonisolated static func bundleIsThin(around origin: CLLocationCoordinate2D) -> Bool {
-        TrailData.near(origin, radiusKm: thinRadiusKm, limit: 1).isEmpty
+        !TrailData.all.contains { trail in
+            trail.km <= localTrailMaxKm && trail.nearestDistanceKm(from: origin) <= thinRadiusKm
+        }
     }
 
     // MARK: - Area & cache
